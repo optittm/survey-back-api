@@ -1,9 +1,11 @@
 from dependency_injector import containers, providers
-from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 
 class Container(containers.DeclarativeContainer):
-    load_dotenv()
+
+    # Wiring the modules which need dependency injection
+    # If you need to use Provide in a file other than main.py, add it to the list of modules here
+    # wiring_config = containers.WiringConfiguration(modules=["routes.comments"])
 
     config = providers.Configuration()
 
