@@ -10,7 +10,6 @@ from sqlalchemy.exc import ArgumentError
 
 from utils.container import Container
 from models.database import setup_database
-from routes import comments
 
 @inject
 def init_fastapi(config = Provide[Container.config]) -> FastAPI:
@@ -23,7 +22,6 @@ def init_fastapi(config = Provide[Container.config]) -> FastAPI:
         allow_methods=config["cors_allow_methods"].split(","),
         allow_headers=config["cors_allow_headers"].split(","),
     )
-    app.include_router(comments.router)
 
     return app
 
