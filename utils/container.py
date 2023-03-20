@@ -1,6 +1,8 @@
 from dependency_injector import containers, providers
 from sqlalchemy.orm import sessionmaker
 
+from repository.FeatureConfig import FeatureConfig
+
 class Container(containers.DeclarativeContainer):
 
     # Wiring the modules which need dependency injection
@@ -11,3 +13,5 @@ class Container(containers.DeclarativeContainer):
 
     Session = sessionmaker()
     db_session = providers.Singleton(Session)
+
+    features_config = providers.Factory(FeatureConfig)
