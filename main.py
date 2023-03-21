@@ -7,7 +7,9 @@ import uvicorn
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import ArgumentError
-
+from pydbantic import Database
+from models.comment import Comment
+from routes.comments import router
 from utils.container import Container
 from models.database import setup_database
 
@@ -22,7 +24,7 @@ def init_fastapi(config = Provide[Container.config]) -> FastAPI:
         allow_methods=config["cors_allow_methods"].split(","),
         allow_headers=config["cors_allow_headers"].split(","),
     )
-
+    app.include_router(router)
     return app
 
 @inject
@@ -38,20 +40,11 @@ def main(config = Provide[Container.config]):
 @inject
 def config_db_session(container: Container, config = Provide[Container.config]):
     try:
-        engine = db.create_engine(config["survey_db"])
+        db= Database.create(config["survey_db"], tables=[Comment])
     except ArgumentError as e:
         raise Exception(f"Error from sqlalchemy : {str(e)}")
-    
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    setup_database(engine)
-
-    container.db_session.override(
-        providers.Singleton(Session)
-    )
 
 load_dotenv()
-
 container = Container()
 # Loading .env variables into the config provider
 container.config.survey_api_host.from_env("SURVEY_API_HOST", required=True, default="localhost")
@@ -65,8 +58,7 @@ container.config.debug_mode.from_env("DEBUG_MODE", required=True, as_=bool, defa
 container.wire(modules=[__name__])
 
 app = init_fastapi()
-
+config_db_session(container)
 # Start the async event loop and ASGI server.
 if __name__ == "__main__":
-    config_db_session(container)
     main()
