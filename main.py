@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 from models.comment import Comment
+from models.project import Project
 from routes.comments import router
 from utils.container import Container
 from models.database import setup_database
@@ -40,7 +41,7 @@ def main(config = Provide[Container.config]):
 @inject
 def config_db_session(container: Container, config = Provide[Container.config]):
     try:
-        db= Database.create(config["survey_db"], tables=[Comment])
+        db= Database.create(config["survey_db"], tables=[Project, Comment])
     except ArgumentError as e:
         raise Exception(f"Error from sqlalchemy : {str(e)}")
 
