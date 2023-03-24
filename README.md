@@ -6,7 +6,7 @@ The API also provides an endpoint to fetch the feedbacks from a third party app,
 
 ## Endpoints
 
-POST /comments
+# POST /comments
 Creates a new comment and stores it in the database.
 
 Request Body
@@ -17,7 +17,8 @@ Request Body
 Response
 status code: 201 - Created
 response model: Comment - The newly created comment object.
-GET /comments
+
+# GET /comments
 Retrieves all comments from the database.
 
 Response
