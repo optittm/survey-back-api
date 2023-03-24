@@ -10,9 +10,10 @@ POST /comments
 Creates a new comment and stores it in the database.
 
 Request Body
-commentcookie: A JSON object containing the comment details, including the feature URL, comment text, and th rating.
-user_id (optional): The ID of the user who posted the comment.
-timestamp (optional): The timestamp of when the comment was posted.
+- commentcookie: A JSON object containing the comment details, including the feature URL, comment text, and th rating.
+    -cookie : user_id, The ID of the user who posted the comment.
+    -cookie : timestamp, The timestamp of when the comment was posted.
+    
 Response
 status code: 201 - Created
 response model: Comment - The newly created comment object.
