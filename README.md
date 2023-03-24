@@ -52,5 +52,6 @@ You can then run the API :
 
 ## Test 
 
-You can run the unittest : 
+You can run the unittests : 
+
     python -m unittest discover test
