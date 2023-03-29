@@ -1,19 +1,18 @@
 from datetime import datetime
 from typing import List
 
-from models.comment import Comment
-from models.commentcookie import CommentCookie
+from models.comment import Comment, CommentPostBody
 from models.project import Project
 
 class SQLiteRepository:
     
-    async def create_comment(self,commentcookie: CommentCookie,user_id, timestamp, project_name: str):
+    async def create_comment(self, commentcookie: CommentPostBody, user_id, timestamp, project_name: str):
         
         timestamp = datetime.strptime(timestamp, '%m/%d/%y %H:%M:%S')
 
         projects = await Project.filter(Project.name==project_name)
 
-        if len(projects)==0:
+        if len(projects) == 0:
             await self.create_project(Project(project_name))
 
         new_comment = await Comment.create(
