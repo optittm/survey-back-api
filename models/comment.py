@@ -1,8 +1,9 @@
 from typing import Optional
 from pydantic import validator
-from pydbantic import DataBaseModel, PrimaryKey, Unique, ForeignKey
+from pydbantic import DataBaseModel, PrimaryKey, ForeignKey
 from datetime import datetime
 from models.project import Project
+
 class Comment(DataBaseModel):
     id: Optional[int] = PrimaryKey(autoincrement=True)
     project_id: int= ForeignKey(Project, "id")
