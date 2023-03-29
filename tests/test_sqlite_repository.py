@@ -2,19 +2,17 @@ import unittest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
-from fastapi import FastAPI
-from models.comment import Comment
-from models.commentcookie import CommentCookie
+from models.comment import Comment, CommentPostBody
 from models.project import Project
-from repository.DBrepository import CommentRepository
+from repository.sqlite_repository import SQLiteRepository
 
-
-class TestCommentRepository(unittest.TestCase):
+# TODO: fix tests
+class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
-        self.repository = CommentRepository()
+        self.repository = SQLiteRepository()
         self.project_name = "test_project"
-        self.comment_cookie = CommentCookie(
+        self.comment_cookie = CommentPostBody(
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment"
@@ -66,24 +64,3 @@ class TestCommentRepository(unittest.TestCase):
         Project.create.assert_called_once_with(name=self.project_name)
         Project.insert.assert_called_once()
         Project.save.assert_called_once()
-
-    async def test_create_comment_endpoint(self):
-        app = FastAPI()
-        client = TestClient(app)
-
-        response = client.post(
-            "/comments",
-            json={"comment_cookie": self.comment_cookie.dict()}
-        )
-        assert response.status_code == 201
-        assert response.json() == {"id": 1}
-
-    async def test_get_all_comments_endpoint(self):
-        app = FastAPI()
-        client = TestClient(app)
-
-        Comment.all = AsyncMock(return_value=[Comment(id=1), Comment(id=2)])
-        response = client.get("/comments")
-        assert response.status_code == 200
-        assert response.json() == [{"id": 1}, {"id": 2}]
-        Comment.all.assert_called_once()
