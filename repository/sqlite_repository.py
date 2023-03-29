@@ -1,13 +1,12 @@
 from datetime import datetime
 from typing import List
-from pydbantic import Database
+
 from models.comment import Comment
 from models.commentcookie import CommentCookie
 from models.project import Project
-from fastapi import Request
 
-class CommentRepository:
-       
+class SQLiteRepository:
+    
     async def create_comment(self,commentcookie: CommentCookie,user_id, timestamp, project_name: str):
         
         timestamp = datetime.strptime(timestamp, '%m/%d/%y %H:%M:%S')

@@ -2,12 +2,12 @@
 import yaml
 from schema import Schema, SchemaError, Optional
 from yaml.loader import SafeLoader
-from models.Rule import Rule
+from models.rule import Rule
 
 
-class FeatureConfig:
+class YamlRulesRepository:
 
-    _FEATURE_CONFIG = 'rules.yaml'
+    _RULES_CONFIG_FILE = 'rules.yaml'
 
     _RULES_CONFIG_SCHEMA = {
         Optional("get_comments_allowed_origins"): str,
@@ -26,7 +26,7 @@ class FeatureConfig:
     }
 
     @staticmethod
-    def getRulesConfig(file_name: str = _FEATURE_CONFIG):
+    def _getRulesConfig(file_name: str = _RULES_CONFIG_FILE):
         """
         Loads the rule configuration data from the specified YAML file and validates it against the specified schema using the Schema library.
 
@@ -40,7 +40,7 @@ class FeatureConfig:
         try:
             with open(file_name) as f:
                 data = yaml.load(f, Loader=SafeLoader)
-                schema = Schema(FeatureConfig._RULES_CONFIG_SCHEMA, ignore_extra_keys=True)
+                schema = Schema(YamlRulesRepository._RULES_CONFIG_SCHEMA, ignore_extra_keys=True)
                 schema.validate(data)
                 return data
         except FileNotFoundError:
@@ -65,15 +65,15 @@ class FeatureConfig:
         Rule: A Rule object containing the information for the corresponding rule, if it exists.
             None if the feature does not exist in the rule configuration.
         """
-        data = FeatureConfig.getRulesConfig(FeatureConfig._FEATURE_CONFIG)
+        data = YamlRulesRepository._getRulesConfig(YamlRulesRepository._RULES_CONFIG_FILE)
         if data :
             for project_name, project_data in data['projects'].items():
                 for rule in project_data['rules']:
                     if rule['feature_url'] == feature_url:
-                        return Rule(rule['feature_url'], \
-                                    rule['ratio'], \
-                                    rule['delay_before_reanswer'], \
-                                    rule['delay_to_answer'], \
+                        return Rule(rule['feature_url'],
+                                    rule['ratio'],
+                                    rule['delay_before_reanswer'],
+                                    rule['delay_to_answer'],
                                     rule['is_active'])
         return None
 
@@ -89,7 +89,7 @@ class FeatureConfig:
         str: The name of the project to which the feature belongs, if it exists.
             None if the feature does not exist in the rule configuration.
         """
-        data = FeatureConfig.getRulesConfig(FeatureConfig._FEATURE_CONFIG)
+        data = YamlRulesRepository._getRulesConfig(YamlRulesRepository._RULES_CONFIG_FILE)
         if data :
             for project_name, project_data in data['projects'].items():
                 for rule in project_data['rules']:
