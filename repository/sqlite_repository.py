@@ -10,12 +10,13 @@ class SQLiteRepository:
         
         timestamp = datetime.strptime(timestamp, '%m/%d/%y %H:%M:%S')
 
-        projects = await Project.filter(Project.name==project_name)
+        projects = await Project.filter(name=project_name)
+        print(projects)
 
         if len(projects) == 0:
-            await self.create_project(Project(project_name))
+            await self.create_project(Project(name=project_name))
 
-        new_comment = await Comment.create(
+        new_comment = Comment(
             project_id= projects[0].id,
             feature_url= commentcookie.feature_url,
             user_id= user_id,
@@ -23,9 +24,8 @@ class SQLiteRepository:
             rating=commentcookie.rating,
             comment=commentcookie.comment,
         )
-
-        await new_comment.insert()
-        await new_comment.save()
+        id = await new_comment.insert()
+        new_comment.id = id
         return new_comment
 
     async def read_comments(self) -> List[Comment]:
@@ -33,9 +33,5 @@ class SQLiteRepository:
         return comments
     
     async def create_project(self, project: Project):
-        new_project = await Project.create(
-            name=project.name,
-        )
-        await new_project.insert()
-        await new_project.save()
-        return new_project
+        await project.insert()
+        return project

@@ -9,7 +9,7 @@ class Comment(DataBaseModel):
     Comment model for the SQL table
     """
     id: Optional[int] = PrimaryKey(autoincrement=True)
-    project_id: int= ForeignKey(Project, "id")
+    project_id: int = ForeignKey(Project, "id")
     user_id: str
     timestamp: datetime
     feature_url: str
