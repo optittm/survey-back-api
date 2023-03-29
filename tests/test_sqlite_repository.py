@@ -22,45 +22,52 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         user_id = 123
         timestamp = "03/24/23 12:00:00"
 
-        self.repository.create_project = AsyncMock()
-        Comment.create = AsyncMock()
-        new_comment = MagicMock()
-        Comment.insert = AsyncMock()
-        Comment.save = AsyncMock()
-        Comment.filter = AsyncMock(return_value=[Project(id=1)])
-        Comment.create.return_value = new_comment
+        self.repository.create_project = AsyncMock(return_value=Project(id=1, name="test_project"))
+        Comment.insert = AsyncMock(return_value=5)
+        Project.filter = AsyncMock(return_value=[Project(id=1, name="test_project")])
         result = await self.repository.create_comment(
-            comment_cookie=self.comment_cookie,
+            commentcookie=self.comment_cookie,
             user_id=user_id,
             timestamp=timestamp,
             project_name=self.project_name,
         )
 
-        self.assertEqual(result, new_comment)
-        Comment.create.assert_called_once_with(
+        Comment.insert.assert_called_once()
+        self.assertEqual(result, Comment(
+            id=5,
             project_id=1,
             feature_url=self.comment_cookie.feature_url,
             user_id=user_id,
             timestamp=datetime.strptime(timestamp, '%m/%d/%y %H:%M:%S'),
             rating=self.comment_cookie.rating,
             comment=self.comment_cookie.comment,
-        )
-        Comment.insert.assert_called_once()
-        Comment.save.assert_called_once()
+        ))
 
     async def test_read_comments(self):
-        Comment.all = AsyncMock(return_value=[Comment(id=1), Comment(id=2)])
+        comment_a = Comment(
+            project_id=1,
+            user_id="1",
+            timestamp=datetime.now(),
+            feature_url="http://test.com/test",
+            rating=4,
+            comment="test"
+        )
+        comment_b = Comment(
+            project_id=1,
+            user_id="2",
+            timestamp=datetime.now(),
+            feature_url="http://test.com/test",
+            rating=4,
+            comment="test2"
+        )
+        Comment.all = AsyncMock(return_value=[comment_a, comment_b])
         result = await self.repository.read_comments()
-        self.assertEqual(result, [Comment(id=1), Comment(id=2)])
+        self.assertEqual(result, [comment_a, comment_b])
         Comment.all.assert_called_once()
 
     async def test_create_project(self):
         project = Project(name=self.project_name)
-        Project.create = AsyncMock(return_value=Project(id=1))
-        Project.insert = AsyncMock()
-        Project.save = AsyncMock()
+        Project.insert = AsyncMock(return_value=5)
         result = await self.repository.create_project(project)
-        self.assertEqual(result, Project(id=1))
-        Project.create.assert_called_once_with(name=self.project_name)
+        self.assertEqual(result, Project(id=5, name="test_project"))
         Project.insert.assert_called_once()
-        Project.save.assert_called_once()

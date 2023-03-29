@@ -11,7 +11,6 @@ class SQLiteRepository:
         timestamp = datetime.strptime(timestamp, '%m/%d/%y %H:%M:%S')
 
         projects = await Project.filter(name=project_name)
-        print(projects)
 
         if len(projects) == 0:
             await self.create_project(Project(name=project_name))
@@ -33,5 +32,6 @@ class SQLiteRepository:
         return comments
     
     async def create_project(self, project: Project):
-        await project.insert()
+        id = await project.insert()
+        project.id = id
         return project
