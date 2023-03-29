@@ -11,5 +11,5 @@ class Container(containers.DeclarativeContainer):
 
     config = providers.Configuration()
 
-    rules_config = providers.Delegate(YamlRulesRepository)
+    rules_config = providers.Object(YamlRulesRepository)
     db_manager = providers.Singleton(SQLiteRepository)
