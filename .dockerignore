@@ -23,7 +23,6 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
-tests/
 
 # virtual env
 venv
