@@ -55,6 +55,7 @@ container.config.debug_mode.from_env("DEBUG_MODE", required=True, as_=bool, defa
 container.wire(modules=[__name__])
 
 app = init_fastapi()
+app.container = container
 config_db_session()
 
 # Start the async event loop and ASGI server.
