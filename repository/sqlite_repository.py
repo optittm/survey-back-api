@@ -13,10 +13,12 @@ class SQLiteRepository:
         projects = await Project.filter(name=project_name)
 
         if len(projects) == 0:
-            await self.create_project(Project(name=project_name))
+            project = await self.create_project(Project(name=project_name))
+        else:
+            project = projects[0]
 
         new_comment = Comment(
-            project_id= projects[0].id,
+            project_id= project.id,
             feature_url= commentcookie.feature_url,
             user_id= user_id,
             timestamp= timestamp,
