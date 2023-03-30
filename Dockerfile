@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
    
-FROM python:3.11
+FROM python:3.8
 WORKDIR /survey-back-api
 COPY . .
 COPY .env.example .env
