@@ -11,18 +11,18 @@ router = APIRouter()
 @router.post("/comments", status_code=status.HTTP_201_CREATED,response_model=Comment)
 @inject
 async def create_comment(
-        commentcookie: CommentPostBody,
+        comment_body: CommentPostBody,
         user_id: Union[str, None] = Cookie(default=None),
         timestamp: Union[str, None] = Cookie(default=None),
-        comment_repo: SQLiteRepository = Depends(Provide[Container.db_manager])
+        sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
     ) -> Comment:
     # TODO: get domain name from request instead
-    project_name = commentcookie.feature_url.split('/')[2]
-    new_comment = await comment_repo.create_comment(commentcookie, user_id, timestamp, project_name)
+    project_name = comment_body.feature_url.split('/')[2]
+    new_comment = await sqlite_repo.create_comment(comment_body, user_id, timestamp, project_name)
     return new_comment
 
 @router.get("/comments",  response_model=List[Comment])
 @inject
-async def get_all_comments(comment_repo: SQLiteRepository = Depends(Provide[Container.db_manager])) -> List[Comment]:
-    comments = await comment_repo.read_comments()
+async def get_all_comments(sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])) -> List[Comment]:
+    comments = await sqlite_repo.read_comments()
     return comments
