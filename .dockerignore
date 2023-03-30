@@ -1,0 +1,29 @@
+.git
+.gitignore
+README.md
+docs/
+logo.png
+*.csv
+*.log
+**/*.sqlite3
+*.html
+*.pkl
+*.parquet
+
+# Byte-compiled / optimized / DLL files
+**/__pycache__
+*.py[cod]
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+tests/
+
+# virtual env
+venv
