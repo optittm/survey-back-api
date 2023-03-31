@@ -34,7 +34,7 @@ response model: List[Comment] - A list of comment objects.
 
 ## Usage
 
-You need to run this commnand to install all the dependencies :
+You need to run this command to install all the dependencies :
 
     pip install -r requirements.txt
 
