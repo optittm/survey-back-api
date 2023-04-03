@@ -3,7 +3,9 @@
 FROM python:3.8
 WORKDIR /survey-back-api
 COPY . .
-COPY .env.example .env
+# Additional COPY to check if .env exists
+# Don't forget to copy .env.exemple as .env and configure it before building the Docker image
+COPY .env .env
 RUN pip install -r requirements.txt
 ENV SURVEY_API_HOST=0.0.0.0
 CMD ["python", "-u", "main.py"]
