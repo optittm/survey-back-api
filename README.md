@@ -5,8 +5,8 @@ You can configure the rules for displaying the modal to your users from the YAML
 The API also provides an endpoint to fetch the feedbacks from a third party app, such as our BugPrediction.
 
 ## Requirements
-- Python >= 3.8
-OR
+- Python >= 3.8  
+OR  
 - Docker
 
 ## Endpoints
@@ -34,6 +34,8 @@ response model: List[Comment] - A list of comment objects.
 
 ## Usage
 
+### Local installation
+
 You need to run this command to install all the dependencies :
 
     pip install -r requirements.txt
@@ -46,12 +48,26 @@ You can then run the API :
 
     python main.py
 
+### Docker
+
+First, ou need to create a file in the project directory called ```.env```, you should copy the ```.env.example``` file.
+You can change the values as needed. You should at least add the URL of your frontend app in ```CORS_ALLOW_ORIGINS```.
+If you want a third party app to fetch the feedbacks, you should also add its URL to the origins, URLs separated with commas.
+
+Then build the Docker image using this command in the project folder :
+
+    docker build -t survey-back-api .
+
+Finally, create a container and run it from the image :
+
+    docker run -dp 8000:8000 survey-back-api
+
 ## Test 
 
 You can run the unit tests : 
 
     python -m unittest discover tests
 
-The tests can also be run within a Docker container:
+The tests can also be run within a Docker container. After building the image, run this command :
 
     docker run --rm [image-name] python -m unittest discover tests
