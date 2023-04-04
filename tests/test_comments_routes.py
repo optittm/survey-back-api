@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from models.comment import Comment, CommentPostBody
 from repository.sqlite_repository import SQLiteRepository
+from repository.yaml_rule_repository import YamlRulesRepository
 from main import app
 
 class TestCommentsRoutes(unittest.TestCase):
@@ -28,6 +29,7 @@ class TestCommentsRoutes(unittest.TestCase):
 
     def test_create_comment_endpoint(self):
         user_id = "3"
+        project_name = "project1"
         return_comment = Comment(
             id=1,
             project_id=2,
@@ -40,7 +42,10 @@ class TestCommentsRoutes(unittest.TestCase):
         mock_repo = Mock(spec=SQLiteRepository)
         mock_repo.create_comment.return_value = return_comment
 
-        with app.container.sqlite_repo.override(mock_repo):
+        mock_yaml = Mock(spec=YamlRulesRepository)
+        mock_yaml.getProjectNameFromFeature.return_value = project_name
+
+        with app.container.sqlite_repo.override(mock_repo), app.container.rules_config.override(mock_yaml):
             response = self.client.post(
                 "/comments",
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
@@ -56,7 +61,8 @@ class TestCommentsRoutes(unittest.TestCase):
         compare_comment = return_comment.dict()
         compare_comment["timestamp"] = self.timestamp.isoformat()
         self.assertEqual(response.json(), compare_comment)
-        mock_repo.create_comment.assert_called_once_with(self.comment_body, user_id, self.timestamp_str, "test.com")
+        mock_yaml.getProjectNameFromFeature.assert_called_once()
+        mock_repo.create_comment.assert_called_once_with(self.comment_body, user_id, self.timestamp_str, project_name)
         
 
     def test_get_all_comments_endpoint(self):
