@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Request, Response
-from dependency_injector.wiring import inject
-from models.Rule import Rule
-from repository.FeatureConfig import FeatureConfig
+from fastapi import APIRouter, Depends, Request, Response
+from dependency_injector.wiring import Provide,inject
+from utils.container import Container
 
-from datetime import date, datetime, timedelta
+from models.rule import Rule
+from repository.yaml_rule_repository import YamlRulesRepository
+
+from datetime import datetime, timedelta
 from uuid import uuid4
 import random
 
@@ -11,20 +13,20 @@ router = APIRouter()
 
 @router.get("/rules")
 @inject
-def show_modal(featureUrl: str, request: Request, response: Response) -> bool:
+def show_modal(featureUrl: str, request: Request, response: Response, rulesYamlConfig: YamlRulesRepository = Depends(Provide[Container.rules_config])) -> bool:
     # Get rules from featureUrl query
-    rulesFromFeature: Rule | None = FeatureConfig.getRuleFromFeature(feature_url=featureUrl)
+    rulesFromFeature: Rule | None = rulesYamlConfig.getRuleFromFeature(feature_url=featureUrl)
 
     # Get Cookie user_id
     userCookie: str | None = request._cookies.get('user_id')
     # Set user_id Cookie if is None
-    if(userCookie == None):
+    if userCookie is None:
         response.set_cookie(key="user_id", value=str(uuid4()))
 
     # Get current timestamp
-    dateToday: date = date.today()
+    dateToday: datetime = datetime.now()
     # Get Cookie timestamp and format into date
-    dateTimestamp: date = date.fromtimestamp(float(request._cookies.get('timestamp')))
+    dateTimestamp: datetime = datetime.fromtimestamp(float(request._cookies.get('timestamp')))
 
     isOverDelay: bool = timedelta(days=rulesFromFeature.delay_before_reanswer * 30.5) <= dateToday - dateTimestamp
     isWithinRatio: bool = random.random() <= rulesFromFeature.ratio
