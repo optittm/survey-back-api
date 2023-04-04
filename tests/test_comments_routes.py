@@ -64,6 +64,34 @@ class TestCommentsRoutes(unittest.TestCase):
         mock_yaml.getProjectNameFromFeature.assert_called_once()
         mock_repo.create_comment.assert_called_once_with(self.comment_body, user_id, self.timestamp_str, project_name)
         
+    def test_create_comment_endpoint_fail(self):
+        """
+        Test case when feature/project is not found in the YAML config
+        """
+        user_id = "3"
+        comment = Comment(
+            id=1,
+            project_id=2,
+            user_id=user_id,
+            timestamp=self.timestamp,
+            feature_url="http://test.com",
+            rating=5,
+            comment="This is a test comment"
+        )
+        mock_yaml = Mock(spec=YamlRulesRepository)
+        mock_yaml.getProjectNameFromFeature.return_value = None
+
+        with app.container.rules_config.override(mock_yaml):
+            response = self.client.post(
+                "/comments",
+                # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
+                json=self.comment_body.dict(),
+                cookies={
+                    "user_id": user_id,
+                    "timestamp": self.timestamp_str
+                }
+            )
+        self.assertEqual(response.status_code, 404)
 
     def test_get_all_comments_endpoint(self):
         comment_a = Comment(
