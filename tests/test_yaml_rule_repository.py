@@ -1,14 +1,12 @@
-
 import unittest
 
-from models.Rule import Rule
-from repository.FeatureConfig import FeatureConfig
-
+from models.rule import Rule
+from repository.yaml_rule_repository import YamlRulesRepository
 
 class TestGetRuleFromFeature(unittest.TestCase):
     def test_existing_feature(self):
         feature_url = '/test2'
-        rule = FeatureConfig.getRuleFromFeature(feature_url)
+        rule = YamlRulesRepository.getRuleFromFeature(feature_url)
         self.assertIsInstance(rule, Rule)
         self.assertEqual(rule.feature_url, feature_url)
         self.assertEqual(rule.ratio, 0.4)
@@ -18,28 +16,28 @@ class TestGetRuleFromFeature(unittest.TestCase):
     
     def test_nonexisting_feature(self):
         feature_url = '/invalid'
-        rule = FeatureConfig.getRuleFromFeature(feature_url)
+        rule = YamlRulesRepository.getRuleFromFeature(feature_url)
         self.assertIsNone(rule)
 
 class TestGetProjectNameFromFeature(unittest.TestCase):
     def test_existing_feature(self):
         feature_url = '/test1'
-        project_name = FeatureConfig.getProjectNameFromFeature(feature_url)
+        project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertEqual(project_name, 'project1')
 
     def test_nonexisting_feature(self):
         feature_url = '/invalid'
-        project_name = FeatureConfig.getProjectNameFromFeature(feature_url)
+        project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertIsNone(project_name)
 
     def test_multiple_projects(self):
         feature_url = '/test2'
-        project_name = FeatureConfig.getProjectNameFromFeature(feature_url)
+        project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertEqual(project_name, 'project2')
 
     def test_multiple_rules(self):
         feature_url = '/test'
-        project_name = FeatureConfig.getProjectNameFromFeature(feature_url)
+        project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertEqual(project_name, 'project1')
 
 

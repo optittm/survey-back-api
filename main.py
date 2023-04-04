@@ -1,18 +1,14 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dependency_injector import providers
 from dependency_injector.wiring import Provide, inject
 import uvicorn
-import sqlalchemy as db
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 from models.comment import Comment
 from models.project import Project
 from routes.comments import router
 from utils.container import Container
-from models.database import setup_database
 
 @inject
 def init_fastapi(config = Provide[Container.config]) -> FastAPI:
@@ -39,9 +35,9 @@ def main(config = Provide[Container.config]):
     )
 
 @inject
-def config_db_session(container: Container, config = Provide[Container.config]):
+def config_db_session(config = Provide[Container.config]):
     try:
-        db= Database.create(config["survey_db"], tables=[Project, Comment])
+        db = Database.create(config["survey_db"], tables=[Project, Comment])
     except ArgumentError as e:
         raise Exception(f"Error from sqlalchemy : {str(e)}")
 
@@ -59,7 +55,9 @@ container.config.debug_mode.from_env("DEBUG_MODE", required=True, as_=bool, defa
 container.wire(modules=[__name__])
 
 app = init_fastapi()
-config_db_session(container)
+app.container = container
+config_db_session()
+
 # Start the async event loop and ASGI server.
 if __name__ == "__main__":
     main()
