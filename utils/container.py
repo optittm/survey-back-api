@@ -1,8 +1,7 @@
 from dependency_injector import containers, providers
-from sqlalchemy.orm import sessionmaker
 
-from repository.FeatureConfig import FeatureConfig
-from repository.DBrepository import CommentRepository
+from repository.yaml_rule_repository import YamlRulesRepository
+from repository.sqlite_repository import SQLiteRepository
 
 class Container(containers.DeclarativeContainer):
 
@@ -12,5 +11,5 @@ class Container(containers.DeclarativeContainer):
 
     config = providers.Configuration()
 
-    features_config = providers.Factory(FeatureConfig)
-    db_manager = providers.Singleton(CommentRepository)
+    rules_config = providers.Object(YamlRulesRepository)
+    sqlite_repo = providers.Singleton(SQLiteRepository)

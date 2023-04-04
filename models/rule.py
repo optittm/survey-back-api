@@ -4,7 +4,7 @@ class Rule:
     A class representing a rule for a particular feature.
     """
 
-    def __init__(self, feature_url: str, ratio: float, delay_before_reanswer: int, \
+    def __init__(self, feature_url: str, ratio: float, delay_before_reanswer: int,
                  delay_to_answer: int, is_active: bool):
         """
         Initializes a new instance of the Rule class.
@@ -21,6 +21,3 @@ class Rule:
         self.delay_before_reanswer = delay_before_reanswer
         self.delay_to_answer = delay_to_answer
         self.is_active = is_active
-    
-    def __str__(self):
-        return f"Rule(feature_url='{self.feature_url}', ratio={self.ratio}, delay_before_reanswer={self.delay_before_reanswer}, delay_to_answer={self.delay_to_answer}, is_active={self.is_active})"
