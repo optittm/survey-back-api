@@ -1,3 +1,4 @@
+import asyncio
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,19 +26,24 @@ def init_fastapi(config = Provide[Container.config]) -> FastAPI:
     return app
 
 @inject
-def main(config = Provide[Container.config]):
+async def main(config = Provide[Container.config]):
+    await config_db_session()
     # Running the uvicorn server in the function to be able to use the config provider
-    uvicorn.run(
+    config = uvicorn.Config(
         "main:app",
         host=config["survey_api_host"],
         reload=config["debug_mode"],
-        port=config["survey_api_port"],
+        port=config["survey_api_port"]
     )
+    # Running the server in the existing async loop
+    # https://www.uvicorn.org/#config-and-server-instances
+    server = uvicorn.Server(config)
+    await server.serve()
 
 @inject
-def config_db_session(config = Provide[Container.config]):
+async def config_db_session(config = Provide[Container.config]):
     try:
-        db = Database.create(config["survey_db"], tables=[Project, Comment])
+        db = await Database.create(config["survey_db"], tables=[Project, Comment])
     except ArgumentError as e:
         raise Exception(f"Error from sqlalchemy : {str(e)}")
 
@@ -56,8 +62,7 @@ container.wire(modules=[__name__])
 
 app = init_fastapi()
 app.container = container
-config_db_session()
 
 # Start the async event loop and ASGI server.
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
