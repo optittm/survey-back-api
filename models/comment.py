@@ -21,10 +21,14 @@ class Comment(DataBaseModel):
         if not 1 <= value <= 5:
             raise ValueError("Rating must be an integer between 1 and 5")
         return value
-    
-    @validator('timestamp')
+
     def encode_timestamp(cls, value):
-        return value.encode('iso-8859-1')
+        try:
+            datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+        except ValueError:
+            raise ValueError('Invalid timestamp format')
+        return value
+
 
 class CommentPostBody(DataBaseModel):
     """
