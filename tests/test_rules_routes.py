@@ -37,7 +37,7 @@ class TestRulesRoutes(unittest.TestCase):
         rule = Rule(
             feature_url='/test',
             ratio=0.6,
-            delay_before_reanswer=1,
+            delay_before_reanswer=30,
             delay_to_answer=3,
             is_active=True)
         
@@ -54,7 +54,7 @@ class TestRulesRoutes(unittest.TestCase):
         rule = Rule(
             feature_url='/test',
             ratio=0.6,
-            delay_before_reanswer=1,
+            delay_before_reanswer=30,
             delay_to_answer=3,
             is_active=False)
         
@@ -71,7 +71,7 @@ class TestRulesRoutes(unittest.TestCase):
         rule = Rule(
             feature_url='/test',
             ratio=0.6,
-            delay_before_reanswer=1,
+            delay_before_reanswer=30,
             delay_to_answer=3,
             is_active=True)
         
@@ -88,7 +88,7 @@ class TestRulesRoutes(unittest.TestCase):
         rule = Rule(
             feature_url='/test',
             ratio=0.6,
-            delay_before_reanswer=1,
+            delay_before_reanswer=30,
             delay_to_answer=3,
             is_active=False)
         

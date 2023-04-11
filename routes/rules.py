@@ -28,7 +28,7 @@ def show_modal(featureUrl: str, request: Request, response: Response, rulesYamlC
     # Get Cookie timestamp and format into date
     dateTimestamp: datetime = datetime.fromtimestamp(float(request._cookies.get('timestamp')))
 
-    isOverDelay: bool = timedelta(days=rulesFromFeature.delay_before_reanswer * 30.5) <= dateToday - dateTimestamp
+    isOverDelay: bool = timedelta(days=rulesFromFeature.delay_before_reanswer) <= dateToday - dateTimestamp
     isWithinRatio: bool = random.random() <= rulesFromFeature.ratio
     isDisplay: bool = rulesFromFeature.is_active and isOverDelay and isWithinRatio
 
