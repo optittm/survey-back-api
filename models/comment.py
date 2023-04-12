@@ -11,7 +11,7 @@ class Comment(DataBaseModel):
     id: Optional[int] = PrimaryKey(autoincrement=True)
     project_id: int = ForeignKey(Project, "id")
     user_id: str
-    timestamp: datetime
+    timestamp: str
     feature_url: str
     rating: int
     comment: str
@@ -21,6 +21,14 @@ class Comment(DataBaseModel):
         if not 1 <= value <= 5:
             raise ValueError("Rating must be an integer between 1 and 5")
         return value
+
+    def encode_timestamp(cls, value):
+        try:
+            datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+        except ValueError:
+            raise ValueError('Invalid timestamp format')
+        return value
+
 
 class CommentPostBody(DataBaseModel):
     """

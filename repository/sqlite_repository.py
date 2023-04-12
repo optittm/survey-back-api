@@ -8,7 +8,7 @@ class SQLiteRepository:
     
     async def create_comment(self, commentcookie: CommentPostBody, user_id, timestamp, project_name: str):
         
-        timestamp = datetime.strptime(timestamp, '%m/%d/%y %H:%M:%S')
+        timestamp = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S').isoformat()
 
         projects = await Project.filter(name=project_name)
 

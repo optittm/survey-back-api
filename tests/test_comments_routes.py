@@ -34,7 +34,7 @@ class TestCommentsRoutes(unittest.TestCase):
             id=1,
             project_id=2,
             user_id=user_id,
-            timestamp=self.timestamp,
+            timestamp=self.timestamp.isoformat(),
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment"
@@ -73,7 +73,7 @@ class TestCommentsRoutes(unittest.TestCase):
             id=1,
             project_id=2,
             user_id=user_id,
-            timestamp=self.timestamp,
+            timestamp=self.timestamp.isoformat(),
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment"
@@ -98,7 +98,7 @@ class TestCommentsRoutes(unittest.TestCase):
             id=1,
             project_id=1,
             user_id="1",
-            timestamp=self.timestamp,
+            timestamp=self.timestamp.isoformat(),
             feature_url="http://test.com/test",
             rating=4,
             comment="test"
@@ -107,7 +107,7 @@ class TestCommentsRoutes(unittest.TestCase):
             id=2,
             project_id=1,
             user_id="2",
-            timestamp=self.timestamp,
+            timestamp=self.timestamp.isoformat(),
             feature_url="http://test.com/test",
             rating=4,
             comment="test2"
