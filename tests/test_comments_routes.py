@@ -1,6 +1,6 @@
 from datetime import datetime
 import unittest
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 
 from models.comment import Comment, CommentGetBody, CommentPostBody

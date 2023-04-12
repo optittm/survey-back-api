@@ -1,11 +1,10 @@
 import unittest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from models.comment import Comment, CommentGetBody
 from models.project import Project
 from repository.sqlite_repository import SQLiteRepository
-from utils.container import Container
 from utils.formatter import comment_to_comment_get_body
 
 

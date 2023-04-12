@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from models.comment import Comment, CommentGetBody, CommentPostBody
+from models.comment import Comment, CommentPostBody
 from models.project import Project
 
 class SQLiteRepository:

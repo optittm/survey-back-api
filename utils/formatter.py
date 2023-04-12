@@ -1,6 +1,6 @@
 from models.comment import Comment, CommentGetBody
 from models.project import Project
-from dependency_injector.wiring import Provide, inject
+from dependency_injector.wiring import Provide
 from repository.sqlite_repository import SQLiteRepository
 
 from utils.container import Container
