@@ -7,7 +7,8 @@ from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 from models.comment import Comment
 from models.project import Project
-from routes.comments import router
+from routes.comments import router as comment_router
+from routes.rules import router as rule_router
 from utils.container import Container
 
 @inject
@@ -21,7 +22,8 @@ def init_fastapi(config = Provide[Container.config]) -> FastAPI:
         allow_methods=config["cors_allow_methods"].split(","),
         allow_headers=config["cors_allow_headers"].split(","),
     )
-    app.include_router(router)
+    app.include_router(comment_router)
+    app.include_router(rule_router)
     return app
 
 @inject

@@ -9,7 +9,6 @@ class Container(containers.DeclarativeContainer):
     # If you need to use Provide in a file other than main.py, add it to the list of modules here
     wiring_config = containers.WiringConfiguration(modules=["routes.comments","utils.formatter"])
 
-
     config = providers.Configuration()
 
     rules_config = providers.Object(YamlRulesRepository)
