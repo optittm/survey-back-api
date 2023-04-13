@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 
-from models.comment import Comment, CommentPostBody
+from models.comment import Comment, CommentGetBody, CommentPostBody
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from main import app
@@ -34,7 +34,7 @@ class TestCommentsRoutes(unittest.TestCase):
             id=1,
             project_id=2,
             user_id=user_id,
-            timestamp=self.timestamp.isoformat(),
+            timestamp=self.timestamp,
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment"
@@ -73,7 +73,7 @@ class TestCommentsRoutes(unittest.TestCase):
             id=1,
             project_id=2,
             user_id=user_id,
-            timestamp=self.timestamp.isoformat(),
+            timestamp=self.timestamp,
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment"
@@ -98,31 +98,34 @@ class TestCommentsRoutes(unittest.TestCase):
             id=1,
             project_id=1,
             user_id="1",
-            timestamp=self.timestamp.isoformat(),
+            timestamp=self.timestamp,
             feature_url="http://test.com/test",
             rating=4,
             comment="test"
         )
-        comment_b = Comment(
-            id=2,
-            project_id=1,
-            user_id="2",
-            timestamp=self.timestamp.isoformat(),
+
+        comment_abis = CommentGetBody(
+            id=1,
+            project_name="project1",
+            user_id="1",
+            timestamp=self.timestamp,
             feature_url="http://test.com/test",
             rating=4,
-            comment="test2"
+            comment="test"
         )
-        mock_repo = Mock(spec=SQLiteRepository)
-        mock_repo.read_comments.return_value = [comment_a, comment_b]
 
-        with app.container.sqlite_repo.override(mock_repo):
-            response = self.client.get("/comments")
+        mock_repo = Mock(spec=SQLiteRepository)
+        mock_repo.read_comments.return_value = [comment_a]
+
+        with patch('routes.comments.comment_to_comment_get_body') as mock_method:
+            with app.container.sqlite_repo.override(mock_repo):
+                mock_method.return_value=comment_abis
+                response = self.client.get("/comments")
 
         self.assertEqual(response.status_code, 200)
         
-        comment_A = comment_a.dict()
+        comment_A = comment_abis.dict()
         comment_A["timestamp"] = self.timestamp.isoformat()
-        comment_B = comment_b.dict()
-        comment_B["timestamp"] = self.timestamp.isoformat()
-        self.assertEqual(response.json(), [comment_A, comment_B])
+
+        self.assertEqual(response.json(), [comment_A])
         mock_repo.read_comments.assert_called_once()
