@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import List
 
 from models.comment import Comment, CommentPostBody
-from models.project import Project
-
+from models.project import Project, ProjectEncryption
+from utils.encryption import Encryption
 class SQLiteRepository:
     
     async def create_comment(self, commentcookie: CommentPostBody, user_id, timestamp, project_name: str):
@@ -35,11 +35,26 @@ class SQLiteRepository:
         return comments
     
     async def create_project(self, project: Project):
-        id = await project.insert()
-        project.id = id
+        projects = await Project.filter(name=project.name)
+
+        if len(projects) == 0:
+            id = await project.insert()
+            project.id = id
+            projet_encryption = ProjectEncryption(project_id=project.id, encryption_key=Encryption.generate_key())
+            await projet_encryption.insert()
+        else:
+            project = projects[0]
+
         return project
 
     async def get_project_by_id(self, project_id : int):
         project = await Project.get(id=project_id)
         return project
 
+    async def get_project_by_name(project_name : str):
+        project = await Project.get(name=project_name)
+        return project
+
+    async def get_encryption_by_projectid(project_id : int):
+        encryption = await ProjectEncryption.get(project_id=project_id)
+        return encryption

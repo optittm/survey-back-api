@@ -47,7 +47,7 @@ async def main(config = Provide[Container.config]):
 async def config_db_session(config = Provide[Container.config], rules_config =Provide[Container.rules_config], sqlite_repo = Provide[Container.sqlite_repo]):
     try:
         db = await Database.create(config["survey_db"], tables=[Project, Comment, ProjectEncryption])
-        print ("project_names")
+        print("project_names")
 
         project_names = rules_config.getProjectNames()
         print (project_names)
