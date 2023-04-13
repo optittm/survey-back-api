@@ -13,6 +13,7 @@ class SQLiteRepository:
         projects = await Project.filter(name=project_name)
 
         if len(projects) == 0:
+            #ajouter une partie qui permet de gérer la clé 
             project = await self.create_project(Project(name=project_name))
         else:
             project = projects[0]

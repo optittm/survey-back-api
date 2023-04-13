@@ -96,3 +96,20 @@ class YamlRulesRepository:
                     if rule['feature_url'] == feature_url:
                         return project_name
         return None
+    
+    @staticmethod
+    def getProjectNames():
+        """
+        Returns the name of the project to which the specified feature URL belongs, or None if the feature does not exist in the rule configuration.
+
+        Args:
+        feature_url (str): The URL of the feature for which to retrieve the project name.
+
+        Returns:
+        str: The name of the project to which the feature belongs, if it exists.
+            None if the feature does not exist in the rule configuration.
+        """
+        data = YamlRulesRepository._getRulesConfig(YamlRulesRepository._RULES_CONFIG_FILE)
+        if data :
+            return data['projects'].keys()
+        return None

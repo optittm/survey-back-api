@@ -6,7 +6,8 @@ import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 from models.comment import Comment
-from models.project import Project
+from models.project import Project, ProjectEncryption
+from repository.yaml_rule_repository import YamlRulesRepository
 from routes.comments import router as comment_router
 from routes.rules import router as rule_router
 from utils.container import Container
@@ -37,9 +38,15 @@ def main(config = Provide[Container.config]):
     )
 
 @inject
-def config_db_session(config = Provide[Container.config]):
+async def config_db_session(config = Provide[Container.config], rules_config =Provide[Container.rules_config], sqlite_repo = Provide[Container.sqlite_repo]):
     try:
-        db = Database.create(config["survey_db"], tables=[Project, Comment])
+        db = await Database.create(config["survey_db"], tables=[Project, Comment, ProjectEncryption])
+        print ("project_names")
+
+        project_names = rules_config.getProjectNames()
+        print (project_names)
+        for project_name in project_names : 
+            await sqlite_repo.create_project(Project(name=project_name))
     except ArgumentError as e:
         raise Exception(f"Error from sqlalchemy : {str(e)}")
 

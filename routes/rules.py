@@ -4,12 +4,15 @@ from utils.container import Container
 
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
+from utils.encryption import Encryption
 
 from datetime import datetime, timedelta
 from uuid import uuid4
 import random
 
 router = APIRouter()
+encryption = Encryption()
+fernet = encryption.fernet
 
 @router.get("/rules")
 @inject
@@ -26,14 +29,24 @@ def show_modal(featureUrl: str, request: Request, response: Response, rulesYamlC
     # Get current timestamp
     dateToday: datetime = datetime.now()
     # Get Cookie timestamp and format into date
-    dateTimestamp: datetime = datetime.fromtimestamp(float(request._cookies.get('timestamp')))
+    encrypted_timestamp = request._cookies.get('timestamp')
+    if encrypted_timestamp is not None:
+        decrypted_timestamp = fernet.decrypt(encrypted_timestamp.encode()).decode()
+        dateTimestamp: datetime = datetime.fromtimestamp(float(decrypted_timestamp))
+        isOverDelay: bool = timedelta(days=rulesFromFeature.delay_before_reanswer * 30.5) <= dateToday - dateTimestamp
+    else:
+        dateTimestamp = datetime.now()
+        isOverDelay=True
 
-    isOverDelay: bool = timedelta(days=rulesFromFeature.delay_before_reanswer * 30.5) <= dateToday - dateTimestamp
     isWithinRatio: bool = random.random() <= rulesFromFeature.ratio
     isDisplay: bool = rulesFromFeature.is_active and isOverDelay and isWithinRatio
 
     # Set timestamp Cookie to current timestamp when display survey modal
     if(isDisplay):
-        response.set_cookie(key="timestamp", value=datetime.now().timestamp())
+        # Chiffrer le timestamp en bytes avec la clé
+        timestamp_bytes = str(datetime.now().timestamp()).encode()
+        encrypted_timestamp = fernet.encrypt(timestamp_bytes)
+        # Ajouter le cookie chiffré à la réponse
+        response.set_cookie(key="timestamp", value=encrypted_timestamp.decode())
 
     return isDisplay
