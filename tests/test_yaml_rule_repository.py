@@ -10,7 +10,7 @@ class TestGetRuleFromFeature(unittest.TestCase):
         self.assertIsInstance(rule, Rule)
         self.assertEqual(rule.feature_url, feature_url)
         self.assertEqual(rule.ratio, 0.4)
-        self.assertEqual(rule.delay_before_reanswer, 1)
+        self.assertEqual(rule.delay_before_reanswer, 30)
         self.assertEqual(rule.delay_to_answer, 5)
         self.assertEqual(rule.is_active, True)
     

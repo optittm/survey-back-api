@@ -38,3 +38,8 @@ class SQLiteRepository:
         id = await project.insert()
         project.id = id
         return project
+
+    async def get_project_by_id(self, project_id : int):
+        project = await Project.get(id=project_id)
+        return project
+
