@@ -3,7 +3,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock
 
 from models.comment import Comment, CommentPostBody
-from models.project import Project
+from models.project import Project, ProjectEncryption
 from repository.sqlite_repository import SQLiteRepository
 
 
@@ -12,7 +12,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.repository = SQLiteRepository()
         self.project_name = "test_project"
-        self.comment_cookie = CommentPostBody(
+        self.comment_body = CommentPostBody(
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
@@ -28,7 +28,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         Comment.insert = AsyncMock(return_value=5)
         Project.filter = AsyncMock(return_value=[Project(id=1, name="test_project")])
         result = await self.repository.create_comment(
-            commentcookie=self.comment_cookie,
+            comment_body=self.comment_body,
             user_id=user_id,
             timestamp=timestamp_dt,
             project_name=self.project_name,
@@ -40,11 +40,11 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             Comment(
                 id=5,
                 project_id=1,
-                feature_url=self.comment_cookie.feature_url,
+                feature_url=self.comment_body.feature_url,
                 user_id=user_id,
                 timestamp=timestamp_dt,
-                rating=self.comment_cookie.rating,
-                comment=self.comment_cookie.comment,
+                rating=self.comment_body.rating,
+                comment=self.comment_body.comment,
             ),
         )
 
@@ -72,9 +72,25 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
 
     async def test_create_project(self):
         project = Project(name=self.project_name)
+        Project.filter = AsyncMock(return_value=[])
         Project.insert = AsyncMock(return_value=5)
+        ProjectEncryption.insert = AsyncMock()
 
         result = await self.repository.create_project(project)
 
-        self.assertEqual(result, Project(id=5, name="test_project"))
+        self.assertEqual(result, Project(id=5, name=self.project_name))
         Project.insert.assert_called_once()
+        ProjectEncryption.insert.assert_called_once()
+
+    async def test_create_project_already_exists(self):
+        project = Project(name=self.project_name)
+        db_project = Project(id=5, name=self.project_name)
+        Project.filter = AsyncMock(return_value=[db_project])
+        Project.insert = AsyncMock()
+        ProjectEncryption.insert = AsyncMock()
+
+        result = await self.repository.create_project(project)
+
+        self.assertEqual(result, db_project)
+        Project.insert.assert_not_called()
+        ProjectEncryption.insert.assert_not_called()

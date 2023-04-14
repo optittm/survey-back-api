@@ -15,7 +15,7 @@ class TestUtils(unittest.IsolatedAsyncioTestCase):
             id=1,
             project_id=1,
             user_id=123,
-            timestamp=datetime.now(),
+            timestamp=datetime.now().isoformat(),
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
