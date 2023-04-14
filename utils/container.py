@@ -8,7 +8,7 @@ class Container(containers.DeclarativeContainer):
     # Wiring the modules which need dependency injection
     # If you need to use Provide in a file other than main.py, add it to the list of modules here
     wiring_config = containers.WiringConfiguration(
-        modules=["routes.comments", "utils.formatter"]
+        modules=["routes.comments", "routes.rules", "utils.formatter"]
     )
 
     config = providers.Configuration()

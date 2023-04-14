@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Union
 
 from models.comment import Comment, CommentPostBody
 from models.project import Project, ProjectEncryption
@@ -55,14 +55,22 @@ class SQLiteRepository:
 
         return project
 
-    async def get_project_by_id(self, project_id: int):
+    async def get_project_by_id(self, project_id: int) -> Project:
         project = await Project.get(id=project_id)
         return project
 
-    async def get_project_by_name(project_name: str):
-        project = await Project.get(name=project_name)
-        return project
+    async def get_project_by_name(self, project_name: str) -> Union[Project, None]:
+        projects = await Project.filter(name=project_name)
+        if len(projects):
+            return projects[0]
+        else:
+            return None
 
-    async def get_encryption_by_projectid(project_id: int):
-        encryption = await ProjectEncryption.get(project_id=project_id)
-        return encryption
+    async def get_encryption_by_project_id(
+        self, project_id: int
+    ) -> Union[ProjectEncryption, None]:
+        encryptions = await ProjectEncryption.filter(project_id=project_id)
+        if len(encryptions):
+            return encryptions[0]
+        else:
+            return None

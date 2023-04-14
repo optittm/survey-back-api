@@ -56,14 +56,12 @@ async def init_db(
         db = await Database.create(
             config["survey_db"], tables=[Project, Comment, ProjectEncryption]
         )
-        print("project_names")
-
-        project_names = rules_config.getProjectNames()
-        print(project_names)
-        for project_name in project_names:
-            await sqlite_repo.create_project(Project(name=project_name))
     except ArgumentError as e:
         raise Exception(f"Error from sqlalchemy : {str(e)}")
+
+    project_names = rules_config.getProjectNames()
+    for project_name in project_names:
+        await sqlite_repo.create_project(Project(name=project_name))
 
 
 load_dotenv()

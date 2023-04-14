@@ -11,7 +11,7 @@ class Encryption:
         return Fernet.generate_key()
 
     def encrypt(self, data):
-        return self.fernet.encrypt(data.encode())
+        return self.fernet.encrypt(data.encode()).decode()
 
     def decrypt(self, data):
         return self.fernet.decrypt(data).decode()
