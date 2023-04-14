@@ -1,5 +1,6 @@
 from cryptography.fernet import Fernet
 
+
 class Encryption:
     def __init__(self, key):
         self.key = key
@@ -8,7 +9,7 @@ class Encryption:
     @staticmethod
     def generate_key():
         return Fernet.generate_key()
-    
+
     def encrypt(self, data):
         return self.fernet.encrypt(data.encode())
 
