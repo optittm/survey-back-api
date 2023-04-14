@@ -1,3 +1,4 @@
+from typing import List
 import yaml
 from schema import Schema, SchemaError, Optional
 from yaml.loader import SafeLoader
@@ -106,16 +107,9 @@ class YamlRulesRepository:
         return None
 
     @staticmethod
-    def getProjectNames():
+    def getProjectNames() -> List[str]:
         """
-        Returns the name of the project to which the specified feature URL belongs, or None if the feature does not exist in the rule configuration.
-
-        Args:
-        feature_url (str): The URL of the feature for which to retrieve the project name.
-
-        Returns:
-        str: The name of the project to which the feature belongs, if it exists.
-            None if the feature does not exist in the rule configuration.
+        Returns the names of the projects listed in the YAML config file
         """
         data = YamlRulesRepository._getRulesConfig(
             YamlRulesRepository._RULES_CONFIG_FILE

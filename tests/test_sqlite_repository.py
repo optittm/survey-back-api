@@ -7,7 +7,6 @@ from models.project import Project, ProjectEncryption
 from repository.sqlite_repository import SQLiteRepository
 
 
-# TODO: fix tests
 class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.repository = SQLiteRepository()
