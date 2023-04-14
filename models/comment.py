@@ -28,7 +28,7 @@ class Comment(DataBaseModel):
     @validator("timestamp")
     def encode_timestamp(cls, value):
         try:
-            datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
+            datetime.fromisoformat(value)
         except ValueError:
             raise ValueError("Invalid timestamp format")
         return value
@@ -58,7 +58,7 @@ class CommentGetBody(DataBaseModel):
     id: Optional[int] = PrimaryKey(autoincrement=True)
     project_name: str
     user_id: str
-    timestamp: datetime
+    timestamp: str
     feature_url: str
     rating: int
     comment: str
@@ -67,4 +67,12 @@ class CommentGetBody(DataBaseModel):
     def validate_rating(cls, value):
         if not 1 <= value <= 5:
             raise ValueError("Rating must be an integer between 1 and 5")
+        return value
+
+    @validator("timestamp")
+    def encode_timestamp(cls, value):
+        try:
+            datetime.fromisoformat(value)
+        except ValueError:
+            raise ValueError("Invalid timestamp format")
         return value

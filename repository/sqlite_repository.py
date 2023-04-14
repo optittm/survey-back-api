@@ -9,12 +9,23 @@ from utils.encryption import Encryption
 class SQLiteRepository:
     async def create_comment(
         self,
-        commentcookie: CommentPostBody,
-        user_id,
-        timestamp,
+        comment_body: CommentPostBody,
+        user_id: str,
+        timestamp: str,
         project_name: str,
-    ):
-        timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S").isoformat()
+    ) -> Comment:
+        """
+        Creates a comment in the database
+
+        Args:
+            - comment_body: main part of the comment
+            - user_id: the UUID of the user posting the comment
+            - timestamp: timestamp of the comment in ISO 6801 format
+            - project_name: the project name
+
+        Returns:
+            The saved Comment object
+        """
 
         projects = await Project.filter(name=project_name)
 
@@ -26,11 +37,11 @@ class SQLiteRepository:
 
         new_comment = Comment(
             project_id=project.id,
-            feature_url=commentcookie.feature_url,
+            feature_url=comment_body.feature_url,
             user_id=user_id,
             timestamp=timestamp,
-            rating=commentcookie.rating,
-            comment=commentcookie.comment,
+            rating=comment_body.rating,
+            comment=comment_body.comment,
         )
         id = await new_comment.insert()
         new_comment.id = id
