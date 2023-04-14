@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List
+import logging
 
 from models.comment import Comment, CommentPostBody
 from models.project import Project
@@ -13,6 +14,7 @@ class SQLiteRepository:
         projects = await Project.filter(name=project_name)
 
         if len(projects) == 0:
+            logging.warning("Project missing on comment creation")
             project = await self.create_project(Project(name=project_name))
         else:
             project = projects[0]

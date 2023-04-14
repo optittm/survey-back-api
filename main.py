@@ -6,6 +6,8 @@ from dependency_injector.wiring import Provide, inject
 import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
+import logging
+
 from models.comment import Comment
 from models.project import Project
 from routes.comments import router as comment_router
@@ -14,6 +16,7 @@ from utils.container import Container
 
 @inject
 def init_fastapi(config = Provide[Container.config]) -> FastAPI:
+    logging.info("Init FastAPI app")
     # Creates the FastAPI instance inside the function to be able to use the config provider
     app = FastAPI()
     app.add_middleware(
@@ -40,14 +43,23 @@ async def main(config = Provide[Container.config]):
     # Running the server in the existing async loop
     # https://www.uvicorn.org/#config-and-server-instances
     server = uvicorn.Server(config)
+    logging.info("Starting uvicorn server")
     await server.serve()
 
 @inject
 async def config_db_session(config = Provide[Container.config]):
     try:
         db = await Database.create(config["survey_db"], tables=[Project, Comment])
+        logging.info("Database ready")
     except ArgumentError as e:
+        logging.error("Error initialising the database")
         raise Exception(f"Error from sqlalchemy : {str(e)}")
+
+
+@inject
+def config_logging(config=Provide[Container.config]):
+    logging.basicConfig(level=config.log_level)
+
 
 load_dotenv()
 container = Container()
@@ -60,8 +72,10 @@ container.config.cors_allow_credentials.from_env("CORS_ALLOW_CREDENTIALS", requi
 container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", required=True, default="GET, POST")
 container.config.cors_allow_headers.from_env("CORS_ALLOW_HEADERS", required=True, default="*")
 container.config.debug_mode.from_env("DEBUG_MODE", required=True, as_=bool, default=False)
+container.config.log_level.from_env("LOG_LEVEL", required=True, default="INFO")
 container.wire(modules=[__name__])
 
+config_logging()
 app = init_fastapi()
 app.container = container
 

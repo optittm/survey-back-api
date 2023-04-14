@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Response
 from dependency_injector.wiring import Provide,inject
 from utils.container import Container
+import logging
 
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
@@ -21,6 +22,7 @@ def show_modal(featureUrl: str, request: Request, response: Response, rulesYamlC
     userCookie: str | None = request._cookies.get('user_id')
     # Set user_id Cookie if is None
     if userCookie is None:
+        logging.info("Setting a new user_id cookie")
         response.set_cookie(key="user_id", value=str(uuid4()))
 
     # Get current timestamp
@@ -34,6 +36,7 @@ def show_modal(featureUrl: str, request: Request, response: Response, rulesYamlC
 
     # Set timestamp Cookie to current timestamp when display survey modal
     if(isDisplay):
+        logging.info("Setting a new timestamp cookie")
         response.set_cookie(key="timestamp", value=datetime.now().timestamp())
 
     return isDisplay

@@ -2,6 +2,7 @@ from typing import Optional
 from pydantic import validator
 from pydbantic import DataBaseModel, PrimaryKey, ForeignKey
 from datetime import datetime
+import logging
 from models.project import Project
 
 class Comment(DataBaseModel):
@@ -19,6 +20,7 @@ class Comment(DataBaseModel):
     @validator("rating")
     def validate_rating(cls, value):
         if not 1 <= value <= 5:
+            logging.error("Rating value is out of range")
             raise ValueError("Rating must be an integer between 1 and 5")
         return value
 
@@ -33,6 +35,7 @@ class CommentPostBody(DataBaseModel):
     @validator("rating")
     def validate_rating(cls, value):
         if not 1 <= value <= 5:
+            logging.error("Rating value is out of range")
             raise ValueError("Rating must be an integer between 1 and 5")
         return value
     
@@ -51,5 +54,6 @@ class CommentGetBody(DataBaseModel):
     @validator("rating")
     def validate_rating(cls, value):
         if not 1 <= value <= 5:
+            logging.error("Rating value is out of range")
             raise ValueError("Rating must be an integer between 1 and 5")
         return value
