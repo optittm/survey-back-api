@@ -71,7 +71,7 @@ async def init_db(
 
 @inject
 def config_logging(config=Provide[Container.config]):
-    logging.basicConfig(level=config.log_level)
+    logging.basicConfig(level=config["log_level"])
 
 
 load_dotenv()
