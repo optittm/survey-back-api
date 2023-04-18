@@ -32,13 +32,8 @@ Retrieves all comments from the database.
 Response
 response model: List[Comment] - A list of comment objects.
 
-Response
-response model: List[Comment] - A list of comment objects.
-
-## Usage
 ### GET /rules
 
-### Local installation
 Retrieves the rules for displaying the feedback modal based on the provided feature URL.
 Request Query Parameters
 featureUrl: The URL of the feature for which to retrieve the rules.
@@ -46,14 +41,14 @@ Cookies
 - user_id: The ID of the user who posted the comment.
 - timestamp: The timestamp of when the modal was last shown.
 
-    pip install -r requirements.txt
 Response
 - status code: 200 - OK
 - response model: bool - True if the modal should be displayed based on the retrieved rules, False otherwise.
-
+Example usage: GET ```/rules?featureUrl=https://www.example.com/feature1```  
+Example response: true
+## Usage
 ### Local installation
 
-    python main.py
 1. Clone the repository.
 2. Install dependencies by running ```pip install -r requirements.txt```.
 3. Create a file in the project directory called ```.env```, and copy the ```.env.example``` file to it.
@@ -74,7 +69,7 @@ Response
 
 ## Test 
 
-You can run the unit tests : 
+To run the unit tests: 
 
 1. Install dependencies by running ```pip install -r requirements.txt```.
 2. Run the tests by running ```python -m unittest discover tests```.
