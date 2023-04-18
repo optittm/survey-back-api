@@ -1,11 +1,16 @@
-
 class Rule:
     """
     A class representing a rule for a particular feature.
     """
 
-    def __init__(self, feature_url: str, ratio: float, delay_before_reanswer: int,
-                 delay_to_answer: int, is_active: bool):
+    def __init__(
+        self,
+        feature_url: str,
+        ratio: float,
+        delay_before_reanswer: int,
+        delay_to_answer: int,
+        is_active: bool,
+    ):
         """
         Initializes a new instance of the Rule class.
 
