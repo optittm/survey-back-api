@@ -5,7 +5,10 @@ from repository.sqlite_repository import SQLiteRepository
 
 from utils.container import Container
 
-async def comment_to_comment_get_body(comment: Comment, sqliterepo: SQLiteRepository = Provide[Container.sqlite_repo]) -> CommentGetBody:
+
+async def comment_to_comment_get_body(
+    comment: Comment, sqliterepo: SQLiteRepository = Provide[Container.sqlite_repo]
+) -> CommentGetBody:
     """
     Convert a Comment to a CommentGetBody with project name
     """
