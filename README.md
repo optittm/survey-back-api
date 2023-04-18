@@ -32,42 +32,54 @@ Retrieves all comments from the database.
 Response
 response model: List[Comment] - A list of comment objects.
 
+### GET /rules
+
+Retrieves the rules for displaying the feedback modal based on the provided feature URL.
+
+Request Query Parameters
+featureUrl: The URL of the feature for which to retrieve the rules.
+Cookies
+- user_id: The ID of the user who posted the comment.
+- timestamp: The timestamp of when the modal was last shown.
+
+Response
+- status code: 200 - OK
+- response model: bool - True if the modal should be displayed based on the retrieved rules, False otherwise.
+
+Example usage
+    GET ```/rules?featureUrl=https://www.example.com/feature1```
+Example response
+    true
 ## Usage
 
 ### Local installation
 
-You need to run this command to install all the dependencies :
-
-    pip install -r requirements.txt
-
-You need to create a file in the project directory called ```.env```, you should copy the ```.env.example``` file.
-You can change the values as needed. You should at least add the URL of your frontend app in ```CORS_ALLOW_ORIGINS```.
-If you want a third party app to fetch the feedbacks, you should also add its URL to the origins, URLs separated with commas.
-
-You can then run the API :
-
-    python main.py
+1. Clone the repository.
+2. Install dependencies by running ```pip install -r requirements.txt```.
+3. Create a file in the project directory called ```.env```, and copy the ```.env.example``` file to it.
+4. Update the values in .env as needed. You should at least add the URL of your frontend app in ```CORS_ALLOW_ORIGINS```.
+5. If you want a third-party app to fetch feedback, add its URL to the ```CORS_ALLOW_ORIGINS``` field, separated by commas.
+6. Fill in the rules.yaml file with the rules for displaying the feedback modal for your projects.
+7. Run the API by running python ```main.py```.
 
 ### Docker
 
-First, ou need to create a file in the project directory called ```.env```, you should copy the ```.env.example``` file.
-You can change the values as needed. You should at least add the URL of your frontend app in ```CORS_ALLOW_ORIGINS```.
-If you want a third party app to fetch the feedbacks, you should also add its URL to the origins, URLs separated with commas.
-
-Then build the Docker image using this command in the project folder :
-
-    docker build -t survey-back-api .
-
-Finally, create a container and run it from the image :
-
-    docker run -dp 8000:8000 survey-back-api
+1. Clone the repository.
+2. Create a file in the project directory called ```.env```, and copy the ```.env.example``` file to it.
+3. Update the values in ```.env``` as needed. You should at least add the URL of your frontend app in ```CORS_ALLOW_ORIGINS```.
+4. If you want a third-party app to fetch feedback, add its URL to the ```CORS_ALLOW_ORIGINS``` field, separated by commas.
+5. Fill in the rules.yaml file with the rules for displaying the feedback modal for your projects.
+6. Build the Docker image by running ```docker build -t survey-back-api .``` in the project folder.
+7. Create and run a container from the image by running ```docker run -dp 8000:8000 survey-back-api```.
 
 ## Test 
 
-You can run the unit tests : 
+To run the unit tests:
 
-    python -m unittest discover tests
+1. Install dependencies by running ```pip install -r requirements.txt```.
+2. Run the tests by running ```python -m unittest discover tests```.
 
-The tests can also be run within a Docker container. After building the image, run this command :
+You can also run the tests within a Docker container:
 
-    docker run --rm [image-name] python -m unittest discover tests
+1. Build the Docker image as described in the Docker section above.
+2. Run the tests by running ```docker run --rm [image-name] python -m unittest discover tests```.
