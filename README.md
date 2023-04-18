@@ -46,10 +46,8 @@ Response
 - status code: 200 - OK
 - response model: bool - True if the modal should be displayed based on the retrieved rules, False otherwise.
 
-Example usage
-    GET ```/rules?featureUrl=https://www.example.com/feature1```
-Example response
-    true
+Example usage: GET ```/rules?featureUrl=https://www.example.com/feature1```
+Example response: true
 ## Usage
 
 ### Local installation
@@ -60,7 +58,7 @@ Example response
 4. Update the values in .env as needed. You should at least add the URL of your frontend app in ```CORS_ALLOW_ORIGINS```.
 5. If you want a third-party app to fetch feedback, add its URL to the ```CORS_ALLOW_ORIGINS``` field, separated by commas.
 6. Fill in the rules.yaml file with the rules for displaying the feedback modal for your projects.
-7. Run the API by running python ```main.py```.
+7. Run the API by running ```python main.py```.
 
 ### Docker
 
