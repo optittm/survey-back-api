@@ -32,7 +32,7 @@ class SQLiteRepository:
 
         if len(projects) == 0:
             logging.warning("Project missing on comment creation")
-            
+
             # ajouter une partie qui permet de gérer la clé
             project = await self.create_project(Project(name=project_name))
         else:
@@ -48,6 +48,7 @@ class SQLiteRepository:
         )
         id = await new_comment.insert()
         new_comment.id = id
+        logging.debug(f"Comment created in DB: {new_comment}")
         return new_comment
 
     async def read_comments(self) -> List[Comment]:
@@ -60,11 +61,14 @@ class SQLiteRepository:
         if len(projects) == 0:
             id = await project.insert()
             project.id = id
+            logging.debug(f"Project created in DB: {project}")
             projet_encryption = ProjectEncryption(
                 project_id=project.id, encryption_key=Encryption.generate_key()
             )
             await projet_encryption.insert()
+            logging.debug(f"Project Encryption created in DB: {projet_encryption}")
         else:
+            logging.debug("Cannot create project, already exists in DB")
             project = projects[0]
 
         return project

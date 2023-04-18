@@ -2,6 +2,7 @@ from typing import List, Union
 from fastapi import APIRouter, Depends, status, Cookie, Response
 from dependency_injector.wiring import Provide, inject
 from datetime import datetime
+import logging
 
 from models.comment import Comment, CommentGetBody, CommentPostBody
 from utils.container import Container
@@ -31,6 +32,7 @@ async def create_comment(
         project_name := rules_config.getProjectNameFromFeature(comment_body.feature_url)
     ) is not None:
         if user_id is None or timestamp is None:
+            logging.error("POST comments::Missing cookies")
             response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
             return {"Error": "Missing cookies"}
 
@@ -47,6 +49,7 @@ async def create_comment(
         )
         return new_comment
     else:
+        logging.error("POST comments::Feature not found")
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"Error": "Feature not found"}
 

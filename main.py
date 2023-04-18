@@ -16,7 +16,7 @@ from utils.container import Container
 
 
 @inject
-def init_fastapi(config = Provide[Container.config]) -> FastAPI:
+def init_fastapi(config=Provide[Container.config]) -> FastAPI:
     logging.info("Init FastAPI app")
     # Creates the FastAPI instance inside the function to be able to use the config provider
     app = FastAPI()
@@ -68,9 +68,11 @@ async def init_db(
     for project_name in project_names:
         await sqlite_repo.create_project(Project(name=project_name))
 
+
 @inject
 def config_logging(config=Provide[Container.config]):
     logging.basicConfig(level=config.log_level)
+
 
 load_dotenv()
 container = Container()
