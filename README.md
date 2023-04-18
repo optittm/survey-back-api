@@ -46,7 +46,7 @@ Response
 - status code: 200 - OK
 - response model: bool - True if the modal should be displayed based on the retrieved rules, False otherwise.
 
-Example usage: GET ```/rules?featureUrl=https://www.example.com/feature1```
+Example usage: GET ```/rules?featureUrl=https://www.example.com/feature1```  
 Example response: true
 ## Usage
 
