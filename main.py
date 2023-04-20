@@ -15,7 +15,7 @@ from utils.container import Container
 
 
 @inject
-def init_fastapi(config=Provide[Container.config]) -> FastAPI:
+def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
     # Creates the FastAPI instance inside the function to be able to use the config provider
     app = FastAPI()
     app.add_middleware(
@@ -25,8 +25,8 @@ def init_fastapi(config=Provide[Container.config]) -> FastAPI:
         allow_methods=config["cors_allow_methods"].split(","),
         allow_headers=config["cors_allow_headers"].split(","),
     )
-    app.include_router(comment_router)
-    app.include_router(rule_router)
+    app.include_router(comment_router, prefix=prefix)
+    app.include_router(rule_router, prefix=prefix)
     return app
 
 
