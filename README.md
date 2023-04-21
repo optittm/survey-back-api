@@ -11,11 +11,11 @@ OR
 
 ## Endpoints
 
-### POST /comments
+### POST /api/v1/comments
 Creates a new comment and stores it in the database.
 It is intended to be used only by the Survey front library.
 
-Request Body
+Request Body  
 A JSON object containing the comment details, including the feature URL, comment text, and the star rating.
 
 Cookies
@@ -26,17 +26,19 @@ Response
 - status code: 201 - Created
 - response model: Comment - The newly created comment object.
 
-### GET /comments
+### GET /api/v1/comments
 Retrieves all comments from the database.
 
-Response
+Response  
 response model: List[Comment] - A list of comment objects.
 
-### GET /rules
+### GET /api/v1/rules
 
 Retrieves the rules for displaying the feedback modal based on the provided feature URL.
+
 Request Query Parameters
-featureUrl: The URL of the feature for which to retrieve the rules.
+- featureUrl: The URL of the feature for which to retrieve the rules.
+
 Cookies
 - user_id: The ID of the user who posted the comment.
 - timestamp: The timestamp of when the modal was last shown.
@@ -45,7 +47,7 @@ Response
 - status code: 200 - OK
 - response model: bool - True if the modal should be displayed based on the retrieved rules, False otherwise.  
 
-Example usage: GET ```/rules?featureUrl=https://www.example.com/feature1```  
+Example usage: GET ```/api/v1/rules?featureUrl=https://www.example.com/feature1```  
 Example response: true
 ## Usage
 ### Local installation
@@ -68,7 +70,7 @@ Example response: true
 6. Build the Docker image by running ```docker build -t survey-back-api .``` in the project folder.
 7. Create and run a container from the image by running ```docker run -dp 8000:8000 survey-back-api```.
 
-## Test 
+## Tests 
 
 To run the unit tests: 
 
