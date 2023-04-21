@@ -17,6 +17,7 @@ class TestRulesRoutes(unittest.TestCase):
 
     def setUp(self):
         self.client = TestClient(app)
+        self.route = "/api/v1/rules"
         self.mock_yaml_repo = Mock(spec=YamlRulesRepository)
         self.mock_db_repo = Mock(spec=SQLiteRepository)
         self.crypt_key = "rg3ENcA7oBCxtxvJ1kk4oAXLizePSnGqPykRi4hvWqY="
@@ -27,7 +28,7 @@ class TestRulesRoutes(unittest.TestCase):
             self.mock_yaml_repo
         ), app.container.sqlite_repo.override(self.mock_db_repo):
             response = self.client.get(
-                "/rules",
+                self.route,
                 params={"featureUrl": "/test"},
                 cookies={
                     "user_id": "1",
@@ -161,7 +162,7 @@ class TestRulesRoutes(unittest.TestCase):
                 self.mock_yaml_repo
             ), app.container.sqlite_repo.override(self.mock_db_repo):
                 response = self.client.get(
-                    "/rules",
+                    self.route,
                     params={"featureUrl": "/test"},
                 )
 

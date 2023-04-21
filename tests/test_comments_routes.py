@@ -20,6 +20,7 @@ class TestCommentsRoutes(unittest.TestCase):
 
     def setUp(self):
         self.client = TestClient(app)
+        self.route = "/api/v1/comments"
 
         self.comment_body = CommentPostBody(
             feature_url="http://test.com",
@@ -57,7 +58,7 @@ class TestCommentsRoutes(unittest.TestCase):
             self.mock_repo
         ), app.container.rules_config.override(self.mock_yaml):
             response = self.client.post(
-                "/comments",
+                self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
                 json=self.comment_body.dict(),
                 cookies={
@@ -86,7 +87,7 @@ class TestCommentsRoutes(unittest.TestCase):
 
         with app.container.rules_config.override(self.mock_yaml):
             response = self.client.post(
-                "/comments",
+                self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
                 json=self.comment_body.dict(),
                 cookies={
@@ -106,7 +107,7 @@ class TestCommentsRoutes(unittest.TestCase):
 
         with app.container.rules_config.override(self.mock_yaml):
             response = self.client.post(
-                "/comments",
+                self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
                 json=self.comment_body.dict(),
             )
@@ -138,7 +139,7 @@ class TestCommentsRoutes(unittest.TestCase):
         with patch("routes.comments.comment_to_comment_get_body") as mock_method:
             with app.container.sqlite_repo.override(self.mock_repo):
                 mock_method.return_value = comment_abis
-                response = self.client.get("/comments")
+                response = self.client.get(self.route)
 
         self.assertEqual(response.status_code, 200)
 
