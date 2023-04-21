@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import unittest
 from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 
 from models.comment import Comment, CommentGetBody, CommentPostBody
+from models.rule import Rule
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from main import app
@@ -29,6 +30,7 @@ class TestCommentsRoutes(unittest.TestCase):
         )
         self.datetime = datetime.now()
         self.mock_yaml = Mock(spec=YamlRulesRepository)
+        self.mock_rule = Mock(spec=Rule)
         self.mock_repo = Mock(spec=SQLiteRepository)
         self.crypt_key = "rg3ENcA7oBCxtxvJ1kk4oAXLizePSnGqPykRi4hvWqY="
         self.encryption = Encryption(self.crypt_key)
@@ -52,6 +54,8 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_repo.get_encryption_by_project_id.return_value = (
             project_encryption_mock
         )
+        self.mock_rule.delay_to_answer = 5
+        self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
         self.mock_repo.create_comment.return_value = return_comment
 
         with app.container.sqlite_repo.override(
@@ -112,6 +116,38 @@ class TestCommentsRoutes(unittest.TestCase):
                 json=self.comment_body.dict(),
             )
         self.assertEqual(response.status_code, 422)
+
+    def test_create_comment_endpoint_delay_elapsed(self):
+        """
+        Test case when the delay to submit a comment has elapsed
+        """
+        self.mock_yaml.getProjectNameFromFeature.return_value = "project1"
+        self.mock_repo.get_project_by_name.return_value = Mock()
+        project_encryption_mock = Mock()
+        project_encryption_mock.encryption_key = self.crypt_key
+        self.mock_repo.get_encryption_by_project_id.return_value = (
+            project_encryption_mock
+        )
+        self.mock_rule.delay_to_answer = 5
+        self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
+        elpased_datetime = self.datetime - timedelta(minutes=10)
+
+        with app.container.sqlite_repo.override(
+            self.mock_repo
+        ), app.container.rules_config.override(self.mock_yaml):
+            response = self.client.post(
+                self.route,
+                # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
+                json=self.comment_body.dict(),
+                cookies={
+                    "user_id": "3",
+                    "timestamp": self.encryption.encrypt(
+                        str(elpased_datetime.timestamp())
+                    ),
+                },
+            )
+
+        self.assertEqual(response.status_code, 408)
 
     def test_get_all_comments_endpoint(self):
         comment_a = Comment(

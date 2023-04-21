@@ -1,9 +1,10 @@
 from typing import List, Union
 from fastapi import APIRouter, Depends, status, Cookie, Response
 from dependency_injector.wiring import Provide, inject
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from models.comment import Comment, CommentGetBody, CommentPostBody
+from models.rule import Rule
 from utils.container import Container
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
@@ -38,10 +39,16 @@ async def create_comment(
         project = await sqlite_repo.get_project_by_name(project_name)
         encryption_db = await sqlite_repo.get_encryption_by_project_id(project.id)
         encryption = Encryption(encryption_db.encryption_key)
-        # Decrypt and convert to ISO 6801
+        # Decrypt, check delay then convert to ISO 6801
         decrypted_timestamp = encryption.decrypt(timestamp)
-        iso_timestamp = datetime.fromtimestamp(float(decrypted_timestamp)).isoformat()
+        dt_timestamp = datetime.fromtimestamp(float(decrypted_timestamp))
 
+        rule: Rule = rules_config.getRuleFromFeature(comment_body.feature_url)
+        if (datetime.now() - dt_timestamp) >= timedelta(minutes=rule.delay_to_answer):
+            response.status_code = status.HTTP_408_REQUEST_TIMEOUT
+            return {"Error": "Time to submit a comment has elapsed"}
+
+        iso_timestamp = dt_timestamp.isoformat()
         new_comment = await sqlite_repo.create_comment(
             comment_body, user_id, iso_timestamp, project_name
         )
