@@ -1,6 +1,7 @@
 from typing import Union
 from fastapi import APIRouter, Depends, Response, Cookie, status
 from dependency_injector.wiring import Provide, inject
+import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
 import random
@@ -30,6 +31,7 @@ async def show_modal(
         feature_url=featureUrl
     )
     if rulesFromFeature is None:
+        logging.error("GET rules::Feature not found")
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"Error": "Feature not found"}
 
@@ -41,6 +43,7 @@ async def show_modal(
 
     # Set user_id Cookie if is None
     if user_id is None:
+        logging.info("GET rules::Setting a new user_id cookie")
         response.set_cookie(key="user_id", value=str(uuid4()))
 
     # Get current timestamp
@@ -56,11 +59,13 @@ async def show_modal(
         previous_timestamp: datetime = datetime.fromtimestamp(
             float(decrypted_timestamp)
         )
+        logging.debug(f"GET rules::Previous timestamp {previous_timestamp}")
         isOverDelay: bool = (
             timedelta(days=rulesFromFeature.delay_before_reanswer)
             <= dateToday - previous_timestamp
         )
     else:
+        logging.debug("GET rules::No timestamp cookie given")
         isOverDelay = True
 
     isWithinRatio: bool = random.random() <= rulesFromFeature.ratio
@@ -68,6 +73,7 @@ async def show_modal(
 
     # Set timestamp Cookie to current timestamp when display survey modal
     if isDisplay:
+        logging.info("GET rules::Setting a new timestamp cookie")
         # Encrypt the timestamp to prevent user modification
         timestamp_bytes = str(dateToday.timestamp())
         encrypted_timestamp = encryption.encrypt(timestamp_bytes)
