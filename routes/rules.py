@@ -53,7 +53,7 @@ async def show_modal(
         try:
             decrypted_timestamp = encryption.decrypt(timestamp)
         except Exception:
-            # logging.error("POST comments::Invalid timestamp, cannot decrypt")
+            logging.error("GET rules::Invalid timestamp, cannot decrypt")
             response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
             return {"Error": "Invalid timestamp, cannot decrypt"}
         previous_timestamp: datetime = datetime.fromtimestamp(

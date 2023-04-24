@@ -46,7 +46,7 @@ async def create_comment(
         try:
             decrypted_timestamp = encryption.decrypt(timestamp)
         except Exception:
-            # logging.error("POST comments::Invalid timestamp, cannot decrypt")
+            logging.error("POST comments::Invalid timestamp, cannot decrypt")
             response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
             return {"Error": "Invalid timestamp, cannot decrypt"}
 
