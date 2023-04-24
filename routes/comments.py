@@ -39,10 +39,17 @@ async def create_comment(
         project = await sqlite_repo.get_project_by_name(project_name)
         encryption_db = await sqlite_repo.get_encryption_by_project_id(project.id)
         encryption = Encryption(encryption_db.encryption_key)
-        # Decrypt, check delay then convert to ISO 6801
-        decrypted_timestamp = encryption.decrypt(timestamp)
-        dt_timestamp = datetime.fromtimestamp(float(decrypted_timestamp))
 
+        # Decrypt timestamp
+        try:
+            decrypted_timestamp = encryption.decrypt(timestamp)
+        except Exception:
+            # logging.error("POST comments::Invalid timestamp, cannot decrypt")
+            response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+            return {"Error": "Invalid timestamp, cannot decrypt"}
+
+        dt_timestamp = datetime.fromtimestamp(float(decrypted_timestamp))
+        # Check delay to answer
         rule: Rule = rules_config.getRuleFromFeature(comment_body.feature_url)
         if (datetime.now() - dt_timestamp) >= timedelta(minutes=rule.delay_to_answer):
             response.status_code = status.HTTP_408_REQUEST_TIMEOUT

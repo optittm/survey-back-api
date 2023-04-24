@@ -15,7 +15,7 @@ from utils.encryption import Encryption
 router = APIRouter()
 
 
-@router.get("/rules")
+@router.get("/rules", response_model=Union[bool, dict])
 @inject
 async def show_modal(
     featureUrl: str,
@@ -47,7 +47,12 @@ async def show_modal(
     dateToday: datetime = datetime.now()
 
     if timestamp is not None:
-        decrypted_timestamp = encryption.decrypt(timestamp)
+        try:
+            decrypted_timestamp = encryption.decrypt(timestamp)
+        except Exception:
+            # logging.error("POST comments::Invalid timestamp, cannot decrypt")
+            response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+            return {"Error": "Invalid timestamp, cannot decrypt"}
         previous_timestamp: datetime = datetime.fromtimestamp(
             float(decrypted_timestamp)
         )
