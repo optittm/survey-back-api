@@ -41,6 +41,7 @@ async def main(config=Provide[Container.config]):
         host=config["survey_api_host"],
         reload=config["debug_mode"],
         port=config["survey_api_port"],
+        log_level=config["log_level"].lower(),
     )
     # Running the server in the existing async loop
     # https://www.uvicorn.org/#config-and-server-instances
