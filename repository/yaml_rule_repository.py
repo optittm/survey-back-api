@@ -1,3 +1,4 @@
+import logging
 from typing import List
 import yaml
 from schema import Schema, SchemaError, Optional
@@ -39,6 +40,7 @@ class YamlRulesRepository:
             None if the file does not exist or if it is not valid against the schema.
         """
         try:
+            logging.info("Reading YAML rules file")
             with open(file_name) as f:
                 data = yaml.load(f, Loader=SafeLoader)
                 schema = Schema(
@@ -47,13 +49,13 @@ class YamlRulesRepository:
                 schema.validate(data)
                 return data
         except FileNotFoundError:
-            print(f"File {file_name} not found")
+            logging.error(f"File {file_name} not found")
             return None
         except SchemaError as exc:
-            print(f"Error while validating the file {file_name}: {exc}")
+            logging.error(f"Error while validating the file {file_name}: {exc}")
             return None
         except yaml.YAMLError as exc:
-            print(f"Error while parsing the file {file_name}: {exc}")
+            logging.error(f"Error while parsing the file {file_name}: {exc}")
             return None
 
     @staticmethod

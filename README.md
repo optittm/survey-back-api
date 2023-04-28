@@ -11,7 +11,7 @@ OR
 
 ## Endpoints
 
-### POST /api/v1/comments
+### POST /comments
 Creates a new comment and stores it in the database.
 It is intended to be used only by the Survey front library.
 
@@ -26,13 +26,13 @@ Response
 - status code: 201 - Created
 - response model: Comment - The newly created comment object.
 
-### GET /api/v1/comments
+### GET /comments
 Retrieves all comments from the database.
 
 Response  
 response model: List[Comment] - A list of comment objects.
 
-### GET /api/v1/rules
+### GET /rules
 
 Retrieves the rules for displaying the feedback modal based on the provided feature URL.
 
@@ -47,7 +47,7 @@ Response
 - status code: 200 - OK
 - response model: bool - True if the modal should be displayed based on the retrieved rules, False otherwise.  
 
-Example usage: GET ```/api/v1/rules?featureUrl=https://www.example.com/feature1```  
+Example usage: GET ```/rules?featureUrl=https://www.example.com/feature1```  
 Example response: true
 ## Usage
 ### Local installation
