@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Union
+from typing import List, Optional, Union
 import logging
 
 from models.comment import Comment, CommentPostBody
