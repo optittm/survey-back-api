@@ -1,12 +1,15 @@
-from datetime import datetime
-from typing import List, Union
+
+import datetime
+from typing import List, Optional, Union
 
 from models.comment import Comment, CommentPostBody
 from models.project import Project, ProjectEncryption
 from utils.encryption import Encryption
 
 
+
 class SQLiteRepository:
+  
     async def create_comment(
         self,
         comment_body: CommentPostBody,
@@ -47,9 +50,56 @@ class SQLiteRepository:
         new_comment.id = id
         return new_comment
 
-    async def read_comments(self) -> List[Comment]:
+    async def get_all_comments(self) -> List[Comment]:
         comments = await Comment.all()
+
         return comments
+
+    async def read_comments(
+                self,
+                project_name: Optional[str] = None,
+                feature_url: Optional[str] = None,
+                user_id: Optional[str] = None,
+                timestampbegin: Optional[str] = None,
+                timestampend: Optional[str] = None,
+                search_query: Optional[str] = None,
+            ) -> List[Comment]:
+            
+            all_comments = await self.get_all_comments()
+            filtered_comments = []
+            if project_name is not None:
+                project = await self.get_project_by_name(project_name)
+                if project is None:
+                    
+                    return filtered_comments
+           
+            
+            for comment in all_comments:
+
+                if project_name and project.name == project_name:
+                    continue
+                if feature_url and comment.feature_url != feature_url:
+                    continue
+                if user_id and comment.user_id != user_id:
+                    continue
+                if timestampbegin:
+                    comment_ts = comment.timestamp
+                    query_ts = timestampbegin
+                    if comment_ts < query_ts:
+                        continue
+                if timestampend:
+                    comment_ts = comment.timestamp
+                    query_ts = timestampend
+                    if comment_ts > query_ts:
+                        continue
+                if search_query and search_query not in comment.comment:
+                    continue
+                filtered_comments.append(comment)
+
+            return filtered_comments
+
+
+
 
     async def create_project(self, project: Project):
         projects = await Project.filter(name=project.name)
