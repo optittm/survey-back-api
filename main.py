@@ -16,7 +16,7 @@ from utils.container import Container
 
 
 @inject
-def init_fastapi(config=Provide[Container.config]) -> FastAPI:
+def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
     logging.info("Init FastAPI app")
     # Creates the FastAPI instance inside the function to be able to use the config provider
     app = FastAPI()
@@ -27,8 +27,8 @@ def init_fastapi(config=Provide[Container.config]) -> FastAPI:
         allow_methods=config["cors_allow_methods"].split(","),
         allow_headers=config["cors_allow_headers"].split(","),
     )
-    app.include_router(comment_router)
-    app.include_router(rule_router)
+    app.include_router(comment_router, prefix=prefix)
+    app.include_router(rule_router, prefix=prefix)
     return app
 
 
@@ -41,6 +41,7 @@ async def main(config=Provide[Container.config]):
         host=config["survey_api_host"],
         reload=config["debug_mode"],
         port=config["survey_api_port"],
+        log_level=config["log_level"].lower(),
     )
     # Running the server in the existing async loop
     # https://www.uvicorn.org/#config-and-server-instances
