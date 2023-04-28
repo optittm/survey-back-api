@@ -27,10 +27,23 @@ Response
 - response model: Comment - The newly created comment object.
 
 ### GET /comments
-Retrieves all comments from the database.
+
+Retrieves comments from the database. It supports filtering by various parameters.
+
+Request Query Parameters
+
+project_name: The name of the project to filter by.  
+feature_url: The URL of the feature to filter by.  
+user_id: The ID of the user to filter by.  
+timestampbegin: The minimum timestamp of the comments to filter by (in ISO 8601 format).  
+timestampend: The maximum timestamp of the comments to filter by (in ISO 8601 format).  
+search_query: A search query to filter comments by. It searches in both the feature URL and comment text fields.  
 
 Response  
-response model: List[Comment] - A list of comment objects.
+response model: List[Comment] - A list of comment objects matching the specified filters. If no filters are provided, it returns all comments.
+
+Example usage: GET /comments?project_name=my-project&feature_url=/feature1&user_id=user123&timestampbegin=2022-01-01T00:00:00Z&timestampend=2022-12-31T23:59:59Z&search_query=bug  
+
 
 ### GET /rules
 
