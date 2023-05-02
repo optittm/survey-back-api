@@ -67,19 +67,21 @@ class SQLiteRepository:
                 timestampend: Optional[str] = None,
                 search_query: Optional[str] = None,
             ) -> List[Comment]:
-            
+            print(project_name)
             all_comments = await self.get_all_comments()
             filtered_comments = []
             if project_name is not None:
                 project = await self.get_project_by_name(project_name)
+
                 if project is None:
-                    
+
                     return filtered_comments
            
             
             for comment in all_comments:
 
-                if project_name and project.name == project_name:
+                if project.id != comment.project_id:
+                    
                     continue
                 if feature_url and comment.feature_url != feature_url:
                     continue
@@ -98,7 +100,7 @@ class SQLiteRepository:
                 if search_query and search_query not in comment.comment:
                     continue
                 filtered_comments.append(comment)
-
+            print(filtered_comments)
             return filtered_comments
 
 
