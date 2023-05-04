@@ -128,7 +128,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         Comment.all.assert_called_once()
 
    
-    async def test_read_comments_with_invalide_search_query_filter(self):
+    async def test_read_comments_with_invalide_content_search_filter(self):
         comment_a = Comment(
             project_id=1,
             user_id="1",
@@ -147,10 +147,10 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         )
         
         
-        search_query = "essai"
+        content_search = "essai"
 
         Comment.all = AsyncMock(return_value=[comment_a, comment_b])
-        result = await self.repository.read_comments(search_query=search_query)
+        result = await self.repository.read_comments(content_search=content_search)
         self.assertEqual(result, [])
 
         Comment.all.assert_called_once()
@@ -267,7 +267,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         Comment.all.assert_called_once()
 
 
-    async def test_read_comments_with_search_query_filter(self):
+    async def test_read_comments_with_content_search_filter(self):
         # Create some comments to simulate a database
         comment_a = Comment(
             project_id=1,
@@ -287,7 +287,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         )
 
         Comment.all = AsyncMock(return_value=[comment_a, comment_b])
-        result = await self.repository.read_comments(search_query="2")
+        result = await self.repository.read_comments(content_search="2")
         self.assertEqual(result, [comment_b])
 
         Comment.all.assert_called_once()

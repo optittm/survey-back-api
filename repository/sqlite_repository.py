@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from typing import List, Optional, Union
 import logging
 
@@ -66,7 +67,7 @@ class SQLiteRepository:
             user_id: Optional[str] = None,
             timestampbegin: Optional[str] = None,
             timestampend: Optional[str] = None,
-            search_query: Optional[str] = None,
+            content_search: Optional[str] = None,
         ) -> List[Comment]:
         """
         Get all comments from the database that match the given filters.
@@ -77,7 +78,7 @@ class SQLiteRepository:
             - user_id: (optional) the user ID to filter by
             - timestampbegin: (optional) the earliest timestamp to filter by
             - timestampend: (optional) the latest timestamp to filter by
-            - search_query: (optional) a search query to filter comments by
+            - content_search: (optional) a search query to filter comments by
 
         Returns:
             A list of comments that match the given filters
@@ -87,9 +88,15 @@ class SQLiteRepository:
         all_comments = await self.get_all_comments()
 
         # If no filters are given, return all comments
-        if not any((project_name, feature_url, user_id, timestampbegin, timestampend, search_query)):
+        if not any((project_name, feature_url, user_id, timestampbegin, timestampend, content_search)):
             return all_comments
         
+        # Compile the content_search string into a regular expression pattern
+        pattern = None
+        if content_search:
+            search_words = content_search.split()
+            pattern = re.compile(".*" + ".*".join(search_words) + ".*", re.IGNORECASE)
+
         # Filter comments by project, feature URL, user ID, timestamp, and search query
         filtered_comments = []
         if project_name is not None:
@@ -117,7 +124,7 @@ class SQLiteRepository:
                         query_ts = timestampend
                         if comment_ts > query_ts:
                             continue
-                    if search_query and search_query not in comment.comment:
+                    if pattern and not pattern.search(comment.comment):
                         continue
                     filtered_comments.append(comment)
         if project_name is None:
@@ -136,7 +143,7 @@ class SQLiteRepository:
                     query_ts = timestampend
                     if comment_ts > query_ts:
                         continue
-                if search_query and search_query not in comment.comment:
+                if pattern and not pattern.search(comment.comment):
                     continue
                 filtered_comments.append(comment)
         return filtered_comments

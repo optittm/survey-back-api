@@ -37,12 +37,12 @@ feature_url: The URL of the feature to filter by.
 user_id: The ID of the user to filter by.  
 timestampbegin: The minimum timestamp of the comments to filter by (in ISO 8601 format).  
 timestampend: The maximum timestamp of the comments to filter by (in ISO 8601 format).  
-search_query: A search query to filter comments by. It searches in both the feature URL and comment text fields.  
+content_search: A search query to filter comments by. It searches in both the feature URL and comment text fields.  
 
 Response  
 response model: List[Comment] - A list of comment objects matching the specified filters. If no filters are provided, it returns all comments.
 
-Example usage: GET /comments?project_name=my-project&feature_url=/feature1&user_id=user123&timestampbegin=2022-01-01T00:00:00Z&timestampend=2022-12-31T23:59:59Z&search_query=bug  
+Example usage: GET /comments?project_name=my-project&feature_url=/feature1&user_id=user123&timestampbegin=2022-01-01T00:00:00Z&timestampend=2022-12-31T23:59:59Z&content_search=bug  
 
 
 ### GET /rules

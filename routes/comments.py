@@ -77,7 +77,7 @@ async def get_comments(
     user_id: Optional[str] = None,
     timestampbegin: Optional[str] = None,
     timestampend: Optional[str] = None,
-    search_query: Optional[str] = None,
+    content_search: Optional[str] = None,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
 ) -> List[CommentGetBody]:
     
@@ -87,7 +87,7 @@ async def get_comments(
         user_id=user_id,
         timestampbegin=timestampbegin,
         timestampend=timestampend,
-        search_query=search_query,
+        content_search=content_search,
     )
 
     # Formatage des commentaires filtrés en CommentGetBody
