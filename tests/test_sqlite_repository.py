@@ -15,10 +15,10 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            user_id="123",
         )
 
     async def test_create_comment(self):
-        user_id = 123
         timestamp = "03/24/23 12:00:00"
         timestamp_dt = datetime.strptime(timestamp, "%m/%d/%y %H:%M:%S").isoformat()
         self.repository.create_project = AsyncMock(
@@ -27,8 +27,10 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         Comment.insert = AsyncMock(return_value=5)
         Project.filter = AsyncMock(return_value=[Project(id=1, name="test_project")])
         result = await self.repository.create_comment(
-            comment_body=self.comment_body,
-            user_id=user_id,
+            feature_url=self.comment_body.feature_url,
+            rating=self.comment_body.rating,
+            comment=self.comment_body.comment,
+            user_id=self.comment_body.user_id,
             timestamp=timestamp_dt,
             project_name=self.project_name,
         )
@@ -40,7 +42,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
                 id=5,
                 project_id=1,
                 feature_url=self.comment_body.feature_url,
-                user_id=user_id,
+                user_id=self.comment_body.user_id,
                 timestamp=timestamp_dt,
                 rating=self.comment_body.rating,
                 comment=self.comment_body.comment,

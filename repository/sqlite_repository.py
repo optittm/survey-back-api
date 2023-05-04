@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Union
 import logging
 
-from models.comment import Comment, CommentPostBody
+from models.comment import Comment
 from models.project import Project, ProjectEncryption
 from utils.encryption import Encryption
 
@@ -10,7 +10,9 @@ from utils.encryption import Encryption
 class SQLiteRepository:
     async def create_comment(
         self,
-        comment_body: CommentPostBody,
+        feature_url: str,
+        rating: int,
+        comment: str,
         user_id: str,
         timestamp: str,
         project_name: str,
@@ -40,11 +42,11 @@ class SQLiteRepository:
 
         new_comment = Comment(
             project_id=project.id,
-            feature_url=comment_body.feature_url,
+            feature_url=feature_url,
             user_id=user_id,
             timestamp=timestamp,
-            rating=comment_body.rating,
-            comment=comment_body.comment,
+            rating=rating,
+            comment=comment,
         )
         id = await new_comment.insert()
         new_comment.id = id

@@ -88,6 +88,9 @@ container.config.survey_api_port.from_env(
 container.config.survey_db.from_env(
     "SURVEY_DB", required=True, default="sqlite:///data/survey.sqlite3"
 )
+container.config.use_fingerprint.from_env(
+    "USE_FINGERPRINT", required=True, as_=str_to_bool, default=False
+)
 container.config.cors_allow_origins.from_env(
     "CORS_ALLOW_ORIGINS", required=True, default="*"
 )
