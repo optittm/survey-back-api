@@ -35,14 +35,14 @@ class DBWarehouse:
         """
         cursor = self.conn.cursor()
         # All the creation of the view are ignored if the view already exist
-        # Create the view that count the average rating of a project
+        # Create the view that count the average rating of a feature of a project
         cursor.execute('''
             CREATE VIEW IF NOT EXISTS feature_rating_avg AS
                 SELECT project_id, feature_url, AVG(rating) AS average_rating
                 FROM Comment
                 GROUP BY project_id, feature_url;
         ''')
-        # Create the view that count the average rating of a feature in a project
+        # Create the view that count the average rating of a project
         cursor.execute('''
             CREATE VIEW IF NOT EXISTS project_rating_avg AS
                 SELECT project_id, AVG(rating) AS average_rating
