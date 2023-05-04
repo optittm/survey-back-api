@@ -13,6 +13,7 @@ from models.project import Project, ProjectEncryption
 from routes.comments import router as comment_router
 from routes.rules import router as rule_router
 from utils.container import Container
+from utils.formatter import str_to_bool
 
 
 @inject
@@ -100,7 +101,7 @@ container.config.cors_allow_headers.from_env(
     "CORS_ALLOW_HEADERS", required=True, default="*"
 )
 container.config.debug_mode.from_env(
-    "DEBUG_MODE", required=True, as_=bool, default=False
+    "DEBUG_MODE", required=True, as_=str_to_bool, default=False
 )
 container.config.log_level.from_env("LOG_LEVEL", required=True, default="INFO")
 container.wire(modules=[__name__])
