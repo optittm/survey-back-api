@@ -82,25 +82,25 @@ class TestDBWarehouse(unittest.TestCase):
         project_a = Project(id=1, name='Project A')
         project_b = Project(id=2, name='Project B')
 
-        self.assertAlmostEqual(self.warehouse.get_project_avg_rating(project_a), 4.0)
-        self.assertAlmostEqual(self.warehouse.get_project_avg_rating(project_b), 2.0)
+        self.assertAlmostEqual(self.warehouse.get_project_avg_rating(project_a.id), 4.0)
+        self.assertAlmostEqual(self.warehouse.get_project_avg_rating(project_b.id), 2.0)
 
     def test_get_feature_avg_rating(self):
         project_a = Project(id=1, name='Project A')
 
-        self.assertAlmostEqual(self.warehouse.get_feature_avg_rating(project_a, 'http://example.com/feature1'), 4.0)
-        self.assertAlmostEqual(self.warehouse.get_feature_avg_rating(project_a, 'http://example.com/feature2'), 4.0)
+        self.assertAlmostEqual(self.warehouse.get_feature_avg_rating(project_a.id, 'http://example.com/feature1'), 4.0)
+        self.assertAlmostEqual(self.warehouse.get_feature_avg_rating(project_a.id, 'http://example.com/feature2'), 4.0)
 
     def test_get_number_of_comment(self):
         project_a = Project(id=1, name='Project A')
         project_b = Project(id=2, name='Project B')
 
-        self.assertEqual(self.warehouse.get_number_of_comment(project_a), 3)
-        self.assertEqual(self.warehouse.get_number_of_comment(project_b), 1)
+        self.assertEqual(self.warehouse.get_number_of_comment(project_a.id), 3)
+        self.assertEqual(self.warehouse.get_number_of_comment(project_b.id), 1)
 
     def test_get_number_of_display(self):
         project_a = Project(id=1, name='Project A')
         project_b = Project(id=2, name='Project B')
 
-        self.assertEqual(self.warehouse.get_number_of_display(project_a), 2)
-        self.assertEqual(self.warehouse.get_number_of_display(project_b), 1)
+        self.assertEqual(self.warehouse.get_number_of_display(project_a.id), 2)
+        self.assertEqual(self.warehouse.get_number_of_display(project_b.id), 1)

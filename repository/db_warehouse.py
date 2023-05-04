@@ -66,7 +66,7 @@ class DBWarehouse:
         self.conn.commit()
         cursor.close()
 
-    def get_project_avg_rating(self, project: Project):
+    def get_project_avg_rating(self, project_id: int):
         """
         Retrieve the average rating of a project from the `project_rating_avg` view.
 
@@ -84,13 +84,13 @@ class DBWarehouse:
         cursor.execute(f'''
             SELECT average_rating 
             FROM project_rating_avg
-            WHERE project_id = {project.id};
+            WHERE project_id = {project_id};
         ''')
         result = cursor.fetchall()
         cursor.close()
         return result[0][0]
 
-    def get_feature_avg_rating(self, project: Project, feature_url: str):
+    def get_feature_avg_rating(self, project_id: int, feature_url: str):
         """
         Retrieves the average rating for a given feature of a specific project from 
         the database.
@@ -114,14 +114,14 @@ class DBWarehouse:
         cursor.execute(f'''
             SELECT average_rating
             FROM feature_rating_avg
-            WHERE project_id = {project.id}
+            WHERE project_id = {project_id}
                 AND feature_url = "{feature_url}";
         ''')
         result = cursor.fetchall()
         cursor.close()
         return result[0][0]
 
-    def get_number_of_comment(self, project: Project):
+    def get_number_of_comment(self, project_id: int):
         """
         Retrieves the number of comments for a specific project from the database.
 
@@ -142,13 +142,13 @@ class DBWarehouse:
         cursor.execute(f'''
             SELECT number_comment
             FROM number_comment_by_project
-            WHERE project_id = {project.id};
+            WHERE project_id = {project_id};
         ''')
         result = cursor.fetchall()
         cursor.close()
         return result[0][0]
 
-    def get_number_of_display(self, project: Project):
+    def get_number_of_display(self, project_id: int):
         """
         Retrieves the number of displays for a specific project from the database.
 
@@ -170,7 +170,7 @@ class DBWarehouse:
         cursor.execute(f'''
             SELECT number_display
             FROM number_display_by_project
-            WHERE project_id = {project.id};
+            WHERE project_id = {project_id};
         ''')
         result = cursor.fetchall()
         cursor.close()
