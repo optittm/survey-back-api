@@ -2,9 +2,9 @@
 import unittest
 import sqlite3
 from models.project import Project
-from utils.db_warehouse import DBWarehouse
+from repository.db_warehouse import DBWarehouse
 
-from utils.db_warehouse import DBWarehouse
+from repository.db_warehouse import DBWarehouse
 
 
 class TestDBWarehouse(unittest.TestCase):
