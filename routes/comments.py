@@ -80,6 +80,7 @@ async def get_comments(
     search_query: Optional[str] = None,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
 ) -> List[CommentGetBody]:
+    
     comments = await sqlite_repo.read_comments(
         project_name=project_name,
         feature_url=feature_url,
