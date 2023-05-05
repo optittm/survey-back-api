@@ -96,9 +96,8 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         ProjectEncryption.insert.assert_not_called()
 
     async def test_create_display(self):
-        user_id = 123
-        timestamp = "03/24/23 12:00:00"
-        timestamp_dt = datetime.strptime(timestamp, "%m/%d/%y %H:%M:%S").isoformat()
+        user_id = "123"
+        timestamp_dt = datetime.now().isoformat()
         self.repository.create_project = AsyncMock(
             return_value=Project(id=1, name="test_project")
         )
