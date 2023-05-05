@@ -11,6 +11,7 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
+from utils.middleware import comment_body_treatment
 
 router = APIRouter()
 
@@ -22,8 +23,8 @@ router = APIRouter()
 )
 @inject
 async def create_comment(
-    comment_body: CommentPostBody,
     response: Response,
+    comment_body: CommentPostBody = Depends(comment_body_treatment),
     user_id: Union[str, None] = Cookie(default=None),
     timestamp: Union[str, None] = Cookie(default=None),
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),

@@ -176,6 +176,19 @@ class TestCommentsRoutes(unittest.TestCase):
 
         self.assertEqual(response.status_code, 422)
 
+    def test_create_comment_endpoint_invalid_feature(self):
+        self.comment_body.feature_url = "http://tes[t.com/test"
+        response = self.client.post(
+            self.route,
+            # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
+            json=self.comment_body.dict(),
+            cookies={
+                "user_id": "3",
+                "timestamp": "jdsodkcvhjsdknv",
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+
     def test_get_all_comments_endpoint(self):
         comment_a = Comment(
             id=1,
