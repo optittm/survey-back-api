@@ -87,7 +87,10 @@ class SQLiteRepository:
         result = cursor.fetchall()
         cursor.close()
         conn.close()
-        return result[0][0]
+        try:
+            return result[0][0]
+        except IndexError:
+            return 0
 
     def get_feature_avg_rating(self, project_id: int, feature_url: str):
         """
@@ -120,7 +123,10 @@ class SQLiteRepository:
         result = cursor.fetchall()
         cursor.close()
         conn.close()
-        return result[0][0]
+        try:
+            return result[0][0]
+        except IndexError:
+            return 0
 
     def get_number_of_comment(self, project_id: int):
         """
@@ -149,7 +155,10 @@ class SQLiteRepository:
         result = cursor.fetchall()
         cursor.close()
         conn.close()
-        return result[0][0]
+        try:
+            return result[0][0]
+        except IndexError:
+            return 0
 
     def get_number_of_display(self, project_id: int):
         """
@@ -179,7 +188,10 @@ class SQLiteRepository:
         result = cursor.fetchall()
         cursor.close()
         conn.close()
-        return result[0][0]
+        try:
+            return result[0][0]
+        except IndexError:
+            return 0
 
     async def create_comment(
         self,
