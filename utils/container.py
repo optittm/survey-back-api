@@ -1,5 +1,4 @@
 from dependency_injector import containers, providers
-from repository.db_warehouse import DBWarehouse
 
 from repository.yaml_rule_repository import YamlRulesRepository
 from repository.sqlite_repository import SQLiteRepository
@@ -15,5 +14,4 @@ class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
 
     rules_config = providers.Singleton(YamlRulesRepository)
-    sqlite_repo = providers.Singleton(SQLiteRepository)
-    db_warehouse = providers.Factory(DBWarehouse, db_name=config.SURVEY_DB)
+    sqlite_repo = providers.Singleton(SQLiteRepository, config=config)
