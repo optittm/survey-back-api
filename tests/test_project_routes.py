@@ -2,9 +2,11 @@
 
 import unittest
 from unittest.mock import MagicMock
+from xml.sax.handler import feature_validation
 from fastapi.testclient import TestClient
 from main import app
 from models.project import Project
+from models.rule import Rule
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 
@@ -66,3 +68,42 @@ class TestProjectRoute(unittest.TestCase):
             # Check that the response is valid and matches the expected output
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json(), {"id": 1, "Error": "Project not found"})
+
+    def test_get_project_rules(self):
+        expected_output = [
+            {
+                "url": "http://example.com/feature1",
+                "ratio": 0.5,
+                "delay_before_reanswer": 30,
+                "delay_to_answer": 10,
+                "is_active": True
+            }
+        ]
+        mock_project = Project(id=1, name="project1")
+
+        # Create a mock SQLiteRepository instance with a get_project_by_id method that returns the mock project
+        self.mock_sqlite_repo.get_project_by_id.return_value = mock_project
+        
+        # Create a mock YamlRulesRepository instance with a getProjectNames method that returns a list with the mock project name
+        self.mock_yaml_repo.getProjectNames.return_value = [mock_project.name]
+
+        # Create a mock YamlRulesRepository instance with a getFeatureUrlsFromProjectName method that returns a list with the feature url
+        self.mock_yaml_repo.getFeatureUrlsFromProjectName.return_value = ["http://example.com/feature1"]
+
+        # Create a mock YamlRulesRepository instance with a getRuleFromFeature method that returns a Rule
+        self.mock_yaml_repo.getRuleFromFeature.return_value = Rule(
+            feature_url=expected_output[0]["url"],
+            ratio=expected_output[0]["ratio"],
+            delay_before_reanswer=expected_output[0]["delay_before_reanswer"],
+            delay_to_answer=expected_output[0]["delay_to_answer"],
+            is_active=expected_output[0]["is_active"]
+        )
+            
+        with app.container.sqlite_repo.override(self.mock_sqlite_repo),\
+            app.container.rules_config.override(self.mock_yaml_repo):
+            # Make request to /projects/{id}/rules endpoint
+            response = self.client.get(self.prefix + "/projects/1/rules")
+
+        # Check that the response is valid and matches the expected output
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected_output)
