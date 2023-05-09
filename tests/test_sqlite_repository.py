@@ -3,6 +3,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock
 
 from models.comment import Comment, CommentPostBody
+from models.display import Display
 from models.project import Project, ProjectEncryption
 from repository.sqlite_repository import SQLiteRepository
 
@@ -93,3 +94,30 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, db_project)
         Project.insert.assert_not_called()
         ProjectEncryption.insert.assert_not_called()
+
+    async def test_create_display(self):
+        user_id = "123"
+        timestamp_dt = datetime.now().isoformat()
+        self.repository.create_project = AsyncMock(
+            return_value=Project(id=1, name="test_project")
+        )
+        Display.insert = AsyncMock(return_value=5)
+        Project.filter = AsyncMock(return_value=[Project(id=1, name="test_project")])
+        result = await self.repository.create_display(
+            feature_url=self.comment_body.feature_url,
+            user_id=user_id,
+            timestamp=timestamp_dt,
+            project_name=self.project_name,
+        )
+
+        Display.insert.assert_called_once()
+        self.assertEqual(
+            result,
+            Display(
+                id=5,
+                project_id=1,
+                feature_url=self.comment_body.feature_url,
+                user_id=user_id,
+                timestamp=timestamp_dt
+            ),
+        )

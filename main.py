@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dependency_injector.wiring import Provide, inject
+from models.display import Display
 import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
@@ -58,7 +59,7 @@ async def init_db(
 ):
     try:
         db = await Database.create(
-            config["survey_db"], tables=[Project, Comment, ProjectEncryption]
+            config["survey_db"], tables=[Project, Comment, ProjectEncryption, Display]
         )
         logging.info("Database ready")
     except ArgumentError as e:
