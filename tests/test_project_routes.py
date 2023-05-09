@@ -7,7 +7,7 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 
 
-class TestProjectRating(unittest.TestCase):
+class TestProjectRoute(unittest.TestCase):
 
     def setUp(self):
         self.prefix = "/api/v1"
