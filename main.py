@@ -13,6 +13,7 @@ from models.comment import Comment
 from models.project import Project, ProjectEncryption
 from routes.comments import router as comment_router
 from routes.rules import router as rule_router
+from routes.project import router as project_router
 from utils.container import Container
 
 
@@ -30,6 +31,7 @@ def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
     )
     app.include_router(comment_router, prefix=prefix)
     app.include_router(rule_router, prefix=prefix)
+    app.include_router(project_router, prefix=prefix)
     return app
 
 
