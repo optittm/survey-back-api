@@ -1,8 +1,8 @@
-from datetime import datetime
 import re
 from typing import List, Optional, Union
 import logging
 
+from sqlalchemy.orm import Session
 from models.comment import Comment, CommentPostBody
 from models.project import Project, ProjectEncryption
 from utils.encryption import Encryption
@@ -20,13 +20,11 @@ class SQLiteRepository:
     ) -> Comment:
         """
         Creates a comment in the database
-
         Args:
             - comment_body: main part of the comment
             - user_id: the UUID of the user posting the comment
             - timestamp: timestamp of the comment in ISO 6801 format
             - project_name: the project name
-
         Returns:
             The saved Comment object
         """
@@ -61,92 +59,88 @@ class SQLiteRepository:
         return comments
 
     async def read_comments(
-            self,
-            project_name: Optional[str] = None,
-            feature_url: Optional[str] = None,
-            user_id: Optional[str] = None,
-            timestampbegin: Optional[str] = None,
-            timestampend: Optional[str] = None,
-            content_search: Optional[str] = None,
-        ) -> List[Comment]:
+        self,
+        project_name: Optional[str] = None,
+        feature_url: Optional[str] = None,
+        user_id: Optional[str] = None,
+        timestamp_start: Optional[str] = None,
+        timestamp_end: Optional[str] = None,
+        content_search: Optional[str] = None,
+        rating_min:Optional[int] = None,
+        rating_max:Optional[int] = None
+    ) -> List[Comment]:
         """
         Get all comments from the database that match the given filters.
-
         Args:
             - project_name: (optional) the name of the project to filter by
             - feature_url: (optional) the feature URL to filter by
             - user_id: (optional) the user ID to filter by
-            - timestampbegin: (optional) the earliest timestamp to filter by
-            - timestampend: (optional) the latest timestamp to filter by
+            - timestamp_start: (optional) the earliest timestamp to filter by
+            - timestamp_end: (optional) the latest timestamp to filter by
             - content_search: (optional) a search query to filter comments by
-
         Returns:
             A list of comments that match the given filters
         """
+        # print(issubclass(Comment.c.comment,ColumnElement))
+        #If no filters are given, return all comments
+        if not any((project_name, feature_url, user_id, timestamp_start, timestamp_end, content_search, rating_min, rating_max)):
+            return await self.get_all_comments()
+        query = []
 
-        # Get all comments from the database
-        all_comments = await self.get_all_comments()
-
-        # If no filters are given, return all comments
-        if not any((project_name, feature_url, user_id, timestampbegin, timestampend, content_search)):
-            return all_comments
-        
-        # Compile the content_search string into a regular expression pattern
-        pattern = None
-        if content_search:
-            search_words = content_search.split()
-            pattern = re.compile(".*" + ".*".join(search_words) + ".*", re.IGNORECASE)
-
-        # Filter comments by project, feature URL, user ID, timestamp, and search query
-        filtered_comments = []
-        if project_name is not None:
+        print("RATING MIN",rating_min)
+        print("RATING MAX",rating_max)
+        if project_name :
             project = await self.get_project_by_name(project_name)
-
-            if project is None:
-                return filtered_comments
-        
+            if project : 
+                query.append(Comment.project_id==project.id)
             else :
-                for comment in all_comments:
+                return []
+            
+        if feature_url is not None:
 
-                    if project_name and project.id != comment.project_id:
-                        continue
-                    if feature_url and comment.feature_url != feature_url:
-                        continue
-                    if user_id and comment.user_id != user_id:
-                        continue
-                    if timestampbegin:
-                        comment_ts = comment.timestamp
-                        query_ts = timestampbegin
-                        if comment_ts < query_ts:
-                            continue
-                    if timestampend:
-                        comment_ts = comment.timestamp
-                        query_ts = timestampend
-                        if comment_ts > query_ts:
-                            continue
-                    if pattern and not pattern.search(comment.comment):
-                        continue
-                    filtered_comments.append(comment)
-        if project_name is None:
-            for comment in all_comments:
-                if feature_url and comment.feature_url != feature_url:
-                    continue
-                if user_id and comment.user_id != user_id:
-                    continue
-                if timestampbegin:
-                    comment_ts = comment.timestamp
-                    query_ts = timestampbegin
-                    if comment_ts < query_ts:
-                        continue
-                if timestampend:
-                    comment_ts = comment.timestamp
-                    query_ts = timestampend
-                    if comment_ts > query_ts:
-                        continue
-                if pattern and not pattern.search(comment.comment):
-                    continue
-                filtered_comments.append(comment)
-        return filtered_comments
+            query.append(Comment.feature_url==feature_url) 
+
+        if user_id is not None:
+            print("ici",Comment.user_id)
+            query.append(Comment.user_id == user_id)
+
+        if timestamp_start is not None :
+            query.append(Comment.timestamp >= timestamp_start)
+
+        if timestamp_end is not None:
+            query.append(Comment.timestamp <= timestamp_end)
+
+        if rating_min is not None:
+            query.append(Comment.rating >=rating_min)
+
+        if rating_max is not None:
+            query.append(Comment.rating<=rating_max)
+
+        
+        if content_search is None:
+            if len(query)==0:
+                return await self.get_all_comments()
+            else :
+                query = await Comment.filter(*query)
+                return list(query)
+            
+        if content_search is not None:
+            table = Comment.get_table()
+            with Session(Comment.__metadata__.database.engine) as session:
+                result = (
+                    session.query(table).where(table.c.comment.regexp_match(content_search)).all()
+                )
+            comments_searched: List[Comment] = Comment.parse_results(result, [], False)
+            if len(query)==0:
+                return comments_searched
+            else :
+                query = await Comment.filter(*query)
+                print(list(query))
+                query_comments = list(query)
+                common_comments= [x for x in comments_searched if x in query_comments]
+                return common_comments
+        
+   
 
 
     async def create_project(self, project: Project):
@@ -179,6 +173,7 @@ class SQLiteRepository:
         else:
             return None
 
+        
     async def get_encryption_by_project_id(
         self, project_id: int
     ) -> Union[ProjectEncryption, None]:

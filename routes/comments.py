@@ -75,9 +75,11 @@ async def get_comments(
     project_name: Optional[str] = None,
     feature_url: Optional[str] = None,
     user_id: Optional[str] = None,
-    timestampbegin: Optional[str] = None,
-    timestampend: Optional[str] = None,
+    timestamp_start: Optional[str] = None,
+    timestamp_end: Optional[str] = None,
     content_search: Optional[str] = None,
+    rating_min: Optional[int] = None,
+    rating_max: Optional[int] = None,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
 ) -> List[CommentGetBody]:
     
@@ -85,9 +87,11 @@ async def get_comments(
         project_name=project_name,
         feature_url=feature_url,
         user_id=user_id,
-        timestampbegin=timestampbegin,
-        timestampend=timestampend,
+        timestamp_start=timestamp_start,
+        timestamp_end=timestamp_end,
         content_search=content_search,
+        rating_min=rating_min,
+        rating_max=rating_max
     )
 
     # Formatage des commentaires filtrés en CommentGetBody
