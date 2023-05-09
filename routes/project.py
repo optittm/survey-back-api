@@ -17,7 +17,7 @@ async def get_project_rating(
     yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> dict:  
     project = await sqlite_repo.get_project_by_id(id)
-    if project.name not in yaml_repo.getProjectNames():
+    if not project or project.name not in yaml_repo.getProjectNames():
         return {"id": id, "Error": "Project not found"}
     rating = sqlite_repo.get_project_avg_rating(id)
     return {
