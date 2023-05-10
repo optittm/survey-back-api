@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from fastapi import APIRouter, Depends, status, Cookie, Response
 from dependency_injector.wiring import Provide, inject
 from datetime import datetime, timedelta
@@ -11,6 +11,7 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
+
 
 router = APIRouter()
 
@@ -70,9 +71,30 @@ async def create_comment(
 
 @router.get("/comments", response_model=List[CommentGetBody])
 @inject
-async def get_all_comments(
-    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-) -> List[Comment]:
-    comments = await sqlite_repo.read_comments()
+async def get_comments(
+    project_name: Optional[str] = None,
+    feature_url: Optional[str] = None,
+    user_id: Optional[str] = None,
+    timestamp_start: Optional[str] = None,
+    timestamp_end: Optional[str] = None,
+    content_search: Optional[str] = None,
+    rating_min: Optional[int] = None,
+    rating_max: Optional[int] = None,
+    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
+) -> List[CommentGetBody]:
+    
+    comments = await sqlite_repo.read_comments(
+        project_name=project_name,
+        feature_url=feature_url,
+        user_id=user_id,
+        timestamp_start=timestamp_start,
+        timestamp_end=timestamp_end,
+        content_search=content_search,
+        rating_min=rating_min,
+        rating_max=rating_max
+    )
+
+    # Formatage des commentaires filtrés en CommentGetBody
     comments = [await comment_to_comment_get_body(comment) for comment in comments]
+
     return comments
