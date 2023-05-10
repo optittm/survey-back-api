@@ -14,4 +14,4 @@ class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
 
     rules_config = providers.Singleton(YamlRulesRepository)
-    sqlite_repo = providers.Singleton(SQLiteRepository)
+    sqlite_repo = providers.Singleton(SQLiteRepository, config=config)

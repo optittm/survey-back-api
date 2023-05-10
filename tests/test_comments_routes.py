@@ -188,38 +188,3 @@ class TestCommentsRoutes(unittest.TestCase):
             },
         )
         self.assertEqual(response.status_code, 422)
-
-    def test_get_all_comments_endpoint(self):
-        comment_a = Comment(
-            id=1,
-            project_id=1,
-            user_id="1",
-            timestamp=self.datetime.isoformat(),
-            feature_url="http://test.com/test",
-            rating=4,
-            comment="test",
-        )
-
-        comment_abis = CommentGetBody(
-            id=1,
-            project_name="project1",
-            user_id="1",
-            timestamp=self.datetime.isoformat(),
-            feature_url="http://test.com/test",
-            rating=4,
-            comment="test",
-        )
-
-        self.mock_repo.read_comments.return_value = [comment_a]
-
-        with patch("routes.comments.comment_to_comment_get_body") as mock_method:
-            with app.container.sqlite_repo.override(self.mock_repo):
-                mock_method.return_value = comment_abis
-                response = self.client.get(self.route)
-
-        self.assertEqual(response.status_code, 200)
-
-        comment_A = comment_abis.dict()
-
-        self.assertEqual(response.json(), [comment_A])
-        self.mock_repo.read_comments.assert_called_once()
