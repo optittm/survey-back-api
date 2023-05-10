@@ -1,4 +1,4 @@
-from datetime import datetime
+
 from typing import List, Union
 import logging
 import sqlite3
@@ -217,8 +217,6 @@ class SQLiteRepository:
 
         if len(projects) == 0:
             logging.warning("Project missing on comment creation")
-
-            # ajouter une partie qui permet de gérer la clé
             project = await self.create_project(Project(name=project_name))
         else:
             project = projects[0]
@@ -279,7 +277,7 @@ class SQLiteRepository:
             return None
         
     async def create_display(
-            self, project_name: str, user_id: int, timestamp: str, feature_url: str
+            self, project_name: str, user_id: str, timestamp: str, feature_url: str
     ) -> Union[Display, None]:
         
         projects = await Project.filter(name=project_name)
@@ -287,7 +285,6 @@ class SQLiteRepository:
         if len(projects) == 0:
             logging.warning("Project missing on display creation")
 
-            # ajouter une partie qui permet de gérer la clé
             project = await self.create_project(Project(name=project_name))
         else:
             project = projects[0]
