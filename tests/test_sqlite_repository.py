@@ -1,8 +1,7 @@
 import unittest
 
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
-import uuid
+from datetime import datetime
+from unittest.mock import AsyncMock, PropertyMock, patch
 
 from models.comment import Comment, CommentPostBody
 from models.project import Project, ProjectEncryption
@@ -13,9 +12,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.repository = SQLiteRepository()
         self.project_name = "test_project"
-
-
-    
+           
     async def test_create_comment(self):
         comment_body = CommentPostBody(
             feature_url="http://test.com",
@@ -129,6 +126,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         Comment.all.assert_called_once()
 
     async def test_read_comments_with_feature_url(self):
+        
         comment_a = Comment(
             id=1,
             project_id=1,
@@ -138,20 +136,50 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             rating=4,
             comment="test",
         )
-        comment_b = Comment(
-            id=2,
-            project_id=1,
-            user_id="2",
-            timestamp=datetime.now().isoformat(),
-            feature_url="http://test.com/test2",
-            rating=5,
-            comment="test2",
+
+        with patch('models.comment.Comment.filter') as mock_filter:
+            mock_filter.return_value = [comment_a]
+            Comment.feature_url = AsyncMock(return_value=comment_a.feature_url)
+            result = await self.repository.read_comments(feature_url="http://test.com/test")
+            mock_filter.assert_called_once_with(Comment.feature_url == "http://test.com/test")
+            self.assertEqual(result, [comment_a])
+            
+    async def test_read_comments_with_project_name(self):
+        comment_a = Comment(
+                id=1,
+                project_id=1,
+                user_id="1",
+                timestamp=datetime.now().isoformat(),
+                feature_url="http://test.com/test",
+                rating=4,
+                comment="test",
+            )
+        project = Project (
+            id=1,
+            name="project1",
         )
+        with patch('models.comment.Comment.filter') as mock_filter:
+            mock_filter.return_value = [comment_a]
+            Comment.project_id = AsyncMock(return_value=comment_a.project_id)
+            result = await self.repository.read_comments(project_name=project.name)
+            mock_filter.assert_called_once_with(Comment.project_id == 1)
+            self.assertEqual(result, [comment_a])
 
-        with patch("repository.sqlite_repository.SQLiteRepository.get_all_comments") as mock:
-            mock.return_value =[comment_a, comment_b]
-            result = await self.repository.read_comments(feature_url=comment_a.feature_url)
-        
-        self.assertEqual(result, [comment_a])
+    async def test_read_comments_with_timestamp_start(self):
+        comment_a = Comment(
+            id=1,
+            project_id=1,
+            user_id="1",
+            timestamp=datetime.now().isoformat(),
+            feature_url="http://test.com/test",
+            rating=4,
+            comment="test",
+        )
+        timestamp_start = datetime(2023, 5, 1).isoformat()
 
-        Comment.all.assert_called_once()
+        with patch('models.comment.Comment.filter') as mock_filter:
+            mock_filter.return_value = [comment_a]
+            Comment.timestamp = PropertyMock(return_value=comment_a.timestamp)
+            result = await self.repository.read_comments(timestamp_start=timestamp_start)
+            mock_filter.assert_called_once_with(Comment.timestamp >= timestamp_start)
+            self.assertEqual(result, [comment_a])

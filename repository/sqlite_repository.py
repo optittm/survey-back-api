@@ -1,4 +1,3 @@
-import re
 from typing import List, Optional, Union
 import logging
 
@@ -96,12 +95,10 @@ class SQLiteRepository:
             else :
                 return []
             
-        if feature_url is not None:
-
+        if feature_url is not None :
             query.append(Comment.feature_url==feature_url) 
 
         if user_id is not None:
-            print("ici",Comment.user_id)
             query.append(Comment.user_id == user_id)
 
         if timestamp_start is not None :
