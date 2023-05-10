@@ -18,7 +18,7 @@ def remove_search_hash_from_url(featureUrl: str):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid feature URL",
         )
-    split_url._replace(query="", fragment="")
+    split_url = split_url._replace(query="", fragment="")
     return split_url.geturl()
 
 
