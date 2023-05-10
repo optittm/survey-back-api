@@ -37,7 +37,7 @@ feature_url: The URL of the feature to filter by.
 user_id: The ID of the user to filter by.  
 timestamp_start: The minimum timestamp of the comments to filter by (in ISO 8601 format).  
 timestamp_end: The maximum timestamp of the comments to filter by (in ISO 8601 format).  
-content_search: A search query to filter comments by. It searches in comment text fields.  
+content_search: A search query (regex) to filter comments by. It searches in the comment text field.
 
 Response  
 response model: List[Comment] - A list of comment objects matching the specified filters. If no filters are provided, it returns all comments.
