@@ -3,6 +3,7 @@ import logging
 
 from sqlalchemy.orm import Session
 from models.comment import Comment, CommentPostBody
+from models.display import Display
 from models.project import Project, ProjectEncryption
 from utils.encryption import Encryption
 
@@ -179,3 +180,29 @@ class SQLiteRepository:
             return encryptions[0]
         else:
             return None
+        
+    async def create_display(
+            self, project_name: str, user_id: str, timestamp: str, feature_url: str
+    ) -> Union[Display, None]:
+        
+        projects = await Project.filter(name=project_name)
+
+        if len(projects) == 0:
+            logging.warning("Project missing on display creation")
+
+            project = await self.create_project(Project(name=project_name))
+        else:
+            project = projects[0]
+
+        new_display = Display(
+            project_id = project.id,
+            user_id = user_id,
+            timestamp = timestamp,
+            feature_url = feature_url
+        )
+
+        id = await new_display.insert()
+        new_display.id = id
+        logging.debug(f"Display created in DB: {new_display}")
+        return new_display
+        
