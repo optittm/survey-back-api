@@ -1,5 +1,7 @@
 from typing import List, Optional, Union
 import logging
+import sqlite3
+from sqlalchemy.orm import Session
 
 from models.comment import Comment, CommentPostBody
 from models.display import Display
@@ -7,9 +9,7 @@ from models.project import Project, ProjectEncryption
 from utils.encryption import Encryption
 
 
-
 class SQLiteRepository:
-  
     def __init__(self, config):
         self.db_name = config["survey_db"].replace("sqlite:///", "")
 
@@ -31,33 +31,41 @@ class SQLiteRepository:
         cursor = conn.cursor()
         # All the creation of the view are ignored if the view already exist
         # Create the view that count the average rating of a feature of a project
-        cursor.execute('''
+        cursor.execute(
+            """
             CREATE VIEW IF NOT EXISTS feature_rating_avg AS
                 SELECT project_id, feature_url, AVG(rating) AS average_rating
                 FROM Comment
                 GROUP BY project_id, feature_url;
-        ''')
+        """
+        )
         # Create the view that count the average rating of a project
-        cursor.execute('''
+        cursor.execute(
+            """
             CREATE VIEW IF NOT EXISTS project_rating_avg AS
                 SELECT project_id, AVG(rating) AS average_rating
                 FROM Comment
                 GROUP BY project_id;
-        ''')
+        """
+        )
         # Create the view that count the number of comment by project
-        cursor.execute('''
+        cursor.execute(
+            """
             CREATE VIEW IF NOT EXISTS number_comment_by_project AS
                 SELECT project_id, count(timestamp) AS number_comment
                 FROM Comment
                 GROUP BY project_id;
-        ''')
+        """
+        )
         # Create the view that count the number of display by project
-        cursor.execute('''
+        cursor.execute(
+            """
             CREATE VIEW IF NOT EXISTS number_display_by_project AS
                 SELECT project_id, count(timestamp) AS number_display
                 FROM Display
                 GROUP BY project_id;
-        ''')
+        """
+        )
         conn.commit()
         cursor.close()
         conn.close()
@@ -75,14 +83,16 @@ class SQLiteRepository:
         Raises:
             IndexError: If the result of the query is empty.
         """
-        
+
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute(f'''
+        cursor.execute(
+            f"""
             SELECT average_rating 
             FROM project_rating_avg
             WHERE project_id = {project_id};
-        ''')
+        """
+        )
         result = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -93,32 +103,34 @@ class SQLiteRepository:
 
     def get_feature_avg_rating(self, project_id: int, feature_url: str):
         """
-        Retrieves the average rating for a given feature of a specific project from 
+        Retrieves the average rating for a given feature of a specific project from
         the database.
 
-        This method executes an SQL query to retrieve the average rating associated 
-        with the specified feature of a specific project. The average rating is extracted 
+        This method executes an SQL query to retrieve the average rating associated
+        with the specified feature of a specific project. The average rating is extracted
         from the 'feature_rating_avg' view created by the '__create_views' method.
 
         Args:
-            project (Project): the Project object representing the project for which the 
+            project (Project): the Project object representing the project for which the
                 average rating should be retrieved.
-            feature_url (str): the URL of the feature for which the average rating should 
+            feature_url (str): the URL of the feature for which the average rating should
                 be retrieved.
 
         Returns:
-            float: the average rating of the specified feature for the specified project. 
+            float: the average rating of the specified feature for the specified project.
                 If the average rating is not found, returns None.
         """
-        
+
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute(f'''
+        cursor.execute(
+            f"""
             SELECT average_rating
             FROM feature_rating_avg
             WHERE project_id = {project_id}
                 AND feature_url = "{feature_url}";
-        ''')
+        """
+        )
         result = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -131,26 +143,28 @@ class SQLiteRepository:
         """
         Retrieves the number of comments for a specific project from the database.
 
-        This method executes an SQL query to retrieve the number of comments associated 
-        with a specific project. The number of comments is extracted from the 
+        This method executes an SQL query to retrieve the number of comments associated
+        with a specific project. The number of comments is extracted from the
         'number_comment_by_project' view created by the '__create_views' method.
 
         Args:
-            project (Project): the Project object representing the project for which the 
+            project (Project): the Project object representing the project for which the
                 number of comments should be retrieved.
 
         Returns:
-            int: the number of comments for the specified project. If the number of comments 
+            int: the number of comments for the specified project. If the number of comments
                 is not found, returns None.
         """
-        
+
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute(f'''
+        cursor.execute(
+            f"""
             SELECT number_comment
             FROM number_comment_by_project
             WHERE project_id = {project_id};
-        ''')
+        """
+        )
         result = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -163,27 +177,29 @@ class SQLiteRepository:
         """
         Retrieves the number of displays for a specific project from the database.
 
-        This method executes an SQL query to retrieve the number of displays associated 
-        with a specific project. The number of displays is extracted from the 
+        This method executes an SQL query to retrieve the number of displays associated
+        with a specific project. The number of displays is extracted from the
         'number_display_by_project' view created by the '__create_views' method.
 
         Args:
             self: the instance of the class.
-            project (Project): the Project object representing the project for which the 
+            project (Project): the Project object representing the project for which the
                 number of displays should be retrieved.
 
         Returns:
-            int: the number of displays for the specified project. If the number of displays 
+            int: the number of displays for the specified project. If the number of displays
                 is not found, returns None.
         """
 
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute(f'''
+        cursor.execute(
+            f"""
             SELECT number_display
             FROM number_display_by_project
             WHERE project_id = {project_id};
-        ''')
+        """
+        )
         result = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -191,7 +207,7 @@ class SQLiteRepository:
             return result[0][0]
         except IndexError:
             return 0
-  
+
     async def create_comment(
         self,
         comment_body: CommentPostBody,
@@ -201,17 +217,17 @@ class SQLiteRepository:
     ) -> Comment:
         """
         Creates a comment in the database
-        
+
         Args:
             - comment_body: main part of the comment
             - user_id: the UUID of the user posting the comment
             - timestamp: timestamp of the comment in ISO 6801 format
             - project_name: the project name
-            
+
         Returns:
             The saved Comment object
         """
-        
+
         # Get project by name
         projects = await Project.filter(name=project_name)
 
@@ -232,7 +248,7 @@ class SQLiteRepository:
         )
         id = await new_comment.insert()
         new_comment.id = id
-        
+
         # Log and return saved comment object
         logging.debug(f"Comment created in DB: {new_comment}")
         return new_comment
@@ -250,8 +266,8 @@ class SQLiteRepository:
         timestamp_start: Optional[str] = None,
         timestamp_end: Optional[str] = None,
         content_search: Optional[str] = None,
-        rating_min:Optional[int] = None,
-        rating_max:Optional[int] = None
+        rating_min: Optional[int] = None,
+        rating_max: Optional[int] = None,
     ) -> List[Comment]:
         """
         Get all comments from the database that match the given filters.
@@ -265,68 +281,72 @@ class SQLiteRepository:
         Returns:
             A list of comments that match the given filters
         """
-        # print(issubclass(Comment.c.comment,ColumnElement))
-        #If no filters are given, return all comments
-        if not any((project_name, feature_url, user_id, timestamp_start, timestamp_end, content_search, rating_min, rating_max)):
+        # If no filters are given, return all comments
+        if not any(
+            (
+                project_name,
+                feature_url,
+                user_id,
+                timestamp_start,
+                timestamp_end,
+                content_search,
+                rating_min,
+                rating_max,
+            )
+        ):
             return await self.get_all_comments()
         query = []
 
-        print("RATING MIN",rating_min)
-        print("RATING MAX",rating_max)
-        if project_name :
+        if project_name:
             project = await self.get_project_by_name(project_name)
-            if project : 
-                query.append(Comment.project_id==project.id)
-            else :
+            if project:
+                query.append(Comment.project_id == project.id)
+            else:
                 return []
-            
-        if feature_url is not None :
-            query.append(Comment.feature_url==feature_url) 
+
+        if feature_url is not None:
+            query.append(Comment.feature_url == feature_url)
 
         if user_id is not None:
             query.append(Comment.user_id == user_id)
 
-        if timestamp_start is not None :
+        if timestamp_start is not None:
             query.append(Comment.timestamp >= timestamp_start)
 
         if timestamp_end is not None:
             query.append(Comment.timestamp <= timestamp_end)
 
         if rating_min is not None:
-            query.append(Comment.rating >=rating_min)
+            query.append(Comment.rating >= rating_min)
 
         if rating_max is not None:
-            query.append(Comment.rating<=rating_max)
+            query.append(Comment.rating <= rating_max)
 
-        
         if content_search is None:
-            if len(query)==0:
+            if len(query) == 0:
                 return await self.get_all_comments()
-            else :
+            else:
                 query = await Comment.filter(*query)
                 return list(query)
-            
+
         if content_search is not None:
             table = Comment.get_table()
             with Session(Comment.__metadata__.database.engine) as session:
                 result = (
-                    session.query(table).where(table.c.comment.regexp_match(content_search)).all()
+                    session.query(table)
+                    .where(table.c.comment.regexp_match(content_search))
+                    .all()
                 )
             comments_searched: List[Comment] = Comment.parse_results(result, [], False)
-            if len(query)==0:
+            if len(query) == 0:
                 return comments_searched
-            else :
+            else:
                 query = await Comment.filter(*query)
-                print(list(query))
                 query_comments = list(query)
-                common_comments= [x for x in comments_searched if x in query_comments]
+                common_comments = [x for x in comments_searched if x in query_comments]
                 return common_comments
-        
-   
-
 
     async def create_project(self, project: Project):
-
         projects = await Project.filter(name=project.name)
 
         if len(projects) == 0:
@@ -355,7 +375,6 @@ class SQLiteRepository:
         else:
             return None
 
-        
     async def get_encryption_by_project_id(
         self, project_id: int
     ) -> Union[ProjectEncryption, None]:
@@ -364,11 +383,10 @@ class SQLiteRepository:
             return encryptions[0]
         else:
             return None
-        
+
     async def create_display(
-            self, project_name: str, user_id: str, timestamp: str, feature_url: str
+        self, project_name: str, user_id: str, timestamp: str, feature_url: str
     ) -> Union[Display, None]:
-        
         projects = await Project.filter(name=project_name)
 
         if len(projects) == 0:
@@ -379,14 +397,13 @@ class SQLiteRepository:
             project = projects[0]
 
         new_display = Display(
-            project_id = project.id,
-            user_id = user_id,
-            timestamp = timestamp,
-            feature_url = feature_url
+            project_id=project.id,
+            user_id=user_id,
+            timestamp=timestamp,
+            feature_url=feature_url,
         )
 
         id = await new_display.insert()
         new_display.id = id
         logging.debug(f"Display created in DB: {new_display}")
         return new_display
-        
