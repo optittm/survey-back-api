@@ -8,11 +8,12 @@ from utils.container import Container
 
 
 def str_to_bool(string: str):
-    if string == "True":
+    if string.lower() == "true":
         return True
-    elif string == "False":
+    elif string.lower() == "false":
         return False
     else:
+        logging.error(f"String value {string} cannot be converted to bool")
         raise Exception(f"String value {string} cannot be converted to bool")
 
 
