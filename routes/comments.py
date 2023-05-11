@@ -30,6 +30,7 @@ async def create_comment(
     timestamp: Union[str, None] = Cookie(default=None),
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     rules_config: YamlRulesRepository = Depends(Provide[Container.rules_config]),
+    config=Depends(Provide[Container.config]),
 ) -> Comment:
     if (
         project_name := rules_config.getProjectNameFromFeature(comment_body.feature_url)
@@ -61,7 +62,13 @@ async def create_comment(
 
         iso_timestamp = dt_timestamp.isoformat()
         new_comment = await sqlite_repo.create_comment(
-            comment_body, user_id, iso_timestamp, project_name
+            comment_body.feature_url,
+            comment_body.rating,
+            comment_body.comment,
+            # Depending on config, use either the fingerprint passed in body, or the UUID from cookie
+            comment_body.user_id if config["use_fingerprint"] else user_id,
+            iso_timestamp,
+            project_name,
         )
         return new_comment
     else:
