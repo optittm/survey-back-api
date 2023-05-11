@@ -11,6 +11,7 @@ from utils.container import Container
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
+from utils.middleware import remove_search_hash_from_url
 
 
 router = APIRouter()
@@ -19,8 +20,8 @@ router = APIRouter()
 @router.get("/rules", response_model=Union[bool, dict])
 @inject
 async def show_modal(
-    featureUrl: str,
     response: Response,
+    featureUrl: str = Depends(remove_search_hash_from_url),
     user_id: Union[str, None] = Cookie(default=None),
     timestamp: Union[str, None] = Cookie(default=None),
     rulesYamlConfig: YamlRulesRepository = Depends(Provide[Container.rules_config]),
@@ -44,7 +45,8 @@ async def show_modal(
     # Set user_id Cookie if is None
     if user_id is None:
         logging.info("GET rules::Setting a new user_id cookie")
-        response.set_cookie(key="user_id", value=str(uuid4()))
+        user_id = str(uuid4())
+        response.set_cookie(key="user_id", value=user_id)
 
     # Get current timestamp
     dateToday: datetime = datetime.now()
@@ -79,5 +81,9 @@ async def show_modal(
         encrypted_timestamp = encryption.encrypt(timestamp_bytes)
         # Add the encrypted timestamp as cookie to the response
         response.set_cookie(key="timestamp", value=encrypted_timestamp)
-
+        # Store the timestamp when it's displayed
+        iso_timestamp = dateToday.isoformat()
+        await sqlite_repo.create_display(
+            project_name, user_id, iso_timestamp, featureUrl
+        )
     return isDisplay
