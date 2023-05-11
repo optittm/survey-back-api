@@ -6,7 +6,6 @@ from models.comment import Comment, CommentGetBody
 from models.project import Project
 from repository.sqlite_repository import SQLiteRepository
 from utils.formatter import comment_to_comment_get_body
-from utils.middleware import remove_search_hash_from_url
 
 
 class TestUtils(unittest.IsolatedAsyncioTestCase):
@@ -42,9 +41,3 @@ class TestUtils(unittest.IsolatedAsyncioTestCase):
             ),
         )
         self.sqliterepo.get_project_by_id.assert_called_once_with(1)
-
-    def test_remove_search_hash_from_url(self):
-        main_url = "https://test.com/segment"
-        full_url = main_url + "?query=value#something"
-        result = remove_search_hash_from_url(full_url)
-        self.assertEqual(result, main_url)

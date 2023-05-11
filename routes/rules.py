@@ -11,7 +11,7 @@ from utils.container import Container
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
-from utils.middleware import remove_search_hash_from_url
+from routes.middlewares import remove_search_hash_from_url
 
 
 router = APIRouter()

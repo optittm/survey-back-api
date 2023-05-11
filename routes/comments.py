@@ -11,7 +11,7 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
-from utils.middleware import comment_body_treatment
+from routes.middlewares import comment_body_treatment
 
 
 router = APIRouter()
@@ -81,9 +81,8 @@ async def get_comments(
     content_search: Optional[str] = None,
     rating_min: Optional[int] = None,
     rating_max: Optional[int] = None,
-    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
+    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
 ) -> List[CommentGetBody]:
-    
     comments = await sqlite_repo.read_comments(
         project_name=project_name,
         feature_url=feature_url,
@@ -92,7 +91,7 @@ async def get_comments(
         timestamp_end=timestamp_end,
         content_search=content_search,
         rating_min=rating_min,
-        rating_max=rating_max
+        rating_max=rating_max,
     )
 
     # Formatage des commentaires filtrés en CommentGetBody
