@@ -1,17 +1,18 @@
 from typing import List, Optional, Union
-from fastapi import APIRouter, Depends, status, Cookie, Response
+from fastapi import APIRouter, Depends, Security, status, Cookie, Response
 from dependency_injector.wiring import Provide, inject
 from datetime import datetime, timedelta
 import logging
 
 from models.comment import Comment, CommentGetBody, CommentPostBody
 from models.rule import Rule
+from models.security import ScopeEnum
 from utils.container import Container
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
-from routes.middlewares import comment_body_treatment
+from routes.middlewares import check_jwt, comment_body_treatment
 
 
 router = APIRouter()
@@ -19,6 +20,7 @@ router = APIRouter()
 
 @router.post(
     "/comments",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.CLIENT.value])],
     status_code=status.HTTP_201_CREATED,
     response_model=Union[Comment, dict],
 )
@@ -70,7 +72,11 @@ async def create_comment(
         return {"Error": "Feature not found"}
 
 
-@router.get("/comments", response_model=List[CommentGetBody])
+@router.get(
+    "/comments",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_model=List[CommentGetBody],
+)
 @inject
 async def get_comments(
     project_name: Optional[str] = None,
