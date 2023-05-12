@@ -17,10 +17,10 @@ from utils.container import Container
 
 
 @inject
-def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
+def init_fastapi(prefix="/api/v1", config=Provide[Container.config]) -> FastAPI:
     logging.info("Init FastAPI app")
     # Creates the FastAPI instance inside the function to be able to use the config provider
-    app = FastAPI()
+    app = FastAPI(debug=config["debug_mode"])
     app.add_middleware(
         CORSMiddleware,
         allow_origins=config["cors_allow_origins"].split(","),

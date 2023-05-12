@@ -94,7 +94,7 @@ async def get_comments(
         rating_max=rating_max,
     )
 
-    # Formatage des commentaires filtrés en CommentGetBody
+    # Formatting of filtered comments into CommentGetBody
     comments = [await comment_to_comment_get_body(comment) for comment in comments]
 
     return comments
