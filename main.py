@@ -100,6 +100,13 @@ container.config.cors_allow_methods.from_env(
 container.config.cors_allow_headers.from_env(
     "CORS_ALLOW_HEADERS", required=True, default="*"
 )
+container.config.secret_key.from_env("SECRET_KEY")
+container.config.access_token_expire_minutes.from_env(
+    "ACCESS_TOKEN_EXPIRE_MINUTES", as_=int, default=15
+)
+container.config.refresh_token_expire_days.from_env(
+    "REFRESH_TOKEN_EXPIRE_DAYS", as_=int, default=14
+)
 container.config.debug_mode.from_env(
     "DEBUG_MODE", required=True, as_=bool, default=False
 )
