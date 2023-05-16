@@ -1,6 +1,6 @@
 
 from typing import List, Union
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 
 from dependency_injector.wiring import Provide, inject
 from models.project import Project
@@ -10,10 +10,11 @@ from utils.container import Container
 
 router = APIRouter()
 
-@router.get("/projects/{id}/feature_rating", response_model=Union[List, dict])
+@router.get("/projects/{id}/avg_feature_rating", response_model=Union[List, dict])
 @inject
 async def get_projects_feature_rating(
     id: int,
+    response: Response,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> Union[List, dict]:  
@@ -34,6 +35,7 @@ async def get_projects_feature_rating(
     output = []
     project = await sqlite_repo.get_project_by_id(id)
     if not project or project.name not in yaml_repo.getProjectNames():
+        response.status_code = status.HTTP_404_NOT_FOUND
         return {"id": id, "Error": "Project not found"}
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project.name)
     for url in feature_urls:
@@ -48,6 +50,7 @@ async def get_projects_feature_rating(
 @inject
 async def get_projects_rules(
     id: int,
+    response: Response,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> Union[List, dict]:  
@@ -65,6 +68,7 @@ async def get_projects_rules(
     output = []
     project = await sqlite_repo.get_project_by_id(id)
     if not project or project.name not in yaml_repo.getProjectNames():
+        response.status_code = status.HTTP_404_NOT_FOUND
         return {"id": id, "Error": "Project not found"}
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project.name)
     for url in feature_urls:
