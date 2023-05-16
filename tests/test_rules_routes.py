@@ -17,6 +17,7 @@ class TestRulesRoutes(unittest.TestCase):
 
     def setUp(self):
         self.client = TestClient(app)
+        self.route = "/api/v1/rules"
         self.mock_yaml_repo = Mock(spec=YamlRulesRepository)
         self.mock_db_repo = Mock(spec=SQLiteRepository)
         self.crypt_key = "rg3ENcA7oBCxtxvJ1kk4oAXLizePSnGqPykRi4hvWqY="
@@ -27,7 +28,7 @@ class TestRulesRoutes(unittest.TestCase):
             self.mock_yaml_repo
         ), app.container.sqlite_repo.override(self.mock_db_repo):
             response = self.client.get(
-                "/rules",
+                self.route,
                 params={"featureUrl": "/test"},
                 cookies={
                     "user_id": "1",
@@ -161,7 +162,7 @@ class TestRulesRoutes(unittest.TestCase):
                 self.mock_yaml_repo
             ), app.container.sqlite_repo.override(self.mock_db_repo):
                 response = self.client.get(
-                    "/rules",
+                    self.route,
                     params={"featureUrl": "/test"},
                 )
 
@@ -169,3 +170,46 @@ class TestRulesRoutes(unittest.TestCase):
         self.assertEqual(response.json(), True)
         self.assertIsNotNone(response.cookies.get("timestamp"))
         self.assertIsNotNone(response.cookies.get("user_id"))
+
+    def test_invalid_timestamp(self):
+        rule = Rule(
+            feature_url="/test",
+            ratio=0.6,
+            delay_before_reanswer=30,
+            delay_to_answer=3,
+            is_active=True,
+        )
+        self.mock_yaml_repo.getRuleFromFeature.return_value = rule
+        self.mock_yaml_repo.getProjectNameFromFeature.return_value = "project1"
+        self.mock_db_repo.get_project_by_name.return_value = Mock()
+        project_encryption_mock = Mock()
+        project_encryption_mock.encryption_key = self.crypt_key
+        self.mock_db_repo.get_encryption_by_project_id.return_value = (
+            project_encryption_mock
+        )
+
+        with app.container.rules_config.override(
+            self.mock_yaml_repo
+        ), app.container.sqlite_repo.override(self.mock_db_repo):
+            response = self.client.get(
+                self.route,
+                params={"featureUrl": "/test"},
+                cookies={
+                    "user_id": "1",
+                    "timestamp": "hdhskokvhsnvj",
+                },
+            )
+
+        self.assertEqual(response.status_code, 422)
+
+    def test_invalid_feature(self):
+        response = self.client.get(
+            self.route,
+            params={"featureUrl": "http://tes[t.com/test"},
+            cookies={
+                "user_id": "1",
+                "timestamp": "hdhskokvhsnvj",
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)

@@ -3,9 +3,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dependency_injector.wiring import Provide, inject
+from models.display import Display
 import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
+import logging
 
 from models.comment import Comment
 from models.project import Project, ProjectEncryption
@@ -13,10 +15,12 @@ from routes.comments import router as comment_router
 from routes.rules import router as rule_router
 from routes.report import router as report_router
 from utils.container import Container
+from utils.formatter import str_to_bool
 
 
 @inject
-def init_fastapi(config=Provide[Container.config]) -> FastAPI:
+def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
+    logging.info("Init FastAPI app")
     # Creates the FastAPI instance inside the function to be able to use the config provider
     app = FastAPI()
     app.add_middleware(
@@ -41,10 +45,12 @@ async def main(config=Provide[Container.config]):
         host=config["survey_api_host"],
         reload=config["debug_mode"],
         port=config["survey_api_port"],
+        log_level=config["log_level"].lower(),
     )
     # Running the server in the existing async loop
     # https://www.uvicorn.org/#config-and-server-instances
     server = uvicorn.Server(config)
+    logging.info("Starting uvicorn server")
     await server.serve()
 
 
@@ -56,14 +62,21 @@ async def init_db(
 ):
     try:
         db = await Database.create(
-            config["survey_db"], tables=[Project, Comment, ProjectEncryption]
+            config["survey_db"], tables=[Project, Comment, ProjectEncryption, Display]
         )
+        logging.info("Database ready")
     except ArgumentError as e:
+        logging.error("Error initialising the database")
         raise Exception(f"Error from sqlalchemy : {str(e)}")
 
     project_names = rules_config.getProjectNames()
     for project_name in project_names:
         await sqlite_repo.create_project(Project(name=project_name))
+
+
+@inject
+def config_logging(config=Provide[Container.config]):
+    logging.basicConfig(level=config["log_level"])
 
 
 load_dotenv()
@@ -75,26 +88,44 @@ container.config.survey_api_host.from_env(
 container.config.survey_api_port.from_env(
     "SURVEY_API_PORT", required=True, as_=int, default=8000
 )
+# from_env default only applies when the statement VAR= is compeltely absent from the env file
+# Writing VAR= with no following value returns an empty string,
+# thus the use of a lambda expression to apply the default in this case and avoid an error
 container.config.survey_db.from_env(
-    "SURVEY_DB", required=True, default="sqlite:///data/survey.sqlite3"
+    "SURVEY_DB",
+    required=True,
+    as_=lambda x: x if x != "" else "sqlite:///data/survey.sqlite3",
+    default="sqlite:///data/survey.sqlite3",
 )
-container.config.cors_allow_origins.from_env(
-    "CORS_ALLOW_ORIGINS", required=True, default="*"
+container.config.use_fingerprint.from_env(
+    "USE_FINGERPRINT",
+    required=True,
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
+container.config.cors_allow_origins.from_env("CORS_ALLOW_ORIGINS", default="*")
 container.config.cors_allow_credentials.from_env(
-    "CORS_ALLOW_CREDENTIALS", required=True, default=False
+    "CORS_ALLOW_CREDENTIALS",
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
-container.config.cors_allow_methods.from_env(
-    "CORS_ALLOW_METHODS", required=True, default="GET, POST"
-)
-container.config.cors_allow_headers.from_env(
-    "CORS_ALLOW_HEADERS", required=True, default="*"
-)
+container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", default="GET, POST")
+container.config.cors_allow_headers.from_env("CORS_ALLOW_HEADERS", default="*")
 container.config.debug_mode.from_env(
-    "DEBUG_MODE", required=True, as_=bool, default=False
+    "DEBUG_MODE",
+    required=True,
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
+)
+container.config.log_level.from_env(
+    "LOG_LEVEL",
+    required=True,
+    as_=lambda x: x if x != "" else "INFO",
+    default="INFO",
 )
 container.wire(modules=[__name__])
 
+config_logging()
 app = init_fastapi()
 app.container = container
 
