@@ -107,3 +107,18 @@ class TestProjectRoute(unittest.TestCase):
         # Check that the response is valid and matches the expected output
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected_output)
+
+    def test_get_project_rules_with_rong_id(self):
+
+
+        # Create a mock SQLiteRepository instance with a get_project_by_id method that returns the mock project
+        self.mock_sqlite_repo.get_project_by_id.return_value = None
+            
+        with app.container.sqlite_repo.override(self.mock_sqlite_repo),\
+            app.container.rules_config.override(self.mock_yaml_repo):
+            # Make request to /projects/{id}/rules endpoint
+            response = self.client.get(self.prefix + "/projects/1/rules")
+
+        # Check that the response is valid and matches the expected output
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {"id": 1, "Error": "Project not found"})
