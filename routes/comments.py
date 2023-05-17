@@ -88,6 +88,8 @@ async def get_comments(
     content_search: Optional[str] = None,
     rating_min: Optional[int] = None,
     rating_max: Optional[int] = None,
+    page: Optional[int] = 1,
+    page_size: Optional[int] = 20,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
 ) -> List[CommentGetBody]:
     
@@ -99,10 +101,11 @@ async def get_comments(
         timestamp_end=timestamp_end,
         content_search=content_search,
         rating_min=rating_min,
-        rating_max=rating_max
+        rating_max=rating_max, 
+        page = page,
+        page_size=page_size
     )
+    commentslist=comments['results']
+    commentsreturn = [await comment_to_comment_get_body(comment) for comment in commentslist]
 
-    # Formatage des commentaires filtrés en CommentGetBody
-    comments = [await comment_to_comment_get_body(comment) for comment in comments]
-
-    return comments
+    return commentsreturn
