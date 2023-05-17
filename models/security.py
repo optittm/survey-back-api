@@ -10,9 +10,9 @@ class ScopeEnum(Enum):
 
 class OAuthBody(BaseModel):
     grant_type: str
-    scope: str
     code: Optional[str]
-    refresh_token: Optional[str]
+    client_id: Optional[int]
+    client_secret: Optional[str]
 
 
 class AuthToken(BaseModel):
@@ -20,7 +20,6 @@ class AuthToken(BaseModel):
     token_type: str
     expires_in: int
     scope: str
-    refresh_token: Optional[str]
 
 
 class JWTokenData(BaseModel):

@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
 from dependency_injector.wiring import Provide, inject
 import jwt
-from models.security import AuthToken, OAuthBody
+from jwt import PyJWKClient
+from models.security import AuthToken, OAuthBody, ScopeEnum
 
 from utils.container import Container
 
@@ -24,46 +26,81 @@ def _create_jwtoken(
     return encoded_jwt
 
 
+@router.post("/authorize")
+@inject
+def authorize_redirect(config=Depends(Provide[Container.config])):
+    return RedirectResponse(config["auth_url"])
+
+
 @router.post("/token", response_model=AuthToken)
 @inject
-async def login_for_access_token(
-    data: OAuthBody, config=Depends(Provide[Container.config])
+async def token_request(
+    data: OAuthBody,
+    config=Depends(Provide[Container.config]),
 ):
-    # TODO auth
-    # user = authenticate_user(fake_users_db, form_data.username, form_data.password)
-    # if not user:
-    #     raise HTTPException(status_code=400, detail="Incorrect username or password")
     if data.grant_type == "authorization_code":
+        if data.code is None:
+            logging.error(f"Missing authorization code")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing authorization code",
+            )
+
+        try:
+            jwks_client = PyJWKClient(config["jwk_url"])
+            signing_key = jwks_client.get_signing_keys()[0]
+            jwt.decode(
+                data.code,
+                signing_key.key,
+                algorithms=["RS256"],
+                options={"require": ["exp"]},
+            )
+        except Exception:
+            logging.error("Invalid authorization code")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid code",
+            )
+
+        scope = ScopeEnum.CLIENT.value
         access_token_expires = timedelta(minutes=config["access_token_expire_minutes"])
         access_token = _create_jwtoken(
-            data={"scopes": data.scope.split(" ")},
+            data={"scopes": [scope]},
             expires_delta=access_token_expires,
-        )
-        refresh_token_expires = timedelta(days=config["refresh_token_expire_days"])
-        refresh_token = _create_jwtoken(
-            data={"scopes": data.scope.split(" ")},
-            expires_delta=refresh_token_expires,
         )
         return AuthToken(
             access_token=access_token,
             token_type="Bearer",
             expires_in=access_token_expires.seconds,
-            scope=data.scope,
-            refresh_token=refresh_token,
+            scope=scope,
         )
 
-    elif data.grant_type == "refresh_token":
-        # TODO check expiry
+    elif data.grant_type == "client_credentials":
+        if data.client_id is None or data.client_secret is None:
+            logging.error(f"Missing client id or secret")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing client id or secret",
+            )
+        secrets = config["client_secrets"].split(",")
+        if data.client_secret != secrets[data.client_id]:
+            logging.error(f"Invalid client credentials")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+            )
+
+        scope = ScopeEnum.DATA.value
         access_token_expires = timedelta(minutes=config["access_token_expire_minutes"])
         access_token = _create_jwtoken(
-            data={"scope": data.scope},
+            data={"scopes": [scope]},
             expires_delta=access_token_expires,
         )
         return AuthToken(
             access_token=access_token,
             token_type="Bearer",
             expires_in=access_token_expires.seconds,
-            scope=data.scope,
+            scope=scope,
         )
 
     else:
