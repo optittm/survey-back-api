@@ -15,6 +15,7 @@ from routes.comments import router as comment_router
 from routes.rules import router as rule_router
 from routes.project import router as project_router
 from utils.container import Container
+from utils.formatter import str_to_bool
 
 
 @inject
@@ -87,25 +88,41 @@ container.config.survey_api_host.from_env(
 container.config.survey_api_port.from_env(
     "SURVEY_API_PORT", required=True, as_=int, default=8000
 )
+# from_env default only applies when the statement VAR= is compeltely absent from the env file
+# Writing VAR= with no following value returns an empty string,
+# thus the use of a lambda expression to apply the default in this case and avoid an error
 container.config.survey_db.from_env(
-    "SURVEY_DB", required=True, default="sqlite:///data/survey.sqlite3"
+    "SURVEY_DB",
+    required=True,
+    as_=lambda x: x if x != "" else "sqlite:///data/survey.sqlite3",
+    default="sqlite:///data/survey.sqlite3",
 )
-container.config.cors_allow_origins.from_env(
-    "CORS_ALLOW_ORIGINS", required=True, default="*"
+container.config.use_fingerprint.from_env(
+    "USE_FINGERPRINT",
+    required=True,
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
+container.config.cors_allow_origins.from_env("CORS_ALLOW_ORIGINS", default="*")
 container.config.cors_allow_credentials.from_env(
-    "CORS_ALLOW_CREDENTIALS", required=True, default=False
+    "CORS_ALLOW_CREDENTIALS",
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
-container.config.cors_allow_methods.from_env(
-    "CORS_ALLOW_METHODS", required=True, default="GET, POST"
-)
-container.config.cors_allow_headers.from_env(
-    "CORS_ALLOW_HEADERS", required=True, default="*"
-)
+container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", default="GET, POST")
+container.config.cors_allow_headers.from_env("CORS_ALLOW_HEADERS", default="*")
 container.config.debug_mode.from_env(
-    "DEBUG_MODE", required=True, as_=bool, default=False
+    "DEBUG_MODE",
+    required=True,
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
-container.config.log_level.from_env("LOG_LEVEL", required=True, default="INFO")
+container.config.log_level.from_env(
+    "LOG_LEVEL",
+    required=True,
+    as_=lambda x: x if x != "" else "INFO",
+    default="INFO",
+)
 container.wire(modules=[__name__])
 
 config_logging()

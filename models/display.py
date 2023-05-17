@@ -6,7 +6,7 @@ from pydbantic import DataBaseModel, PrimaryKey, ForeignKey
 
 class Display(DataBaseModel):
     """
-    Comment model for the SQL table
+    Display model for the SQL table
     """
 
     id: Optional[int] = PrimaryKey(autoincrement=True)
