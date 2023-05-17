@@ -65,7 +65,16 @@ Response
 - response model: bool - True if the modal should be displayed based on the retrieved rules, False otherwise.  
 
 Example usage: GET ```/rules?featureUrl=https://www.example.com/feature1```  
-Example response: true
+Example response: true  
+
+### GET /survey-report  
+
+Generates an HTML report for the survey.  
+
+Response  
+- status code: 200 - OK  
+- response model: str - The generated HTML report.  
+
 ## Usage
 ### Local installation
 
