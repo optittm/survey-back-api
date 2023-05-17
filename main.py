@@ -37,6 +37,7 @@ def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
     app.include_router(rule_router, prefix=prefix)
     app.include_router(project_router, prefix=prefix)
     app.include_router(report_router, prefix=prefix)
+
     return app
 
 
