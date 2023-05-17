@@ -11,7 +11,7 @@ from utils.container import Container
 router = APIRouter()
 
 
-@router.get("/projects/{id}/avg_feature_rating", response_model=Union[List, dict])
+@router.get("/project/{id}/avg_feature_rating", response_model=Union[List, dict])
 @inject
 async def get_projects_feature_rating(
     id: int,
@@ -35,6 +35,10 @@ async def get_projects_feature_rating(
             If the project is not found, returns a dictionary with the error message.
     """
     output = []
+    project = await sqlite_repo.get_project_by_id(id)
+    if not project or project.name not in yaml_repo.getProjectNames():
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"id": id, "Error": "Project not found"}
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project.name)
     for url in feature_urls:
         output.append({
