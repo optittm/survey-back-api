@@ -2,7 +2,7 @@ import sqlite3
 import unittest
 
 from datetime import datetime
-from unittest.mock import AsyncMock, PropertyMock, patch, MagicMock
+from unittest.mock import AsyncMock, PropertyMock, patch
 
 from models.comment import Comment, CommentPostBody
 from models.display import Display
