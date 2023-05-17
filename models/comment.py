@@ -6,15 +6,18 @@ import logging
 from models.project import Project
 
 
-class CommentPostBody(DataBaseModel):
+class Comment(DataBaseModel):
     """
-    Comment model for validating the body received on POST request
+    Comment model for the SQL table
     """
 
+    id: Optional[int] = PrimaryKey(autoincrement=True)
+    project_id: int = ForeignKey(Project, "id")
+    user_id: str
+    timestamp: str
     feature_url: str
     rating: int
     comment: str
-    user_id: str
 
     @validator("rating")
     def validate_rating(cls, value):
@@ -22,15 +25,6 @@ class CommentPostBody(DataBaseModel):
             logging.error("Rating value is out of range")
             raise ValueError("Rating must be an integer between 1 and 5")
         return value
-
-
-class CommentCommon(CommentPostBody):
-    """
-    Intermediary class, for code organization purposes only
-    """
-
-    id: Optional[int] = PrimaryKey(autoincrement=True)
-    timestamp: str
 
     @validator("timestamp")
     def encode_timestamp(cls, value):
@@ -41,17 +35,47 @@ class CommentCommon(CommentPostBody):
         return value
 
 
-class Comment(CommentCommon):
+class CommentPostBody(DataBaseModel):
     """
-    Comment model for the SQL table
+    Comment model for validating the body received on POST request
     """
 
-    project_id: int = ForeignKey(Project, "id")
+    feature_url: str
+    rating: int
+    comment: str
+
+    @validator("rating")
+    def validate_rating(cls, value):
+        if not 1 <= value <= 5:
+            logging.error("Rating value is out of range")
+            raise ValueError("Rating must be an integer between 1 and 5")
+        return value
 
 
-class CommentGetBody(CommentCommon):
+class CommentGetBody(DataBaseModel):
     """
     Comment model for sending on GET request
     """
 
+    id: Optional[int] = PrimaryKey(autoincrement=True)
     project_name: str
+    user_id: str
+    timestamp: str
+    feature_url: str
+    rating: int
+    comment: str
+
+    @validator("rating")
+    def validate_rating(cls, value):
+        if not 1 <= value <= 5:
+            logging.error("Rating value is out of range")
+            raise ValueError("Rating must be an integer between 1 and 5")
+        return value
+
+    @validator("timestamp")
+    def encode_timestamp(cls, value):
+        try:
+            datetime.fromisoformat(value)
+        except ValueError:
+            raise ValueError("Invalid timestamp format")
+        return value

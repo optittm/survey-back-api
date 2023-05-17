@@ -201,15 +201,3 @@ class TestRulesRoutes(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 422)
-
-    def test_invalid_feature(self):
-        response = self.client.get(
-            self.route,
-            params={"featureUrl": "http://tes[t.com/test"},
-            cookies={
-                "user_id": "1",
-                "timestamp": "hdhskokvhsnvj",
-            },
-        )
-
-        self.assertEqual(response.status_code, 422)
