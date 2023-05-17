@@ -1,6 +1,6 @@
 import unittest
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 from main import app
 from models.project import Project
 from repository.sqlite_repository import SQLiteRepository
