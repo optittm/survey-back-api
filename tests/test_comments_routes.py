@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from fastapi.testclient import TestClient
 
-from models.comment import Comment, CommentGetBody, CommentPostBody
+from models.comment import Comment, CommentPostBody
 from models.rule import Rule
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository

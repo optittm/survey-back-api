@@ -8,10 +8,10 @@ class Container(containers.DeclarativeContainer):
     # Wiring the modules which need dependency injection
     # If you need to use Provide in a file other than main.py, add it to the list of modules here
     wiring_config = containers.WiringConfiguration(
-        modules=["routes.comments", "routes.rules", "utils.formatter", "routes.project"]
+        modules=["routes.comments", "routes.rules", "routes.report", "routes.project", "utils.formatter"]
     )
 
     config = providers.Configuration()
 
     rules_config = providers.Singleton(YamlRulesRepository)
-    sqlite_repo = providers.Singleton(SQLiteRepository, config=config)
+    sqlite_repo = providers.Singleton(SQLiteRepository,config=config)
