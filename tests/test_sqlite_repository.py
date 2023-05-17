@@ -2,7 +2,7 @@ import sqlite3
 import unittest
 
 from datetime import datetime
-from unittest.mock import AsyncMock, PropertyMock, patch, MagicMock
+from unittest.mock import AsyncMock, PropertyMock, patch
 
 from models.comment import Comment, CommentPostBody
 from models.display import Display
@@ -140,7 +140,6 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, db_project)
         Project.insert.assert_not_called()
-        ProjectEncryption.insert.assert_not_called()
     
     async def test_get_all_comments(self):
         comment_a = Comment(

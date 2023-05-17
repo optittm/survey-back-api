@@ -1,7 +1,6 @@
 from typing import List, Optional, Union
 import logging
 import sqlite3
-from sqlalchemy.orm import Session
 
 from models.comment import Comment
 from models.display import Display
