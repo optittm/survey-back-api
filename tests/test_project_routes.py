@@ -45,7 +45,7 @@ class TestProjectRoute(unittest.TestCase):
                 app.container.rules_config.override(self.mock_yaml_repo):
 
             # Make request to /projects/{id}/feature_rating endpoint
-            response = self.client.get(self.prefix + "/projects/1/feature_rating")
+            response = self.client.get(self.prefix + "/projects/1/avg_feature_rating")
 
             # Check that the response is valid and matches the expected output
             self.assertEqual(response.status_code, 200)
@@ -61,8 +61,8 @@ class TestProjectRoute(unittest.TestCase):
                 app.container.rules_config.override(self.mock_yaml_repo):
 
             # Make request to /projects/{id}/feature_rating endpoint
-            response = self.client.get(self.prefix + "/projects/1/feature_rating")
+            response = self.client.get(self.prefix + "/projects/1/avg_feature_rating")
 
             # Check that the response is valid and matches the expected output
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, 404)
             self.assertEqual(response.json(), {"id": 1, "Error": "Project not found"})
