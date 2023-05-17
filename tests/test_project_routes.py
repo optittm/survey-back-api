@@ -34,7 +34,7 @@ class TestProjectRoute(unittest.TestCase):
             app.container.rules_config.override(self.mock_yaml_repo):
                 
             # Act
-            response = self.client.get(self.prefix + f"/project/{project_id}/rating")
+            response = self.client.get(self.prefix + f"/project/{project_id}/avg_rating")
 
             # Assert
             self.assertEqual(response.status_code, 200)
@@ -59,10 +59,10 @@ class TestProjectRoute(unittest.TestCase):
             app.container.rules_config.override(self.mock_yaml_repo):
                 
             # Act
-            response = self.client.get(self.prefix + f"/project/{2}/rating")
+            response = self.client.get(self.prefix + f"/project/{2}/avg_rating")
 
             # Assert
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, 404)
             self.assertEqual(response.json(), {"id": 2, "Error": "Project not found"})
             self.mock_sqlite_repo.get_project_avg_rating.assert_not_called()
 
