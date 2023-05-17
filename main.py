@@ -15,7 +15,6 @@ from routes.comments import router as comment_router
 from routes.rules import router as rule_router
 from routes.project import router as project_router
 from routes.report import router as report_router
-
 from utils.container import Container
 from utils.formatter import str_to_bool
 
