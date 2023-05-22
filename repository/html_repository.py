@@ -30,11 +30,15 @@ class HTMLRepository:
         html_report = self.template.render(data)
         return html_report
 
-    def generate_detail_project_report(self, id: str) -> str:
+    def generate_detail_project_report(
+        self, id: str, timestamp_start: str = None, timestamp_end: str = None
+    ) -> str:
         logging.info("Generate Detail Project Report")
 
         data = {
             "project": {"id": id},
+            "timestamp_start": timestamp_start,
+            "timestamp_end": timestamp_end,
         }
 
         # Render the template and return Report

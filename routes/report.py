@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 from repository.html_repository import HTMLRepository
@@ -17,6 +18,10 @@ async def init_report() -> str:
 
 
 @router.get("/survey-report/project/{id}", response_class=HTMLResponse)
-async def init_detail_project_report(id: str) -> str:
+async def init_detail_project_report(
+    id: str, timestamp_start: Optional[str] = None, timestamp_end: Optional[str] = None
+) -> str:
     html_repository = HTMLRepository(reportFile="surveyProjectDetailReport.html")
-    return html_repository.generate_detail_project_report(id)
+    return html_repository.generate_detail_project_report(
+        id, timestamp_start, timestamp_end
+    )
