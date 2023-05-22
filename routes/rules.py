@@ -1,5 +1,13 @@
 from typing import Union
-from fastapi import APIRouter, Depends, Response, Cookie, Security, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Response,
+    Cookie,
+    Security,
+    status,
+    HTTPException,
+)
 from dependency_injector.wiring import Provide, inject
 import logging
 from datetime import datetime, timedelta
@@ -38,8 +46,10 @@ async def show_modal(
     )
     if rulesFromFeature is None:
         logging.error("GET rules::Feature not found")
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {"Error": "Feature not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Feature not found",
+        )
 
     # Retrieve the encryption key of the project
     project_name = rulesYamlConfig.getProjectNameFromFeature(featureUrl)

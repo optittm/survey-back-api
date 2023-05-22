@@ -1,5 +1,5 @@
 from typing import List, Optional, Union
-from fastapi import APIRouter, Depends, Security, status, Cookie, Response
+from fastapi import APIRouter, Depends, Security, status, Cookie, HTTPException
 from dependency_injector.wiring import Provide, inject
 from datetime import datetime, timedelta
 import logging
@@ -26,7 +26,6 @@ router = APIRouter()
 )
 @inject
 async def create_comment(
-    response: Response,
     comment_body: CommentPostBody = Depends(comment_body_treatment),
     user_id: Union[str, None] = Cookie(default=None),
     timestamp: Union[str, None] = Cookie(default=None),
@@ -38,8 +37,10 @@ async def create_comment(
     ) is not None:
         if user_id is None or timestamp is None:
             logging.error("POST comments::Missing cookies")
-            response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-            return {"Error": "Missing cookies"}
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Missing cookies",
+            )
 
         # Retrieve the encryption key of the project
         project = await sqlite_repo.get_project_by_name(project_name)
@@ -51,15 +52,20 @@ async def create_comment(
             decrypted_timestamp = encryption.decrypt(timestamp)
         except Exception:
             logging.error("POST comments::Invalid timestamp, cannot decrypt")
-            response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-            return {"Error": "Invalid timestamp, cannot decrypt"}
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid timestamp, cannot decrypt",
+            )
 
         dt_timestamp = datetime.fromtimestamp(float(decrypted_timestamp))
         # Check delay to answer
         rule: Rule = rules_config.getRuleFromFeature(comment_body.feature_url)
         if (datetime.now() - dt_timestamp) >= timedelta(minutes=rule.delay_to_answer):
-            response.status_code = status.HTTP_408_REQUEST_TIMEOUT
-            return {"Error": "Time to submit a comment has elapsed"}
+            logging.error("POST comments::Time to submit a comment has elapsed")
+            raise HTTPException(
+                status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                detail="Time to submit a comment has elapsed",
+            )
 
         iso_timestamp = dt_timestamp.isoformat()
         new_comment = await sqlite_repo.create_comment(
@@ -68,8 +74,10 @@ async def create_comment(
         return new_comment
     else:
         logging.error("POST comments::Feature not found")
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {"Error": "Feature not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Feature not found",
+        )
 
 
 @router.get(
