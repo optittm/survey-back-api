@@ -12,7 +12,7 @@ class Container(containers.DeclarativeContainer):
             "routes.comments",
             "routes.rules",
             "utils.formatter",
-            "routes.middlewares",
+            "routes.middlewares.security",
             "routes.security",
         ]
     )

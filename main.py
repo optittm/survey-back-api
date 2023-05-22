@@ -31,7 +31,9 @@ def init_fastapi(prefix="/api/v1", config=Provide[Container.config]) -> FastAPI:
     )
     app.include_router(comment_router, prefix=prefix)
     app.include_router(rule_router, prefix=prefix)
-    app.include_router(security_router, prefix=prefix)
+    # OAuth security is disabled if no key is present
+    if config["secret_key"] != "":
+        app.include_router(security_router, prefix=prefix)
 
     return app
 

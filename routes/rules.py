@@ -20,7 +20,8 @@ from utils.container import Container
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
-from routes.middlewares import check_jwt, remove_search_hash_from_url
+from routes.middlewares.feature_url import remove_search_hash_from_url
+from routes.middlewares.security import check_jwt
 
 
 router = APIRouter()

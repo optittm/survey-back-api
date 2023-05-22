@@ -1,6 +1,6 @@
 import unittest
 
-from routes.middlewares import remove_search_hash_from_url
+from routes.middlewares.feature_url import remove_search_hash_from_url
 
 
 class TestRulesRoutes(unittest.TestCase):

@@ -12,7 +12,8 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
-from routes.middlewares import check_jwt, comment_body_treatment
+from routes.middlewares.feature_url import comment_body_treatment
+from routes.middlewares.security import check_jwt
 
 
 router = APIRouter()

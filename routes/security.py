@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
@@ -8,22 +8,10 @@ from jwt import PyJWKClient
 from models.security import AuthToken, OAuthBody, ScopeEnum
 
 from utils.container import Container
+from utils.encryption import create_jwtoken
 
 
 router = APIRouter()
-
-
-@inject
-def _create_jwtoken(
-    data: dict,
-    expires_delta: timedelta,
-    config=Depends(Provide[Container.config]),
-):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + expires_delta
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, config["secret_key"])
-    return encoded_jwt
 
 
 @router.post("/authorize")
@@ -64,9 +52,10 @@ async def token_request(
 
         scope = ScopeEnum.CLIENT.value
         access_token_expires = timedelta(minutes=config["access_token_expire_minutes"])
-        access_token = _create_jwtoken(
+        access_token = create_jwtoken(
             data={"scopes": [scope]},
             expires_delta=access_token_expires,
+            encode_key=config["secret_key"],
         )
         return AuthToken(
             access_token=access_token,
@@ -82,8 +71,13 @@ async def token_request(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Missing client id or secret",
             )
+
         secrets = config["client_secrets"].split(",")
-        if data.client_secret != secrets[data.client_id]:
+        try:
+            stored_secret = secrets[data.client_id - 1]
+            if data.client_secret != stored_secret:
+                raise Exception()
+        except (IndexError, Exception):
             logging.error(f"Invalid client credentials")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -92,9 +86,10 @@ async def token_request(
 
         scope = ScopeEnum.DATA.value
         access_token_expires = timedelta(minutes=config["access_token_expire_minutes"])
-        access_token = _create_jwtoken(
+        access_token = create_jwtoken(
             data={"scopes": [scope]},
             expires_delta=access_token_expires,
+            encode_key=config["secret_key"],
         )
         return AuthToken(
             access_token=access_token,

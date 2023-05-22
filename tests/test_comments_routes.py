@@ -22,6 +22,8 @@ class TestCommentsRoutes(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
         self.route = "/api/v1/comments"
+        # Disable OAuth security for these tests
+        app.container.config.secret_key.from_value("")
 
         self.comment_body = CommentPostBody(
             feature_url="http://test.com",
