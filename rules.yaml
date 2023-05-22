@@ -1,8 +1,3 @@
-# Optional: Allowed origins for the GET /comments route
-# Add OptiTTM/BugPrediction URL
-get_comments_allowed_origins: '*'
-# Add Modal origins
-front_allowed_origins: '*'
 # Survey rules
 projects:
   project1:

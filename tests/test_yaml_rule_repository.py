@@ -1,10 +1,14 @@
 import unittest
+from unittest.mock import patch
 
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
 
 
 class TestGetRuleFromFeature(unittest.TestCase):
+    def setUp(self):
+        YamlRulesRepository._RULES_CONFIG_FILE = "tests/mocks/test_rules.yaml"
+
     def test_existing_feature(self):
         feature_url = "/test2"
         rule = YamlRulesRepository.getRuleFromFeature(feature_url)
@@ -22,6 +26,9 @@ class TestGetRuleFromFeature(unittest.TestCase):
 
 
 class TestGetProjectNameFromFeature(unittest.TestCase):
+    def setUp(self):
+        YamlRulesRepository._RULES_CONFIG_FILE = "tests/mocks/test_rules.yaml"
+
     def test_existing_feature(self):
         feature_url = "/test1"
         project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
