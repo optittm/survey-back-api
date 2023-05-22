@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from fastapi import APIRouter, Depends, status, Cookie, Response
 from dependency_injector.wiring import Provide, inject
 from datetime import datetime, timedelta
@@ -11,6 +11,8 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
+from utils.middleware import comment_body_treatment
+
 
 router = APIRouter()
 
@@ -22,12 +24,13 @@ router = APIRouter()
 )
 @inject
 async def create_comment(
-    comment_body: CommentPostBody,
     response: Response,
+    comment_body: CommentPostBody = Depends(comment_body_treatment),
     user_id: Union[str, None] = Cookie(default=None),
     timestamp: Union[str, None] = Cookie(default=None),
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     rules_config: YamlRulesRepository = Depends(Provide[Container.rules_config]),
+    config=Depends(Provide[Container.config]),
 ) -> Comment:
     if (
         project_name := rules_config.getProjectNameFromFeature(comment_body.feature_url)
@@ -59,7 +62,13 @@ async def create_comment(
 
         iso_timestamp = dt_timestamp.isoformat()
         new_comment = await sqlite_repo.create_comment(
-            comment_body, user_id, iso_timestamp, project_name
+            comment_body.feature_url,
+            comment_body.rating,
+            comment_body.comment,
+            # Depending on config, use either the fingerprint passed in body, or the UUID from cookie
+            comment_body.user_id if config["use_fingerprint"] else user_id,
+            iso_timestamp,
+            project_name,
         )
         return new_comment
     else:
@@ -70,9 +79,30 @@ async def create_comment(
 
 @router.get("/comments", response_model=List[CommentGetBody])
 @inject
-async def get_all_comments(
-    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-) -> List[Comment]:
-    comments = await sqlite_repo.read_comments()
+async def get_comments(
+    project_name: Optional[str] = None,
+    feature_url: Optional[str] = None,
+    user_id: Optional[str] = None,
+    timestamp_start: Optional[str] = None,
+    timestamp_end: Optional[str] = None,
+    content_search: Optional[str] = None,
+    rating_min: Optional[int] = None,
+    rating_max: Optional[int] = None,
+    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
+) -> List[CommentGetBody]:
+    
+    comments = await sqlite_repo.read_comments(
+        project_name=project_name,
+        feature_url=feature_url,
+        user_id=user_id,
+        timestamp_start=timestamp_start,
+        timestamp_end=timestamp_end,
+        content_search=content_search,
+        rating_min=rating_min,
+        rating_max=rating_max
+    )
+
+    # Formatage des commentaires filtrés en CommentGetBody
     comments = [await comment_to_comment_get_body(comment) for comment in comments]
+
     return comments

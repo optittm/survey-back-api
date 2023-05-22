@@ -1,16 +1,42 @@
-
 from typing import List, Union
 from fastapi import APIRouter, Depends, Response, status
 
 from dependency_injector.wiring import Provide, inject
 from models.project import Project
+
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.container import Container
 
 router = APIRouter()
 
-@router.get("/projects/{id}/avg_feature_rating", response_model=Union[List, dict])
+@router.get("/projects", response_model=List)
+@inject
+async def get_projects(
+    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
+    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
+) -> List:  
+    """
+    Retrieve a list of projects with their respective ids and names.
+    
+    Args:
+        sqlite_repo (SQLiteRepository, optional): The SQLiteRepository instance to use for database access.
+            Defaults to Depends(Provide[Container.sqlite_repo]).
+        yaml_repo (YamlRulesRepository, optional): The YamlRulesRepository instance to use for rules configuration.
+            Defaults to Depends(Provide[Container.rules_config]).
+    
+    Returns:
+         List[dict]: A list of dictionaries containing the id and name of each project.
+    """
+    output = []
+    for name in yaml_repo.getProjectNames():
+        project = await sqlite_repo.get_project_by_name(name)
+        if not project:
+            project = await sqlite_repo.create_project(Project(name = name))
+        output.append({"id": project.id, "name": project.name})
+    return output
+
+@router.get("/project/{id}/avg_feature_rating", response_model=Union[List, dict])
 @inject
 async def get_projects_feature_rating(
     id: int,
@@ -44,7 +70,6 @@ async def get_projects_feature_rating(
             "rating": sqlite_repo.get_feature_avg_rating(project.id, url)
         })
     return output
-
 
 @router.get("/projects/{id}/rules", response_model=Union[List, dict])
 @inject
@@ -82,3 +107,40 @@ async def get_projects_rules(
             
         })
     return output
+    
+@router.get("/project/{id}/avg_rating", response_model=dict)
+@inject
+async def get_project_rating(
+    id: int,
+    response: Response,
+    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
+    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
+) -> dict:  
+    """
+    Retrieve the average rating of a project with the given id.
+    
+    Args:
+        id (int): The id of the project to retrieve the rating for.
+        sqlite_repo (SQLiteRepository, optional): The SQLiteRepository instance to use for database access.
+            Defaults to Depends(Provide[Container.sqlite_repo]).
+        yaml_repo (YamlRulesRepository, optional): The YamlRulesRepository instance to use for rules configuration.
+            Defaults to Depends(Provide[Container.rules_config]).
+    
+    Returns:
+        dict: A dictionary containing the project id and its average rating, or an error message if the project
+        was not found or if its name is not included in the list of project names in the YamlRulesRepository.
+    """
+
+    project = await sqlite_repo.get_project_by_id(id)
+    if not project or project.name not in yaml_repo.getProjectNames():
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {
+          "id": id, 
+          "Error": "Project not found"
+        }
+    rating = sqlite_repo.get_project_avg_rating(id)
+    return {
+        "id": id,
+        "rating": rating
+    }
+

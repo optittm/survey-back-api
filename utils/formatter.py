@@ -7,6 +7,16 @@ import logging
 from utils.container import Container
 
 
+def str_to_bool(string: str):
+    if string.lower() == "true":
+        return True
+    elif string.lower() == "false":
+        return False
+    else:
+        logging.error(f"String value {string} cannot be converted to bool")
+        raise Exception(f"String value {string} cannot be converted to bool")
+
+
 async def comment_to_comment_get_body(
     comment: Comment, sqliterepo: SQLiteRepository = Provide[Container.sqlite_repo]
 ) -> CommentGetBody:

@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from fastapi.testclient import TestClient
 
-from models.comment import Comment, CommentGetBody, CommentPostBody
+from models.comment import Comment, CommentPostBody
 from models.rule import Rule
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
@@ -23,10 +23,12 @@ class TestCommentsRoutes(unittest.TestCase):
         self.client = TestClient(app)
         self.route = "/api/v1/comments"
 
+        self.user_id = "3"
         self.comment_body = CommentPostBody(
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            user_id=self.user_id,
         )
         self.datetime = datetime.now()
         self.mock_yaml = Mock(spec=YamlRulesRepository)
@@ -36,12 +38,12 @@ class TestCommentsRoutes(unittest.TestCase):
         self.encryption = Encryption(self.crypt_key)
 
     def test_create_comment_endpoint(self):
-        user_id = "3"
         project_name = "project1"
+        cookie_user_id = "123"
         return_comment = Comment(
             id=1,
             project_id=2,
-            user_id=user_id,
+            user_id=cookie_user_id,
             timestamp=self.datetime.isoformat(),
             feature_url="http://test.com",
             rating=5,
@@ -60,13 +62,17 @@ class TestCommentsRoutes(unittest.TestCase):
 
         with app.container.sqlite_repo.override(
             self.mock_repo
-        ), app.container.rules_config.override(self.mock_yaml):
+        ), app.container.rules_config.override(
+            self.mock_yaml
+        ), app.container.config.override(
+            {"use_fingerprint": False}
+        ):
             response = self.client.post(
                 self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
                 json=self.comment_body.dict(),
                 cookies={
-                    "user_id": user_id,
+                    "user_id": cookie_user_id,
                     "timestamp": self.encryption.encrypt(
                         str(self.datetime.timestamp())
                     ),
@@ -79,14 +85,77 @@ class TestCommentsRoutes(unittest.TestCase):
         self.assertEqual(response.json(), compare_comment)
         self.mock_yaml.getProjectNameFromFeature.assert_called_once()
         self.mock_repo.create_comment.assert_called_once_with(
-            self.comment_body, user_id, self.datetime.isoformat(), project_name
+            self.comment_body.feature_url,
+            self.comment_body.rating,
+            self.comment_body.comment,
+            cookie_user_id,
+            self.datetime.isoformat(),
+            project_name,
+        )
+
+    def test_create_comment_endpoint_fingerprint(self):
+        """
+        Same as test_create_comment_endpoint but checks if the user_id is taken from the body instead of the cookie
+        """
+        project_name = "project1"
+        cookie_user_id = "123"
+        return_comment = Comment(
+            id=1,
+            project_id=2,
+            user_id=self.comment_body.user_id,
+            timestamp=self.datetime.isoformat(),
+            feature_url="http://test.com",
+            rating=5,
+            comment="This is a test comment",
+        )
+        self.mock_yaml.getProjectNameFromFeature.return_value = project_name
+        self.mock_repo.get_project_by_name.return_value = Mock()
+        project_encryption_mock = Mock()
+        project_encryption_mock.encryption_key = self.crypt_key
+        self.mock_repo.get_encryption_by_project_id.return_value = (
+            project_encryption_mock
+        )
+        self.mock_rule.delay_to_answer = 5
+        self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
+        self.mock_repo.create_comment.return_value = return_comment
+
+        with app.container.sqlite_repo.override(
+            self.mock_repo
+        ), app.container.rules_config.override(
+            self.mock_yaml
+        ), app.container.config.override(
+            {"use_fingerprint": True}
+        ):
+            response = self.client.post(
+                self.route,
+                # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
+                json=self.comment_body.dict(),
+                cookies={
+                    "user_id": cookie_user_id,
+                    "timestamp": self.encryption.encrypt(
+                        str(self.datetime.timestamp())
+                    ),
+                },
+            )
+
+        self.assertEqual(response.status_code, 201)
+        # response.json() returns a dict, so comparing it against the comment as a dict
+        compare_comment = return_comment.dict()
+        self.assertEqual(response.json(), compare_comment)
+        self.mock_yaml.getProjectNameFromFeature.assert_called_once()
+        self.mock_repo.create_comment.assert_called_once_with(
+            self.comment_body.feature_url,
+            self.comment_body.rating,
+            self.comment_body.comment,
+            self.comment_body.user_id,
+            self.datetime.isoformat(),
+            project_name,
         )
 
     def test_create_comment_endpoint_unknown_feature(self):
         """
         Test case when feature/project is not found in the YAML config
         """
-        user_id = "3"
         self.mock_yaml.getProjectNameFromFeature.return_value = None
 
         with app.container.rules_config.override(self.mock_yaml):
@@ -95,7 +164,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
                 json=self.comment_body.dict(),
                 cookies={
-                    "user_id": user_id,
+                    "user_id": self.user_id,
                     "timestamp": self.encryption.encrypt(
                         str(self.datetime.timestamp())
                     ),
@@ -176,37 +245,15 @@ class TestCommentsRoutes(unittest.TestCase):
 
         self.assertEqual(response.status_code, 422)
 
-    def test_get_all_comments_endpoint(self):
-        comment_a = Comment(
-            id=1,
-            project_id=1,
-            user_id="1",
-            timestamp=self.datetime.isoformat(),
-            feature_url="http://test.com/test",
-            rating=4,
-            comment="test",
+    def test_create_comment_endpoint_invalid_feature(self):
+        self.comment_body.feature_url = "http://tes[t.com/test"
+        response = self.client.post(
+            self.route,
+            # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
+            json=self.comment_body.dict(),
+            cookies={
+                "user_id": "3",
+                "timestamp": "jdsodkcvhjsdknv",
+            },
         )
-
-        comment_abis = CommentGetBody(
-            id=1,
-            project_name="project1",
-            user_id="1",
-            timestamp=self.datetime.isoformat(),
-            feature_url="http://test.com/test",
-            rating=4,
-            comment="test",
-        )
-
-        self.mock_repo.read_comments.return_value = [comment_a]
-
-        with patch("routes.comments.comment_to_comment_get_body") as mock_method:
-            with app.container.sqlite_repo.override(self.mock_repo):
-                mock_method.return_value = comment_abis
-                response = self.client.get(self.route)
-
-        self.assertEqual(response.status_code, 200)
-
-        comment_A = comment_abis.dict()
-
-        self.assertEqual(response.json(), [comment_A])
-        self.mock_repo.read_comments.assert_called_once()
+        self.assertEqual(response.status_code, 422)
