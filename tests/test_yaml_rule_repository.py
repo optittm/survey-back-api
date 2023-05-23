@@ -6,8 +6,43 @@ from repository.yaml_rule_repository import YamlRulesRepository
 
 
 class TestGetRuleFromFeature(unittest.TestCase):
+    def setUp(self):
+        self.data = {
+            "projects": {
+                "project1": {
+                    "rules": [
+                        {
+                            "feature_url": "/test1",
+                            "ratio": 0.5,
+                            "delay_before_reanswer": 10,
+                            "delay_to_answer": 2,
+                            "is_active": True
+                        },
+                        {
+                            "feature_url": "/test",
+                            "ratio": 0.8,
+                            "delay_before_reanswer": 20,
+                            "delay_to_answer": 3,
+                            "is_active": False
+                        }
+                    ]
+                },
+                "project2": {
+                    "rules": [
+                        {
+                            "feature_url": "/test2",
+                            "ratio": 0.4,
+                            "delay_before_reanswer": 30,
+                            "delay_to_answer": 5,
+                            "is_active": True
+                        }
+                    ]
+                }
+            }
+        }
+
     def test_existing_feature(self):
-        feature_url = "/test2"
+        feature_url = "https://www.example.com/test2"
         rule = YamlRulesRepository.getRuleFromFeature(feature_url)
         self.assertIsInstance(rule, Rule)
         self.assertEqual(rule.feature_url, feature_url)
@@ -17,29 +52,81 @@ class TestGetRuleFromFeature(unittest.TestCase):
         self.assertEqual(rule.is_active, True)
 
     def test_nonexisting_feature(self):
-        feature_url = "/invalid"
+        feature_url = "https://www.example.com/invalid"
         rule = YamlRulesRepository.getRuleFromFeature(feature_url)
         self.assertIsNone(rule)
+    
+    def test_regex_matching(self):
+        feature_url = "https://www.example.com/test2"
+        with patch("repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig", return_value=self.data):
+            rule = YamlRulesRepository.getRuleFromFeature(feature_url)
 
+        self.assertIsInstance(rule, Rule)
+        self.assertEqual(rule.feature_url, feature_url)
+        self.assertEqual(rule.ratio, 0.4)
+        self.assertEqual(rule.delay_before_reanswer, 30)
+        self.assertEqual(rule.delay_to_answer, 5)
+        self.assertEqual(rule.is_active, True)
+
+    def test_regex_non_matching(self):
+        feature_url = "https://www.example.com/nonmatching"
+        with patch("repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig", return_value=self.data):
+            rule = YamlRulesRepository.getRuleFromFeature(feature_url)
+
+        self.assertIsNone(rule)
 
 class TestGetProjectNameFromFeature(unittest.TestCase):
+    def setUp(self):
+        self.data = {
+            "projects": {
+                "project1": {
+                    "rules": [
+                        {
+                            "feature_url": "/test1",
+                            "ratio": 0.5,
+                            "delay_before_reanswer": 10,
+                            "delay_to_answer": 2,
+                            "is_active": True
+                        },
+                        {
+                            "feature_url": "/test",
+                            "ratio": 0.8,
+                            "delay_before_reanswer": 20,
+                            "delay_to_answer": 3,
+                            "is_active": False
+                        }
+                    ]
+                },
+                "project2": {
+                    "rules": [
+                        {
+                            "feature_url": "/test2",
+                            "ratio": 0.4,
+                            "delay_before_reanswer": 30,
+                            "delay_to_answer": 5,
+                            "is_active": True
+                        }
+                    ]
+                }
+            }
+        }
     def test_existing_feature(self):
-        feature_url = "/test1"
+        feature_url = "https://www.example.com/test1"
         project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertEqual(project_name, "project1")
 
     def test_nonexisting_feature(self):
-        feature_url = "/invalid"
+        feature_url = "https://www.example.com/invalid"
         project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertIsNone(project_name)
 
     def test_multiple_projects(self):
-        feature_url = "/test2"
+        feature_url = "https://www.example.com/test2"
         project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertEqual(project_name, "project2")
 
     def test_multiple_rules(self):
-        feature_url = "/test"
+        feature_url = "https://www.example.com/test"
         project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertEqual(project_name, "project1")
 

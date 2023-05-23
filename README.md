@@ -65,7 +65,17 @@ Response
 - response model: bool - True if the modal should be displayed based on the retrieved rules, False otherwise.  
 
 Example usage: GET ```/rules?featureUrl=https://www.example.com/feature1```  
-Example response: true  
+Example response: true 
+
+## Regex for featureUrl  
+The featureUrl parameter supports matching based on regular expressions. The regular expression pattern used is as follows:  
+
+The provided featureUrl is matched against the feature_url values in the rule configuration.
+
+The pattern should match the complete feature_url value in the rule configuration.
+Special characters within the feature_url should be properly escaped to ensure correct matching.
+By default, the pattern is wrapped in word boundaries (\b) to match the entire URL and avoid partial matches. 
+The returned rule will be the first rule that matches in the yaml file. 
 
 ### GET /survey-report  
 

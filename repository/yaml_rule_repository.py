@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import List
 import yaml
 from schema import Schema, SchemaError, Optional
@@ -76,9 +77,10 @@ class YamlRulesRepository:
         if data:
             for project_name, project_data in data["projects"].items():
                 for rule in project_data["rules"]:
-                    if rule["feature_url"] == feature_url:
+                    rule_feature_url = rule["feature_url"]
+                    if re.search(fr"\b{re.escape(rule_feature_url)}\b", feature_url):
                         return Rule(
-                            rule["feature_url"],
+                            feature_url,
                             rule["ratio"],
                             rule["delay_before_reanswer"],
                             rule["delay_to_answer"],
@@ -104,7 +106,8 @@ class YamlRulesRepository:
         if data:
             for project_name, project_data in data["projects"].items():
                 for rule in project_data["rules"]:
-                    if rule["feature_url"] == feature_url:
+                    rule_feature_url = rule["feature_url"]
+                    if re.search(fr"\b{re.escape(rule_feature_url)}\b", feature_url):
                         return project_name
         return None
 
