@@ -96,7 +96,7 @@ Response
 - status code: 200 - OK
 - response model: str - The generated HTML report.
 
-Example usage: GET `/survey-report/project/23?start=01-01-2020&end=01-01-2022`
+Example usage: GET `/survey-report/project/23?timestamp_start=01-01-2020&timestamp_end=01-01-2022`
 
 ## Usage
 
