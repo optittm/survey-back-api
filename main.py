@@ -33,7 +33,10 @@ def init_fastapi(prefix="/api/v1", config=Provide[Container.config]) -> FastAPI:
     app.include_router(rule_router, prefix=prefix)
     # OAuth security is disabled if no key is present
     if config["secret_key"] != "":
+        logging.info("Enabling OAuth2 security")
         app.include_router(security_router, prefix=prefix)
+    else:
+        logging.warning("OAuth2 security is disabled")
 
     return app
 

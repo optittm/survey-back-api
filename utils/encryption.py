@@ -8,12 +8,13 @@ def create_jwtoken(
     data: dict,
     expires_delta: timedelta,
     encode_key: str,
+    algorithm: str = "HS256",
 ):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
     logging.debug(f"JWT data: {to_encode}")
-    encoded_jwt = jwt.encode(to_encode, encode_key)
+    encoded_jwt = jwt.encode(to_encode, encode_key, algorithm)
     return encoded_jwt
 
 
