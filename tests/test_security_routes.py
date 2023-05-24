@@ -7,12 +7,16 @@ import jwt
 from jwt.api_jwk import PyJWK
 
 from main import app
+from routes.security import router
 from models.security import OAuthBody, ScopeEnum
 from utils.encryption import create_jwtoken
 
 
 class TestSecurityRoute(unittest.TestCase):
     def setUp(self):
+        # Router has to be included here because it doesn't register
+        # if there is no secret key to start with in .env
+        app.include_router(router, prefix="/api/v1")
         self.client = TestClient(app)
         self.token_route = "/api/v1/token"
 
@@ -27,6 +31,9 @@ class TestSecurityRoute(unittest.TestCase):
 
 class TestAuthCodeFlow(unittest.TestCase):
     def setUp(self):
+        # Router has to be included here because it doesn't register
+        # if there is no secret key to start with in .env
+        app.include_router(router, prefix="/api/v1")
         self.client = TestClient(app)
         self.route = "/api/v1/token"
 
@@ -102,6 +109,9 @@ class TestAuthCodeFlow(unittest.TestCase):
 
 class TestClientCredentialsFlow(unittest.TestCase):
     def setUp(self):
+        # Router has to be included here because it doesn't register
+        # if there is no secret key to start with in .env
+        app.include_router(router, prefix="/api/v1")
         self.client = TestClient(app)
         self.route = "/api/v1/token"
 
