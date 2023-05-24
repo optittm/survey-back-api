@@ -1,7 +1,6 @@
 from typing import List, Optional, Union
 import logging
 import sqlite3
-from sqlalchemy.orm import Session
 
 from models.comment import Comment, CommentPostBody
 from models.display import Display
@@ -210,7 +209,9 @@ class SQLiteRepository:
 
     async def create_comment(
         self,
-        comment_body: CommentPostBody,
+        feature_url: str,
+        rating: int,
+        comment: str,
         user_id: str,
         timestamp: str,
         project_name: str,
@@ -240,11 +241,11 @@ class SQLiteRepository:
         # Create new comment object and insert into database
         new_comment = Comment(
             project_id=project.id,
-            feature_url=comment_body.feature_url,
+            feature_url=feature_url,
             user_id=user_id,
             timestamp=timestamp,
-            rating=comment_body.rating,
-            comment=comment_body.comment,
+            rating=rating,
+            comment=comment,
         )
         id = await new_comment.insert()
         new_comment.id = id

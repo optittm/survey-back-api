@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
@@ -48,6 +48,75 @@ class TestGetProjectNameFromFeature(unittest.TestCase):
         feature_url = "/test"
         project_name = YamlRulesRepository.getProjectNameFromFeature(feature_url)
         self.assertEqual(project_name, "project1")
+
+class TestGetFeatureUrlsFromProjectName(unittest.TestCase):
+
+    def setUp(self):
+        self.data = {
+            "projects": {
+                "Project 1": {
+                    "rules": [
+                        {"feature_url": "http://example.com/feature1"},
+                        {"feature_url": "http://example.com/feature2"}
+                    ]
+                },
+                "Project 2": {
+                    "rules": [
+                        {"feature_url": "http://example.com/feature3"},
+                        {"feature_url": "http://example.com/feature4"}
+                    ]
+                }
+            }
+        }
+
+        self.yaml_repo = YamlRulesRepository()
+
+    def test_getFeatureUrlsFromProjectName_returns_list_of_feature_urls(self):
+        # Arrange
+        name = "Project 1"
+
+        with patch("repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig", return_value = self.data):
+            # Act
+            feature_urls = self.yaml_repo.getFeatureUrlsFromProjectName(name)
+
+        # Assert
+        self.assertEqual(sorted(feature_urls), sorted(["http://example.com/feature1", "http://example.com/feature2"]))
+
+    def test_getFeatureUrlsFromProjectName_returns_none_if_project_name_not_found(self):
+        # Arrange
+        name = "Project 3"
+
+        with patch("repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig", return_value = self.data):
+            # Act
+            feature_urls = self.yaml_repo.getFeatureUrlsFromProjectName(name)
+
+        # Assert
+        self.assertIsNone(feature_urls)
+
+    def test_getFeatureUrlsFromProjectName_returns_empty_set_if_project_has_no_rules(self):
+        # Arrange
+        name = "Project 1"
+        data = {
+            "projects": {
+                "Project 1": {
+                    "rules": []
+                },
+                "Project 2": {
+                    "rules": [
+                        {"feature_url": "http://example.com/feature3"},
+                        {"feature_url": "http://example.com/feature4"}
+                    ]
+                }
+            }
+        }
+        self.yaml_repo._getRulesConfig = MagicMock(return_value=data)
+
+        with patch("repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig", return_value = data):
+            # Act
+            feature_urls = self.yaml_repo.getFeatureUrlsFromProjectName(name)
+
+        # Assert
+        self.assertEqual(feature_urls, [])
 
 
 if __name__ == "__main__":

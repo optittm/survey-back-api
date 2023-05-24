@@ -11,6 +11,8 @@ class Container(containers.DeclarativeContainer):
         modules=[
             "routes.comments",
             "routes.rules",
+            "routes.report",
+            "routes.projects",
             "utils.formatter",
             "routes.middlewares.security",
             "routes.security",

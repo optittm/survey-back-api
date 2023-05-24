@@ -2,7 +2,7 @@ import sqlite3
 import unittest
 
 from datetime import datetime
-from unittest.mock import AsyncMock, PropertyMock, patch, MagicMock
+from unittest.mock import AsyncMock, PropertyMock, patch
 
 from models.comment import Comment, CommentPostBody
 from models.display import Display
@@ -74,7 +74,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         cls.cursor.execute('DROP TABLE Comment')
         cls.cursor.execute('DROP TABLE Display')
         cls.cursor.execute('DROP TABLE Project')
-        
+
     async def asyncSetUp(self):
         self.config = {"survey_db": self.db_name}
         self.repository = SQLiteRepository(self.config)
@@ -83,10 +83,10 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            user_id="123",
         )
            
     async def test_create_comment(self):
-        user_id = 123
         timestamp = "03/24/23 12:00:00"
         timestamp_dt = datetime.strptime(timestamp, "%m/%d/%y %H:%M:%S").isoformat()
         self.repository.create_project = AsyncMock(
@@ -95,8 +95,10 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         Comment.insert = AsyncMock(return_value=5)
         Project.filter = AsyncMock(return_value=[Project(id=1, name="test_project")])
         result = await self.repository.create_comment(
-            comment_body=self.comment_body,
-            user_id=user_id,
+            feature_url=self.comment_body.feature_url,
+            rating=self.comment_body.rating,
+            comment=self.comment_body.comment,
+            user_id=self.comment_body.user_id,
             timestamp=timestamp_dt,
             project_name=self.project_name,
         )
@@ -108,7 +110,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
                 id=5,
                 project_id=1,
                 feature_url=self.comment_body.feature_url,
-                user_id=user_id,
+                user_id=self.comment_body.user_id,
                 timestamp=timestamp_dt,
                 rating=self.comment_body.rating,
                 comment=self.comment_body.comment,
@@ -281,7 +283,6 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
     def test_get_project_avg_rating(self):
         project_a = Project(id=1, name='Project A')
         project_b = Project(id=2, name='Project B')
-
         self.assertAlmostEqual(self.repository.get_project_avg_rating(project_a.id), 4.0)
         self.assertAlmostEqual(self.repository.get_project_avg_rating(project_b.id), 2.0)
 

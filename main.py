@@ -14,7 +14,10 @@ from models.project import Project, ProjectEncryption
 from routes.comments import router as comment_router
 from routes.rules import router as rule_router
 from routes.security import router as security_router
+from routes.projects import router as project_router
+from routes.report import router as report_router
 from utils.container import Container
+from utils.formatter import str_to_bool
 
 
 @inject
@@ -29,8 +32,11 @@ def init_fastapi(prefix="/api/v1", config=Provide[Container.config]) -> FastAPI:
         allow_methods=config["cors_allow_methods"].split(","),
         allow_headers=config["cors_allow_headers"].split(","),
     )
+
     app.include_router(comment_router, prefix=prefix)
     app.include_router(rule_router, prefix=prefix)
+    app.include_router(project_router, prefix=prefix)
+    app.include_router(report_router, prefix=prefix)
     # OAuth security is disabled if no key is present
     if config["secret_key"] != "":
         logging.info("Enabling OAuth2 security")
@@ -93,21 +99,29 @@ container.config.survey_api_host.from_env(
 container.config.survey_api_port.from_env(
     "SURVEY_API_PORT", required=True, as_=int, default=8000
 )
+# from_env default only applies when the statement VAR= is compeltely absent from the env file
+# Writing VAR= with no following value returns an empty string,
+# thus the use of a lambda expression to apply the default in this case and avoid an error
 container.config.survey_db.from_env(
-    "SURVEY_DB", required=True, default="sqlite:///data/survey.sqlite3"
+    "SURVEY_DB",
+    required=True,
+    as_=lambda x: x if x != "" else "sqlite:///data/survey.sqlite3",
+    default="sqlite:///data/survey.sqlite3",
 )
-container.config.cors_allow_origins.from_env(
-    "CORS_ALLOW_ORIGINS", required=True, default="*"
+container.config.use_fingerprint.from_env(
+    "USE_FINGERPRINT",
+    required=True,
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
+container.config.cors_allow_origins.from_env("CORS_ALLOW_ORIGINS", default="*")
 container.config.cors_allow_credentials.from_env(
-    "CORS_ALLOW_CREDENTIALS", required=True, default=False
+    "CORS_ALLOW_CREDENTIALS",
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
-container.config.cors_allow_methods.from_env(
-    "CORS_ALLOW_METHODS", required=True, default="GET, POST"
-)
-container.config.cors_allow_headers.from_env(
-    "CORS_ALLOW_HEADERS", required=True, default="*"
-)
+container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", default="GET, POST")
+container.config.cors_allow_headers.from_env("CORS_ALLOW_HEADERS", default="*")
 container.config.secret_key.from_env("SECRET_KEY")
 container.config.access_token_expire_minutes.from_env(
     "ACCESS_TOKEN_EXPIRE_MINUTES", as_=int, default=15
@@ -116,9 +130,17 @@ container.config.auth_url.from_env("AUTH_URL")
 container.config.jwk_url.from_env("JWK_URL")
 container.config.client_secrets.from_env("CLIENT_SECRETS")
 container.config.debug_mode.from_env(
-    "DEBUG_MODE", required=True, as_=bool, default=False
+    "DEBUG_MODE",
+    required=True,
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
-container.config.log_level.from_env("LOG_LEVEL", required=True, default="INFO")
+container.config.log_level.from_env(
+    "LOG_LEVEL",
+    required=True,
+    as_=lambda x: x if x != "" else "INFO",
+    default="INFO",
+)
 container.wire(modules=[__name__])
 
 config_logging()

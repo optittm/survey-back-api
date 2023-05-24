@@ -78,11 +78,11 @@ class YamlRulesRepository:
                 for rule in project_data["rules"]:
                     if rule["feature_url"] == feature_url:
                         return Rule(
-                            rule["feature_url"],
-                            rule["ratio"],
-                            rule["delay_before_reanswer"],
-                            rule["delay_to_answer"],
-                            rule["is_active"],
+                            feature_url = rule["feature_url"],
+                            ratio = rule["ratio"],
+                            delay_before_reanswer = rule["delay_before_reanswer"],
+                            delay_to_answer = rule["delay_to_answer"],
+                            is_active = rule["is_active"],
                         )
         return None
 
@@ -118,4 +118,27 @@ class YamlRulesRepository:
         )
         if data:
             return data["projects"].keys()
+        return None
+    
+    @staticmethod
+    def getFeatureUrlsFromProjectName(name) -> List:
+        data = YamlRulesRepository._getRulesConfig(
+            YamlRulesRepository._RULES_CONFIG_FILE
+        )
+        """
+        Returns a list of feature URLs associated with a project specified by its name.
+
+        Args:
+            name (str): the name of the project
+
+        Returns:
+          list: a list of feature URLs associated with the project
+        """
+        if data:
+            for project_name, project_data in data["projects"].items():
+                if project_name == name:
+                    feature_urls = set()
+                    for rule in project_data["rules"]:
+                        feature_urls.add(rule["feature_url"])
+                    return list(feature_urls)
         return None
