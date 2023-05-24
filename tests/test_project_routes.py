@@ -14,6 +14,9 @@ class TestProjectRoute(unittest.TestCase):
     def setUp(self):
         self.prefix = "/api/v1"
         self.client = TestClient(app)
+        # Disable OAuth security for these tests
+        app.container.config.secret_key.from_value("")
+
         self.mock_sqlite_repo = MagicMock(spec=SQLiteRepository)
         self.mock_yaml_repo = MagicMock(spec=YamlRulesRepository)
         self.app = self.client.app

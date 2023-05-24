@@ -62,13 +62,10 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
         self.mock_repo.create_comment.return_value = return_comment
 
+        app.container.config.use_fingerprint.from_value(False)
         with app.container.sqlite_repo.override(
             self.mock_repo
-        ), app.container.rules_config.override(
-            self.mock_yaml
-        ), app.container.config.override(
-            {"use_fingerprint": False}
-        ):
+        ), app.container.rules_config.override(self.mock_yaml):
             response = self.client.post(
                 self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
@@ -121,13 +118,10 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
         self.mock_repo.create_comment.return_value = return_comment
 
+        app.container.config.use_fingerprint.from_value(True)
         with app.container.sqlite_repo.override(
             self.mock_repo
-        ), app.container.rules_config.override(
-            self.mock_yaml
-        ), app.container.config.override(
-            {"use_fingerprint": True}
-        ):
+        ), app.container.rules_config.override(self.mock_yaml):
             response = self.client.post(
                 self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
