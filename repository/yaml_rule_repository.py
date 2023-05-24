@@ -119,3 +119,26 @@ class YamlRulesRepository:
         if data:
             return data["projects"].keys()
         return None
+    
+    @staticmethod
+    def getFeatureUrlsFromProjectName(name) -> List:
+        data = YamlRulesRepository._getRulesConfig(
+            YamlRulesRepository._RULES_CONFIG_FILE
+        )
+        """
+        Returns a list of feature URLs associated with a project specified by its name.
+
+        Args:
+            name (str): the name of the project
+
+        Returns:
+          list: a list of feature URLs associated with the project
+        """
+        if data:
+            for project_name, project_data in data["projects"].items():
+                if project_name == name:
+                    feature_urls = set()
+                    for rule in project_data["rules"]:
+                        feature_urls.add(rule["feature_url"])
+                    return list(feature_urls)
+        return None
