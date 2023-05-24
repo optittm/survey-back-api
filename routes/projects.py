@@ -23,17 +23,17 @@ router = APIRouter()
 @inject
 async def get_projects(
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
-) -> List:  
+    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config]),
+) -> List:
     """
     Retrieve a list of projects with their respective ids and names.
-    
+
     Args:
         sqlite_repo (SQLiteRepository, optional): The SQLiteRepository instance to use for database access.
             Defaults to Depends(Provide[Container.sqlite_repo]).
         yaml_repo (YamlRulesRepository, optional): The YamlRulesRepository instance to use for rules configuration.
             Defaults to Depends(Provide[Container.rules_config]).
-    
+
     Returns:
          List[dict]: A list of dictionaries containing the id and name of each project.
     """
@@ -41,7 +41,7 @@ async def get_projects(
     for name in yaml_repo.getProjectNames():
         project = await sqlite_repo.get_project_by_name(name)
         if not project:
-            project = await sqlite_repo.create_project(Project(name = name))
+            project = await sqlite_repo.create_project(Project(name=name))
         output.append({"id": project.id, "name": project.name})
     return output
 
@@ -55,8 +55,8 @@ async def get_projects(
 async def get_projects_feature_rating(
     id: int,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
-) -> Union[List, dict]:  
+    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config]),
+) -> Union[List, dict]:
     """
     Returns the feature ratings for a given project ID.
 
@@ -81,10 +81,9 @@ async def get_projects_feature_rating(
         )
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project.name)
     for url in feature_urls:
-        output.append({
-            "url": url, 
-            "rating": sqlite_repo.get_feature_avg_rating(project.id, url)
-        })
+        output.append(
+            {"url": url, "rating": sqlite_repo.get_feature_avg_rating(project.id, url)}
+        )
     return output
 
 
@@ -97,8 +96,8 @@ async def get_projects_feature_rating(
 async def get_projects_rules(
     id: int,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
-) -> Union[List, dict]:  
+    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config]),
+) -> Union[List, dict]:
     """
     Returns the rules for a project with the given ID.
 
@@ -134,18 +133,18 @@ async def get_projects_rules(
 async def get_project_rating(
     id: int,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
-) -> dict:  
+    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config]),
+) -> dict:
     """
     Retrieve the average rating of a project with the given id.
-    
+
     Args:
         id (int): The id of the project to retrieve the rating for.
         sqlite_repo (SQLiteRepository, optional): The SQLiteRepository instance to use for database access.
             Defaults to Depends(Provide[Container.sqlite_repo]).
         yaml_repo (YamlRulesRepository, optional): The YamlRulesRepository instance to use for rules configuration.
             Defaults to Depends(Provide[Container.rules_config]).
-    
+
     Returns:
         dict: A dictionary containing the project id and its average rating, or an error message if the project
         was not found or if its name is not included in the list of project names in the YamlRulesRepository.
@@ -159,8 +158,4 @@ async def get_project_rating(
             detail={"id": id, "Error": "Project not found"},
         )
     rating = sqlite_repo.get_project_avg_rating(id)
-    return {
-        "id": id,
-        "rating": rating
-    }
-
+    return {"id": id, "rating": rating}
