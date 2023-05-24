@@ -90,18 +90,16 @@ class TestProjectRoute(unittest.TestCase):
 
             # Check that the response is valid and matches the expected output
             self.assertEqual(response.status_code, 404)
-            self.assertEqual(response.json(), {"id": 1, "Error": "Project not found"})
+            self.assertEqual(response.json(), {"detail" :{"id": 1, "Error": "Project not found"}})
 
     def test_get_project_rules(self):
-        expected_output = [
-            {
-                "url": "http://example.com/feature1",
-                "ratio": 0.5,
-                "delay_before_reanswer": 30,
-                "delay_to_answer": 10,
-                "is_active": True
-            }
-        ]
+        expected_output =  {
+            "feature_url": "http://example.com/feature1",
+            "ratio": 0.5,
+            "delay_before_reanswer": 30,
+            "delay_to_answer": 10,
+            "is_active": True
+        }
         mock_project = Project(id=1, name="project1")
 
         # Create a mock SQLiteRepository instance with a get_project_by_id method that returns the mock project
@@ -115,11 +113,11 @@ class TestProjectRoute(unittest.TestCase):
 
         # Create a mock YamlRulesRepository instance with a getRuleFromFeature method that returns a Rule
         self.mock_yaml_repo.getRuleFromFeature.return_value = Rule(
-            feature_url=expected_output[0]["url"],
-            ratio=expected_output[0]["ratio"],
-            delay_before_reanswer=expected_output[0]["delay_before_reanswer"],
-            delay_to_answer=expected_output[0]["delay_to_answer"],
-            is_active=expected_output[0]["is_active"]
+            feature_url=expected_output["feature_url"],
+            ratio=expected_output["ratio"],
+            delay_before_reanswer=expected_output["delay_before_reanswer"],
+            delay_to_answer=expected_output["delay_to_answer"],
+            is_active=expected_output["is_active"]
         )
             
         with app.container.sqlite_repo.override(self.mock_sqlite_repo),\
@@ -131,7 +129,7 @@ class TestProjectRoute(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected_output)
 
-    def test_get_project_rules_with_rong_id(self):
+    def test_get_project_rules_with_wrong_id(self):
 
 
         # Create a mock SQLiteRepository instance with a get_project_by_id method that returns the mock project
@@ -144,7 +142,7 @@ class TestProjectRoute(unittest.TestCase):
 
         # Check that the response is valid and matches the expected output
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json(), {"id": 1, "Error": "Project not found"})
+        self.assertEqual(response.json(), {"detail" :{"id": 1, "Error": "Project not found"}})
 
     def test_get_project_rating(self):
         # Arrange
@@ -193,7 +191,7 @@ class TestProjectRoute(unittest.TestCase):
 
             # Assert
             self.assertEqual(response.status_code, 404)
-            self.assertEqual(response.json(), {"id": 2, "Error": "Project not found"})
+            self.assertEqual(response.json(), {"detail" :{"id": 2, "Error": "Project not found"}})
             self.mock_sqlite_repo.get_project_avg_rating.assert_not_called()
 
     def tearDown(self):

@@ -1,8 +1,10 @@
+import logging
 from typing import List, Union
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from dependency_injector.wiring import Provide, inject
 from models.project import Project
+from models.rule import Rule
 
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
@@ -40,7 +42,6 @@ async def get_projects(
 @inject
 async def get_projects_feature_rating(
     id: int,
-    response: Response,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> Union[List, dict]:  
@@ -61,8 +62,11 @@ async def get_projects_feature_rating(
     output = []
     project = await sqlite_repo.get_project_by_id(id)
     if not project or project.name not in yaml_repo.getProjectNames():
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {"id": id, "Error": "Project not found"}
+        logging.error("Project not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"id": id, "Error": "Project not found"},
+        )
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project.name)
     for url in feature_urls:
         output.append({
@@ -71,11 +75,10 @@ async def get_projects_feature_rating(
         })
     return output
 
-@router.get("/projects/{id}/rules", response_model=Union[List, dict])
+@router.get("/projects/{id}/rules", response_model=Union[List, Rule])
 @inject
 async def get_projects_rules(
     id: int,
-    response: Response,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> Union[List, dict]:  
@@ -93,8 +96,11 @@ async def get_projects_rules(
     output = []
     project = await sqlite_repo.get_project_by_id(id)
     if not project or project.name not in yaml_repo.getProjectNames():
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {"id": id, "Error": "Project not found"}
+        logging.error("Project not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"id": id, "Error": "Project not found"},
+        )
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project.name)
     for url in feature_urls:
         rule = yaml_repo.getRuleFromFeature(url)
@@ -106,13 +112,12 @@ async def get_projects_rules(
             "is_active": rule.is_active
             
         })
-    return output
+    return rule
     
 @router.get("/project/{id}/avg_rating", response_model=dict)
 @inject
 async def get_project_rating(
     id: int,
-    response: Response,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> dict:  
@@ -133,11 +138,11 @@ async def get_project_rating(
 
     project = await sqlite_repo.get_project_by_id(id)
     if not project or project.name not in yaml_repo.getProjectNames():
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {
-          "id": id, 
-          "Error": "Project not found"
-        }
+        logging.error("Project not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"id": id, "Error": "Project not found"},
+        )
     rating = sqlite_repo.get_project_avg_rating(id)
     return {
         "id": id,
