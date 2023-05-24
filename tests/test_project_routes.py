@@ -93,13 +93,15 @@ class TestProjectRoute(unittest.TestCase):
             self.assertEqual(response.json(), {"detail" :{"id": 1, "Error": "Project not found"}})
 
     def test_get_project_rules(self):
-        expected_output =  {
-            "feature_url": "http://example.com/feature1",
-            "ratio": 0.5,
-            "delay_before_reanswer": 30,
-            "delay_to_answer": 10,
-            "is_active": True
-        }
+        expected_output = [
+            {
+                "feature_url": "http://example.com/feature1",
+                "ratio": 0.5,
+                "delay_before_reanswer": 30,
+                "delay_to_answer": 10,
+                "is_active": True
+            }
+        ]
         mock_project = Project(id=1, name="project1")
 
         # Create a mock SQLiteRepository instance with a get_project_by_id method that returns the mock project
@@ -113,11 +115,11 @@ class TestProjectRoute(unittest.TestCase):
 
         # Create a mock YamlRulesRepository instance with a getRuleFromFeature method that returns a Rule
         self.mock_yaml_repo.getRuleFromFeature.return_value = Rule(
-            feature_url=expected_output["feature_url"],
-            ratio=expected_output["ratio"],
-            delay_before_reanswer=expected_output["delay_before_reanswer"],
-            delay_to_answer=expected_output["delay_to_answer"],
-            is_active=expected_output["is_active"]
+            feature_url=expected_output[0]["feature_url"],
+            ratio=expected_output[0]["ratio"],
+            delay_before_reanswer=expected_output[0]["delay_before_reanswer"],
+            delay_to_answer=expected_output[0]["delay_to_answer"],
+            is_active=expected_output[0]["is_active"]
         )
             
         with app.container.sqlite_repo.override(self.mock_sqlite_repo),\

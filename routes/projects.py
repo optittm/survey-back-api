@@ -104,15 +104,8 @@ async def get_projects_rules(
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project.name)
     for url in feature_urls:
         rule = yaml_repo.getRuleFromFeature(url)
-        output.append({
-            "url": rule.feature_url,
-            "ratio": rule.ratio,
-            "delay_before_reanswer": rule.delay_before_reanswer,
-            "delay_to_answer": rule.delay_to_answer,
-            "is_active": rule.is_active
-            
-        })
-    return rule
+        output.append(rule)
+    return output
     
 @router.get("/project/{id}/avg_rating", response_model=dict)
 @inject
