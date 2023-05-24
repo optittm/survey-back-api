@@ -120,7 +120,7 @@ container.config.cors_allow_credentials.from_env(
     as_=lambda x: str_to_bool(x) if x != "" else False,
     default="False",
 )
-container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", default="GET, POST")
+container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", default="GET,POST,OPTIONS")
 container.config.cors_allow_headers.from_env("CORS_ALLOW_HEADERS", default="*")
 container.config.secret_key.from_env("SECRET_KEY")
 container.config.access_token_expire_minutes.from_env(
