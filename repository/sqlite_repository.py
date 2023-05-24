@@ -365,17 +365,13 @@ class SQLiteRepository:
         paginated_comments = comments[start_index:end_index]
     
 
-        # Prepare pagination information
-        next_page = f"/comments?page={page + 1}&pageSize={page_size}" if page < total_pages else None
-        prev_page = f"/comments?page={page - 1}&pageSize={page_size}" if page > 1 else None
 
         return {
             "results": paginated_comments,
             "page": page,
             "page_size": page_size,
-            "total": total_comments,
-            "next_page": next_page,
-            "prev_page": prev_page,
+            "total_comments": total_comments,
+            "total_pages": total_pages,
         }
 
     async def create_project(self, project: Project):

@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Any, Optional, Union, Dict
 from fastapi import APIRouter, Depends, status, Cookie, Response
 from dependency_injector.wiring import Provide, inject
 from datetime import datetime, timedelta
@@ -77,7 +77,7 @@ async def create_comment(
         return {"Error": "Feature not found"}
 
 
-@router.get("/comments", response_model=List[CommentGetBody])
+@router.get("/comments", response_model=Dict[str, Any])
 @inject
 async def get_comments(
     project_name: Optional[str] = None,
@@ -91,7 +91,7 @@ async def get_comments(
     page: Optional[int] = 1,
     page_size: Optional[int] = 20,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
-) -> List[CommentGetBody]:
+) -> Dict[str, Any]:
     
     comments = await sqlite_repo.read_comments(
         project_name=project_name,
@@ -107,5 +107,19 @@ async def get_comments(
     )
     commentslist=comments['results']
     commentsreturn = [await comment_to_comment_get_body(comment) for comment in commentslist]
+    total_pages = comments['total_pages']
+    total_comments = comments['total_comments']
 
-    return commentsreturn
+    # Prepare pagination information
+    next_page = f"/comments?page={page + 1}&pageSize={page_size}" if page < total_pages else None
+    prev_page = f"/comments?page={page - 1}&pageSize={page_size}" if page > 1 else None
+
+    return { 
+            "results": commentsreturn,
+            "page": page,
+            "page_size": page_size,
+            "total_comments": total_comments,
+            "total_pages": total_pages,
+            "next_page": next_page,
+            "prev_page": prev_page,
+    }
