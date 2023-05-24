@@ -74,7 +74,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         cls.cursor.execute('DROP TABLE Comment')
         cls.cursor.execute('DROP TABLE Display')
         cls.cursor.execute('DROP TABLE Project')
-        
+
     async def asyncSetUp(self):
         self.config = {"survey_db": self.db_name}
         self.repository = SQLiteRepository(self.config)
@@ -140,6 +140,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, db_project)
         Project.insert.assert_not_called()
+        ProjectEncryption.insert.assert_not_called()
     
     async def test_get_all_comments(self):
         comment_a = Comment(
@@ -282,7 +283,6 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
     def test_get_project_avg_rating(self):
         project_a = Project(id=1, name='Project A')
         project_b = Project(id=2, name='Project B')
-
         self.assertAlmostEqual(self.repository.get_project_avg_rating(project_a.id), 4.0)
         self.assertAlmostEqual(self.repository.get_project_avg_rating(project_b.id), 2.0)
 
