@@ -2,7 +2,6 @@ import logging
 from typing import Optional
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2AuthorizationCodeBearer, SecurityScopes
-from fastapi.security.utils import get_authorization_scheme_param
 import jwt
 from dependency_injector.wiring import Provide, inject
 
@@ -22,19 +21,8 @@ class EnabledOAuth2ACB(OAuth2AuthorizationCodeBearer):
         request: Request,
         config=Depends(Provide[Container.config]),
     ) -> Optional[str]:
-        authorization = request.headers.get("Authorization")
-        scheme, param = get_authorization_scheme_param(authorization)
-        if not authorization or scheme.lower() != "bearer":
-            # OAuth security is disabled if no key is present in config
-            if self.auto_error or config["secret_key"] != "":
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Not authenticated",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-            else:
-                return None
-        return param
+        if config["secret_key"] != "":
+            return await super().__call__(request)
 
 
 oauth2_scheme = EnabledOAuth2ACB(
@@ -45,7 +33,6 @@ oauth2_scheme = EnabledOAuth2ACB(
         ScopeEnum.CLIENT.value: "Check if the modal should be displayed and post user comments.",
         ScopeEnum.DATA.value: "Read comments, projects, rules and statistics.",
     },
-    auto_error=False,
 )
 
 
@@ -80,9 +67,9 @@ def check_jwt(
             detail="Token is expired",
             headers=exception_headers,
         )
-    except Exception:
+    except Exception as e:
         # JWT could not be decoded, doesn't have an exp or scopes claims, or the claims are invalid
-        logging.error("Invalid JWT")
+        logging.exception("Invalid JWT", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
