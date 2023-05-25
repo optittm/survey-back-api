@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 import logging
 import sqlite3
 
-from models.comment import Comment
+from models.comment import Comment, CommentPostBody
 from models.display import Display
 from models.project import Project, ProjectEncryption
 from utils.encryption import Encryption
