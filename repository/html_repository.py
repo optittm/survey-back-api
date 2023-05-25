@@ -22,9 +22,7 @@ class HTMLRepository:
     def generate_report(self, projects) -> str:
         logging.info("Generate HTML report")
 
-        data = {
-            "project": "TestName",
-        }
+        data = {"projects": projects}
 
         # Render the template and return Report
         html_report = self.template.render(data)

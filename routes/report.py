@@ -27,16 +27,30 @@ async def init_report(
 ) -> str:
     html_repository = HTMLRepository(reportFile="surveyReport.html")
 
-    nameProjects = rulesYamlConfig.getProjectNames()
+    projects = []
 
-    for project_name in nameProjects:
+    for project_name in rulesYamlConfig.getProjectNames():
         project = await sqlite_repo.get_project_by_name(project_name)
-        project_average_rating = sqlite_repo.get_project_avg_rating(project.id)
+        average_rating = sqlite_repo.get_project_avg_rating(project.id)
         comments_number = sqlite_repo.get_number_of_comment(project.id)
         display_modal_number = sqlite_repo.get_number_of_display(project.id)
-        rules = rulesYamlConfig.get_
+        active_rules = [
+            rule
+            for rule in rulesYamlConfig.getRulesFromProjectName(project_name)
+            if rule["is_active"] == True
+        ]
 
-    return html_repository.generate_report(nameProjects)
+        projects.append(
+            {
+                "name": project_name,
+                "average_rating": average_rating,
+                "comments_number": comments_number,
+                "display_modal_number": display_modal_number,
+                "active_rules_number": len(active_rules),
+            }
+        )
+
+    return html_repository.generate_report(projects)
 
 
 @router.get("/survey-report/project/{id}", response_class=HTMLResponse)
