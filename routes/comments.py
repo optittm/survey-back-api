@@ -1,3 +1,4 @@
+from math import ceil
 from typing import Any, Optional, Union, Dict
 from fastapi import APIRouter, Depends, status, Cookie, Response
 from dependency_injector.wiring import Provide, inject
@@ -101,14 +102,16 @@ async def get_comments(
         timestamp_end=timestamp_end,
         content_search=content_search,
         rating_min=rating_min,
-        rating_max=rating_max, 
-        page = page,
-        page_size=page_size
+        rating_max=rating_max
     )
-    commentslist=comments['results']
-    commentsreturn = [await comment_to_comment_get_body(comment) for comment in commentslist]
-    total_pages = comments['total_pages']
-    total_comments = comments['total_comments']
+    # Perform pagination
+    total_comments = len(comments)
+    total_pages = ceil(total_comments / page_size)
+    start_index = (page - 1) * page_size
+    end_index = start_index + page_size
+    paginated_comments = comments[start_index:end_index]
+
+    commentsreturn = [await comment_to_comment_get_body(comment) for comment in paginated_comments]
 
     # Prepare pagination information
     next_page = f"/comments?page={page + 1}&pageSize={page_size}" if page < total_pages else None

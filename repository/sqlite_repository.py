@@ -272,10 +272,8 @@ class SQLiteRepository:
         timestamp_end: Optional[str] = None,
         content_search: Optional[str] = None,
         rating_min: Optional[int] = None,
-        rating_max: Optional[int] = None,
-        page: int = 1,
-        page_size: int = 20,
-    ) -> Dict[str, Any]:
+        rating_max: Optional[int] = None
+    ) -> List[Comment]:
         """
         Get paginated comments from the database that match the given filters.
         Args:
@@ -287,10 +285,8 @@ class SQLiteRepository:
             - content_search: (optional) a search query to filter comments by
             - rating_min: (optional) the minimum rating to filter by
             - rating_max: (optional) the maximum rating to filter by
-            - page: (optional) the current page number (default: 1)
-            - page_size: (optional) the number of comments per page (default: 20)
         Returns:
-            A dictionary containing the paginated comments and pagination information.
+            A dictionary containing the comments.
         """
         # If no filters are given, return all comments
         if not any(
@@ -306,6 +302,8 @@ class SQLiteRepository:
             )
         ):
             comments = await self.get_all_comments()
+            return comments
+            
         else:
             query = []
 
@@ -314,7 +312,7 @@ class SQLiteRepository:
                 if project:
                     query.append(Comment.project_id == project.id)
                 else:
-                    return {"results": [], "page": page, "page_size": page_size, "total": 0, "next_page": None, "prev_page": None}
+                    return []
 
             if feature_url is not None:
                 query.append(Comment.feature_url == feature_url)
@@ -356,22 +354,7 @@ class SQLiteRepository:
                     query_comments = list(query)
                     comments = [x for x in comments_searched if x in query_comments]
 
-        # Perform pagination
-        total_comments = len(comments)
-        total_pages = ceil(total_comments / page_size)
-        start_index = (page - 1) * page_size
-        end_index = start_index + page_size
-        paginated_comments = comments[start_index:end_index]
-    
-
-
-        return {
-            "results": paginated_comments,
-            "page": page,
-            "page_size": page_size,
-            "total_comments": total_comments,
-            "total_pages": total_pages,
-        }
+                return comments
 
     async def create_project(self, project: Project):
         projects = await Project.filter(name=project.name)
