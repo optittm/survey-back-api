@@ -80,11 +80,11 @@ class YamlRulesRepository:
                     rule_feature_url = rule["feature_url"]
                     if re.search(fr"\b{re.escape(rule_feature_url)}\b", feature_url):
                         return Rule(
-                            feature_url,
-                            rule["ratio"],
-                            rule["delay_before_reanswer"],
-                            rule["delay_to_answer"],
-                            rule["is_active"],
+                            feature_url = rule["feature_url"],
+                            ratio = rule["ratio"],
+                            delay_before_reanswer = rule["delay_before_reanswer"],
+                            delay_to_answer = rule["delay_to_answer"],
+                            is_active = rule["is_active"],
                         )
         return None
 
