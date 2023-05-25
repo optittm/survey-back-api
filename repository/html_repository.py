@@ -8,7 +8,7 @@ class HTMLRepository:
     Generate an HTML report
     """
 
-    def generate_report(self) -> str:
+    def generate_report(self, projects) -> str:
         logging.info("Generate HTML report")
 
         # Load HTML template
