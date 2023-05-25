@@ -34,6 +34,7 @@ async def init_report(
         project_average_rating = sqlite_repo.get_project_avg_rating(project.id)
         comments_number = sqlite_repo.get_number_of_comment(project.id)
         display_modal_number = sqlite_repo.get_number_of_display(project.id)
+        rules = rulesYamlConfig.get_
 
     return html_repository.generate_report(nameProjects)
 

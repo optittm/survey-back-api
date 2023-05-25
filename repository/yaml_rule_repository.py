@@ -59,6 +59,25 @@ class YamlRulesRepository:
             return None
 
     @staticmethod
+    def getRulesFromProjectName(name: str):
+        """
+        Returns the rules for a project with the given name.
+
+        Args:
+            name (str): the name of the project to retrieve rules for
+
+        Returns:
+            Union[List, dict]: a list of rules for the project, or an error dictionary if the project is not found
+        """
+        data = YamlRulesRepository._getRulesConfig(
+            YamlRulesRepository._RULES_CONFIG_FILE
+        )
+        if data:
+            for project_name, project_data in data["projects"].items():
+                if project_name == name:
+                    return project_data["rules"]
+
+    @staticmethod
     def getRuleFromFeature(feature_url: str):
         """
         Returns a Rule object corresponding to the specified feature URL, or None if the feature does not exist in the rule configuration.
@@ -78,11 +97,11 @@ class YamlRulesRepository:
                 for rule in project_data["rules"]:
                     if rule["feature_url"] == feature_url:
                         return Rule(
-                            feature_url = rule["feature_url"],
-                            ratio = rule["ratio"],
-                            delay_before_reanswer = rule["delay_before_reanswer"],
-                            delay_to_answer = rule["delay_to_answer"],
-                            is_active = rule["is_active"],
+                            feature_url=rule["feature_url"],
+                            ratio=rule["ratio"],
+                            delay_before_reanswer=rule["delay_before_reanswer"],
+                            delay_to_answer=rule["delay_to_answer"],
+                            is_active=rule["is_active"],
                         )
         return None
 
@@ -119,7 +138,7 @@ class YamlRulesRepository:
         if data:
             return data["projects"].keys()
         return None
-    
+
     @staticmethod
     def getFeatureUrlsFromProjectName(name) -> List:
         data = YamlRulesRepository._getRulesConfig(
