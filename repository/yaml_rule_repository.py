@@ -67,7 +67,7 @@ class YamlRulesRepository:
             name (str): the name of the project to retrieve rules for
 
         Returns:
-            Union[List, dict]: a list of rules for the project, or an error dictionary if the project is not found
+            Union[List, dict]: a list of rules for the project
         """
         data = YamlRulesRepository._getRulesConfig(
             YamlRulesRepository._RULES_CONFIG_FILE
