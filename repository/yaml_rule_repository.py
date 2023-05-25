@@ -75,7 +75,16 @@ class YamlRulesRepository:
         if data:
             for project_name, project_data in data["projects"].items():
                 if project_name == name:
-                    return project_data["rules"]
+                    return [
+                        Rule(
+                            feature_url=rule["feature_url"],
+                            ratio=rule["ratio"],
+                            delay_before_reanswer=rule["delay_before_reanswer"],
+                            delay_to_answer=rule["delay_to_answer"],
+                            is_active=rule["is_active"],
+                        )
+                        for rule in project_data["rules"]
+                    ]
 
     @staticmethod
     def getRuleFromFeature(feature_url: str):

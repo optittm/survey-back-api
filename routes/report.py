@@ -37,7 +37,7 @@ async def init_report(
         active_rules = [
             rule
             for rule in rulesYamlConfig.getRulesFromProjectName(project_name)
-            if rule["is_active"] == True
+            if rule.is_active == True
         ]
 
         projects.append(
