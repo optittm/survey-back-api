@@ -81,7 +81,7 @@ The provided featureUrl is matched against the feature_url values in the rule co
 The pattern should match the complete feature_url value in the rule configuration.
 Special characters within the feature_url should be properly escaped to ensure correct matching.
 By default, the pattern is wrapped in word boundaries (\b) to match the entire URL and avoid partial matches. 
-The returned rule will be the first rule that matches in the yaml file. 
+**Warning:** The returned rule will be the first rule that matches in the yaml file. So if you want a default rule, you should put it at the end of the list. 
 
 ### GET /survey-report
 
