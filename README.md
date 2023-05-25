@@ -40,17 +40,30 @@ Retrieves comments from the database. It supports filtering by various parameter
 
 Request Query Parameters
 
-project_name: The name of the project to filter by.  
-feature_url: The URL of the feature to filter by.  
-user_id: The ID of the user to filter by.  
-timestamp_start: The minimum timestamp of the comments to filter by (in ISO 8601 format).  
-timestamp_end: The maximum timestamp of the comments to filter by (in ISO 8601 format).  
-content_search: A search query (regex) to filter comments by. It searches in the comment text field.
+- project_name: The name of the project to filter by.
+- feature_url: The URL of the feature to filter by.
+- user_id: The ID of the user to filter by.
+- timestamp_start: The minimum timestamp of the comments to filter by (in ISO 8601 format).
+- timestamp_end: The maximum timestamp of the comments to filter by (in ISO 8601 format).
+- content_search: A search query (regex) to filter comments by. It searches in the comment text field.
+- rating_min: The minimum rating to filter by.
+- rating_max: The maximum rating to filter by.
+- page: The current page number (default: 1).
+- page_size: The number of comments per page (default: 20).
 
 Response  
 response model: List[Comment] - A list of comment objects matching the specified filters. If no filters are provided, it returns all comments.
 
-Example usage: GET /comments?project_name=my-project&feature_url=/feature1&user_id=user123&timestamp_starttt=2022-01-01T00:00:00Z&timestamp_end=2022-12-31T23:59:59Z&content_search=bug
+Example usage: GET /comments?project_name=my-project&feature_url=/feature1&user_id=user123&timestamp_start=2022-01-01T00:00:00Z&timestamp_end=2022-12-31T23:59:59Z&content_search=bug&ratin_min=3&rating_max=5&page=1&page_size=20
+
+## Pagination
+
+The `/comments` endpoint supports pagination for retrieving large data sets. The following query parameters can be used to control pagination:
+
+- page: The current page number (default: 1).
+- page_size: The number of comments per page (default: 20).
+
+The API response includes pagination information such as the total number of comments, the current page, page size, and links to the next and previous pages.
 
 ### GET /rules
 
