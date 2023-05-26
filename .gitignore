@@ -134,3 +134,6 @@ tests/mocks/test_db
 
 # VSCode
 .vscode/
+
+# Mock DB
+tests/mocks/test_db
