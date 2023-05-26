@@ -131,3 +131,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 tests/mocks/test_db
+
+# VSCode
+.vscode/
