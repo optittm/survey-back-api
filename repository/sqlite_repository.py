@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 import logging
 import sqlite3
 
@@ -408,3 +408,31 @@ class SQLiteRepository:
         new_display.id = id
         logging.debug(f"Display created in DB: {new_display}")
         return new_display
+
+
+    async def get_rates_from_feature(
+            self, 
+            feature_url: str,
+            timestamp_start: Optional[str] = None, 
+            timestamp_end: Optional[str] = None
+    )-> Dict[int, List[str]]:
+        query=[Comment.feature_url == feature_url]
+
+        if timestamp_start is not None:
+            query.append(Comment.timestamp >= timestamp_start)
+
+        if timestamp_end is not None:
+            query.append(Comment.timestamp <= timestamp_end)
+
+        comments = await Comment.filter(*query)
+        rates_with_timestamps = []
+
+        for comment in comments:
+            rate_timestamp = {
+                "rate": comment.rating,
+                "timestamp": comment.timestamp
+            }
+
+            rates_with_timestamps.append(rate_timestamp)
+
+        return rates_with_timestamps
