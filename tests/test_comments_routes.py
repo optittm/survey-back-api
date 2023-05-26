@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 import unittest
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock, patch
 from fastapi.testclient import TestClient
+from math import ceil
 
 from models.comment import Comment, CommentPostBody
 from models.rule import Rule
@@ -253,3 +254,129 @@ class TestCommentsRoutes(unittest.TestCase):
             },
         )
         self.assertEqual(response.status_code, 422)
+
+    def test_read_comments_pagination(self):
+        comments = [
+            Comment(
+                id=1,
+                project_id=1,
+                user_id="1",
+                timestamp=datetime.now().isoformat(),
+                feature_url="http://test.com/test",
+                rating=4,
+                comment="test",
+            ),
+            Comment(
+                id=2,
+                project_id=1,
+                user_id="2",
+                timestamp=datetime.now().isoformat(),
+                feature_url="http://test.com/test",
+                rating=5,
+                comment="test2",
+            ),
+            Comment(
+                id=3,
+                project_id=1,
+                user_id="3",
+                timestamp=datetime.now().isoformat(),
+                feature_url="http://test.com/test",
+                rating=3,
+                comment="test3",
+            ),
+            Comment(
+                id=4,
+                project_id=1,
+                user_id="4",
+                timestamp=datetime.now().isoformat(),
+                feature_url="http://test.com/test",
+                rating=2,
+                comment="test4",
+            ),
+            Comment(
+                id=5,
+                project_id=1,
+                user_id="4",
+                timestamp=datetime.now().isoformat(),
+                feature_url="http://test.com/test",
+                rating=2,
+                comment="test4",
+            ),
+        ]
+
+        self.mock_repo.read_comments.return_value = comments
+        format_mock = AsyncMock(side_effect=lambda x: x)
+        page_size = 2
+        expected_total_pages = ceil(len(comments) / page_size)
+
+        # Test first page
+        expected_results = comments[:page_size]
+        expected_total = len(comments)
+        expected_page = 1
+        expected_page_size = page_size
+        expected_next_page = f"/comments?page={expected_page + 1}&pageSize={expected_page_size}"
+        expected_prev_page = None
+
+        with app.container.sqlite_repo.override(self.mock_repo), \
+        patch('routes.comments.comment_to_comment_get_body', format_mock):
+            response = self.client.get(self.route, params={
+                "page": 1,
+                "page_size": page_size,
+            })
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertEqual(result["results"], expected_results)
+        self.assertEqual(result["total_comments"], expected_total)
+        self.assertEqual(result["total_pages"], expected_total_pages)
+        self.assertEqual(result["page"], expected_page)
+        self.assertEqual(result["page_size"], expected_page_size)
+        self.assertEqual(result["next_page"], expected_next_page)
+        self.assertEqual(result["prev_page"], expected_prev_page)
+
+        # Test second page
+        expected_results = comments[page_size : page_size * 2]
+        expected_total = len(comments)
+        expected_page = 2
+        expected_page_size = page_size
+        expected_next_page = f"/comments?page={expected_page + 1}&pageSize={expected_page_size}"
+        expected_prev_page = f"/comments?page={expected_page - 1}&pageSize={expected_page_size}"
+
+        with app.container.sqlite_repo.override(self.mock_repo), \
+        patch('routes.comments.comment_to_comment_get_body', format_mock):
+            response = self.client.get(self.route, params={
+                "page": 2,
+                "page_size": page_size,
+            })
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertEqual(result["results"], expected_results)
+        self.assertEqual(result["total_comments"], expected_total)
+        self.assertEqual(result["total_pages"], expected_total_pages)
+        self.assertEqual(result["page"], expected_page)
+        self.assertEqual(result["page_size"], expected_page_size)
+        self.assertEqual(result["next_page"], expected_next_page)
+        self.assertEqual(result["prev_page"], expected_prev_page)
+
+        # Test last page
+        expected_results = comments[page_size * 2 :]
+        expected_total = len(comments)
+        expected_page = 3
+        expected_page_size = page_size
+        expected_next_page = None
+        expected_prev_page = f"/comments?page={expected_page - 1}&pageSize={expected_page_size}"
+
+        with app.container.sqlite_repo.override(self.mock_repo), \
+        patch('routes.comments.comment_to_comment_get_body', format_mock):
+            response = self.client.get(self.route, params={
+                "page": 3,
+                "page_size": page_size,
+            })
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertEqual(result["results"], expected_results)
+        self.assertEqual(result["total_comments"], expected_total)
+        self.assertEqual(result["total_pages"], expected_total_pages)
+        self.assertEqual(result["page"], expected_page)
+        self.assertEqual(result["page_size"], expected_page_size)
+        self.assertEqual(result["next_page"], expected_next_page)
+        self.assertEqual(result["prev_page"], expected_prev_page)

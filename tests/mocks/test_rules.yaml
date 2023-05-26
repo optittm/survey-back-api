@@ -4,7 +4,7 @@ projects:
     rules:
     - 
 # Regex URL
-      feature_url: /test
+      feature_url: https://www.example.com/test
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
 # Delay in days before the modal is being displayed again for a given user
@@ -16,7 +16,7 @@ projects:
       is_active: true
     -
 # Regex URL
-      feature_url: /test1
+      feature_url: https://www.example.com/test1
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
 # Delay in days before the modal is being displayed again for a given user
@@ -30,7 +30,7 @@ projects:
     rules:
     - 
 # Regex URL
-      feature_url: /test2
+      feature_url: https://www.example.com/test2
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
 # Delay in days before the modal is being displayed again for a given user

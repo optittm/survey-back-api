@@ -66,7 +66,7 @@ class TestGetRuleFromFeature(unittest.TestCase):
             rule = YamlRulesRepository.getRuleFromFeature(feature_url)
 
         self.assertIsInstance(rule, Rule)
-        self.assertEqual(rule.feature_url, feature_url)
+        self.assertEqual(rule.feature_url, "/test2")
         self.assertEqual(rule.ratio, 0.4)
         self.assertEqual(rule.delay_before_reanswer, 30)
         self.assertEqual(rule.delay_to_answer, 5)
