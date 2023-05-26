@@ -2,10 +2,11 @@ from typing import Dict, List, Optional, Union
 import logging
 import sqlite3
 
-from models.comment import Comment
+from models.comment import Comment, CommentPostBody
 from models.display import Display
 from models.project import Project, ProjectEncryption
 from utils.encryption import Encryption
+
 
 
 class SQLiteRepository:
@@ -259,6 +260,8 @@ class SQLiteRepository:
         comments = await Comment.all()
         return comments
 
+
+
     async def read_comments(
         self,
         project_name: Optional[str] = None,
@@ -268,10 +271,10 @@ class SQLiteRepository:
         timestamp_end: Optional[str] = None,
         content_search: Optional[str] = None,
         rating_min: Optional[int] = None,
-        rating_max: Optional[int] = None,
+        rating_max: Optional[int] = None
     ) -> List[Comment]:
         """
-        Get all comments from the database that match the given filters.
+        Get paginated comments from the database that match the given filters.
         Args:
             - project_name: (optional) the name of the project to filter by
             - feature_url: (optional) the feature URL to filter by
@@ -279,8 +282,10 @@ class SQLiteRepository:
             - timestamp_start: (optional) the earliest timestamp to filter by
             - timestamp_end: (optional) the latest timestamp to filter by
             - content_search: (optional) a search query to filter comments by
+            - rating_min: (optional) the minimum rating to filter by
+            - rating_max: (optional) the maximum rating to filter by
         Returns:
-            A list of comments that match the given filters
+            A dictionary containing the comments.
         """
         # If no filters are given, return all comments
         if not any(
@@ -295,57 +300,60 @@ class SQLiteRepository:
                 rating_max,
             )
         ):
-            return await self.get_all_comments()
-        query = []
+            comments = await self.get_all_comments()
+            return comments
+            
+        else:
+            query = []
 
-        if project_name:
-            project = await self.get_project_by_name(project_name)
-            if project:
-                query.append(Comment.project_id == project.id)
+            if project_name:
+                project = await self.get_project_by_name(project_name)
+                if project:
+                    query.append(Comment.project_id == project.id)
+                else:
+                    return []
+
+            if feature_url is not None:
+                query.append(Comment.feature_url == feature_url)
+
+            if user_id is not None:
+                query.append(Comment.user_id == user_id)
+
+            if timestamp_start is not None:
+                query.append(Comment.timestamp >= timestamp_start)
+
+            if timestamp_end is not None:
+                query.append(Comment.timestamp <= timestamp_end)
+
+            if rating_min is not None:
+                query.append(Comment.rating >= rating_min)
+
+            if rating_max is not None:
+                query.append(Comment.rating <= rating_max)
+
+            if content_search is None:
+                if len(query) == 0:
+                    comments = await self.get_all_comments()
+                else:
+                    query = await Comment.filter(*query)
+                    comments = list(query)
             else:
-                return []
+                table = Comment.get_table()
+                with Session(Comment.__metadata__.database.engine) as session:
+                    result = (
+                        session.query(table)
+                        .where(table.c.comment.regexp_match(content_search))
+                        .all()
+                    )
+                comments_searched: List[Comment] = Comment.parse_results(result, [], False)
+                if len(query) == 0:
+                    comments = comments_searched
+                else:
+                    query = await Comment.filter(*query)
+                    query_comments = list(query)
+                    comments = [x for x in comments_searched if x in query_comments]
 
-        if feature_url is not None:
-            query.append(Comment.feature_url == feature_url)
-
-        if user_id is not None:
-            query.append(Comment.user_id == user_id)
-
-        if timestamp_start is not None:
-            query.append(Comment.timestamp >= timestamp_start)
-
-        if timestamp_end is not None:
-            query.append(Comment.timestamp <= timestamp_end)
-
-        if rating_min is not None:
-            query.append(Comment.rating >= rating_min)
-
-        if rating_max is not None:
-            query.append(Comment.rating <= rating_max)
-
-        if content_search is None:
-            if len(query) == 0:
-                return await self.get_all_comments()
-            else:
-                query = await Comment.filter(*query)
-                return list(query)
-
-        if content_search is not None:
-            table = Comment.get_table()
-            with Session(Comment.__metadata__.database.engine) as session:
-                result = (
-                    session.query(table)
-                    .where(table.c.comment.regexp_match(content_search))
-                    .all()
-                )
-            comments_searched: List[Comment] = Comment.parse_results(result, [], False)
-            if len(query) == 0:
-                return comments_searched
-            else:
-                query = await Comment.filter(*query)
-                query_comments = list(query)
-                common_comments = [x for x in comments_searched if x in query_comments]
-                return common_comments
+                return comments
 
     async def create_project(self, project: Project):
         projects = await Project.filter(name=project.name)
