@@ -1,4 +1,5 @@
-from typing import List, Optional, Union
+from math import ceil
+from typing import Any, Optional, Union, Dict
 from fastapi import APIRouter, Depends, status, Cookie, Response
 from dependency_injector.wiring import Provide, inject
 from datetime import datetime, timedelta
@@ -77,7 +78,7 @@ async def create_comment(
         return {"Error": "Feature not found"}
 
 
-@router.get("/comments", response_model=List[CommentGetBody])
+@router.get("/comments", response_model=Dict[str, Any])
 @inject
 async def get_comments(
     project_name: Optional[str] = None,
@@ -88,8 +89,10 @@ async def get_comments(
     content_search: Optional[str] = None,
     rating_min: Optional[int] = None,
     rating_max: Optional[int] = None,
+    page: Optional[int] = 1,
+    page_size: Optional[int] = 20,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo])
-) -> List[CommentGetBody]:
+) -> Dict[str, Any]:
     
     comments = await sqlite_repo.read_comments(
         project_name=project_name,
@@ -101,8 +104,25 @@ async def get_comments(
         rating_min=rating_min,
         rating_max=rating_max
     )
+    # Perform pagination
+    total_comments = len(comments)
+    total_pages = ceil(total_comments / page_size)
+    start_index = (page - 1) * page_size
+    end_index = start_index + page_size
+    paginated_comments = comments[start_index:end_index]
 
-    # Formatage des commentaires filtrés en CommentGetBody
-    comments = [await comment_to_comment_get_body(comment) for comment in comments]
+    commentsreturn = [await comment_to_comment_get_body(comment) for comment in paginated_comments]
 
-    return comments
+    # Prepare pagination information
+    next_page = f"/comments?page={page + 1}&pageSize={page_size}" if page < total_pages else None
+    prev_page = f"/comments?page={page - 1}&pageSize={page_size}" if page > 1 else None
+
+    return { 
+            "results": commentsreturn,
+            "page": page,
+            "page_size": page_size,
+            "total_comments": total_comments,
+            "total_pages": total_pages,
+            "next_page": next_page,
+            "prev_page": prev_page,
+    }
