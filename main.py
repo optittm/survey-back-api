@@ -122,13 +122,13 @@ container.config.cors_allow_credentials.from_env(
 )
 container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", default="GET,POST,OPTIONS")
 container.config.cors_allow_headers.from_env("CORS_ALLOW_HEADERS", default="*")
-container.config.secret_key.from_env("SECRET_KEY")
+container.config.secret_key.from_env("SECRET_KEY", default="")
 container.config.access_token_expire_minutes.from_env(
     "ACCESS_TOKEN_EXPIRE_MINUTES", as_=int, default=15
 )
-container.config.auth_url.from_env("AUTH_URL")
-container.config.jwk_url.from_env("JWK_URL")
-container.config.client_secrets.from_env("CLIENT_SECRETS")
+container.config.auth_url.from_env("AUTH_URL", default="")
+container.config.jwk_url.from_env("JWK_URL", default="")
+container.config.client_secrets.from_env("CLIENT_SECRETS", default="")
 container.config.debug_mode.from_env(
     "DEBUG_MODE",
     required=True,
