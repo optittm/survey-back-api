@@ -43,7 +43,7 @@ async def init_report(
         projects.append(
             {
                 "name": project_name,
-                "average_rating": average_rating,
+                "average_rating": round(average_rating, 1),
                 "comments_number": comments_number,
                 "display_modal_number": display_modal_number,
                 "active_rules_number": len(active_rules),
