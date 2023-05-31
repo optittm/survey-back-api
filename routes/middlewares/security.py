@@ -43,7 +43,7 @@ def check_jwt(
     config=Depends(Provide[Container.config]),
 ):
     # OAuth security is disabled if no key is present
-    if config["secret_key"] == "":
+    if token is None and config["secret_key"] == "":
         return None
 
     if security_scopes.scopes:
