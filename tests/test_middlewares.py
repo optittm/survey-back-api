@@ -28,7 +28,7 @@ class TestJWTVerification(unittest.TestCase):
 
     def test_security_disabled(self):
         app.container.config.secret_key.from_value("")
-        result = check_jwt(self.security_scopes)
+        result = check_jwt(self.security_scopes, None)
         self.assertIsNone(result)
 
     def test_token_expired(self):
