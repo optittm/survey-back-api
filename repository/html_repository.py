@@ -33,7 +33,8 @@ class HTMLRepository:
 
     def generate_detail_project_report(
         self, 
-        id: str, 
+        id: str,
+        timerange: str = "week", 
         timestamp_start: str = None, 
         timestamp_end: str = None,
         graphs: List[go.Figure] = None,
@@ -44,6 +45,7 @@ class HTMLRepository:
             "project": {"id": id},
             "timestamp_start": timestamp_start,
             "timestamp_end": timestamp_end,
+            "timerange":timerange,
             "graphs": graphs,
         }
 

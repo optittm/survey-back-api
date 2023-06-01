@@ -24,6 +24,7 @@ async def init_report() -> str:
 @inject
 async def init_detail_project_report(
     id: str, 
+    timerange: Optional[str] = "week",
     timestamp_start: Optional[str] = None, 
     timestamp_end: Optional[str] = None,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
@@ -43,8 +44,11 @@ async def init_detail_project_report(
 
     graphs = []
     for feature_url, rates in feature_rates.items():
-        x = [rate["timestamp"] for rate in rates]
-        y = [rate["rate"] for rate in rates]
+        filtered_rates = await sqlite_repo.filter_rates_by_timerange(
+            rates, timerange, timestamp_start, timestamp_end
+        )
+        x = [rate["timestamp"] for rate in filtered_rates]
+        y = [rate["rate"] for rate in filtered_rates]
         
         fig = go.Figure(data=go.Scatter(x=x, y=y, mode='markers', name=feature_url))
 
@@ -53,11 +57,11 @@ async def init_detail_project_report(
         fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
         graph_data = {
             "feature_url": feature_url,
-            "comment_count": len(rates),
+            "comment_count": len(filtered_rates),
             "figure_html": fig_html
         }
         graphs.append(graph_data)
 
     return html_repository.generate_detail_project_report(
-        id, timestamp_start, timestamp_end, graphs
+        id, timerange, timestamp_start, timestamp_end, graphs
     )

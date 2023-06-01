@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Union
 import logging
 import sqlite3
@@ -444,3 +445,64 @@ class SQLiteRepository:
             rates_with_timestamps.append(rate_timestamp)
 
         return rates_with_timestamps
+    
+
+    async def filter_rates_by_timerange(
+        self,
+        feature_url: str,
+        timerange: Optional[str] = "week",
+        timestamp_start: Optional[str] = None,
+        timestamp_end: Optional[str] = None
+    ) -> List[Dict[str, Union[str, int]]]:
+        rates = await self.get_rates_from_feature(feature_url, timestamp_start, timestamp_end)
+        filtered_rates = []
+
+        for rate in rates:
+            timestamp = rate["timestamp"]
+            if self.is_within_timerange(timestamp, timerange, timestamp_start, timestamp_end):
+                filtered_rates.append(rate)
+
+        return filtered_rates
+
+    
+    async def is_within_timerange(
+        self,
+        timestamp: str,
+        timerange: Optional[str] = "week",
+        timestamp_start: Optional[str] = None,
+        timestamp_end: Optional[str] = None
+    ) -> bool:
+        date = datetime.strptime(timestamp, "%Y-%m-%d")
+
+        if timerange == "day":
+            if timestamp_start and timestamp_end:
+                start_date = datetime.strptime(timestamp_start, "%Y-%m-%d")
+                end_date = datetime.strptime(timestamp_end, "%Y-%m-%d")
+                return start_date <= date <= end_date
+            else:
+                current_date = datetime.now().date()
+                start_date = current_date - timedelta(days=1)
+                return start_date <= date <= current_date
+
+        elif timerange == "week":
+            if timestamp_start and timestamp_end:
+                start_date = datetime.strptime(timestamp_start, "%Y-%m-%d")
+                end_date = datetime.strptime(timestamp_end, "%Y-%m-%d")
+                return start_date <= date <= end_date
+            else:
+                current_date = datetime.now().date()
+                start_date = current_date - timedelta(days=7)
+                return start_date <= date <= current_date
+
+        elif timerange == "month":
+            if timestamp_start and timestamp_end:
+                start_date = datetime.strptime(timestamp_start, "%Y-%m-%d")
+                end_date = datetime.strptime(timestamp_end, "%Y-%m-%d")
+                return start_date <= date <= end_date
+            else:
+                current_date = datetime.now().date()
+                start_date = current_date - timedelta(days=30)
+                return start_date <= date <= current_date
+
+        else:
+            return False
