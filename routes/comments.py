@@ -13,6 +13,7 @@ from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
 from utils.middleware import comment_body_treatment
+from utils.nlp import text_preprocess
 
 
 router = APIRouter()
@@ -60,6 +61,11 @@ async def create_comment(
         if (datetime.now() - dt_timestamp) >= timedelta(minutes=rule.delay_to_answer):
             response.status_code = status.HTTP_408_REQUEST_TIMEOUT
             return {"Error": "Time to submit a comment has elapsed"}
+
+        # Sentiment analysis
+        if len(comment_body.comment):
+            word_tokens = text_preprocess(comment_body.comment)
+            # TODO analysis from tokens
 
         iso_timestamp = dt_timestamp.isoformat()
         new_comment = await sqlite_repo.create_comment(
