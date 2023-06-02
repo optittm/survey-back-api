@@ -24,7 +24,7 @@ async def init_report() -> str:
 @inject
 async def init_detail_project_report(
     id: str, 
-    timerange: Optional[str] = "week",
+    timerange: Optional[str] = "week", 
     timestamp_start: Optional[str] = None, 
     timestamp_end: Optional[str] = None,
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
@@ -41,14 +41,15 @@ async def init_detail_project_report(
     for feature_url in feature_urls:
         rates = await sqlite_repo.get_rates_from_feature(feature_url)
         feature_rates[feature_url] = rates
-
+        filtered_rates= await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
+        
+    print("feature_rates", feature_rates)
+    print("----------------")
+    print("filtered_rates", filtered_rates)
     graphs = []
-    for feature_url, rates in feature_rates.items():
-        filtered_rates = await sqlite_repo.filter_rates_by_timerange(
-            rates, timerange, timestamp_start, timestamp_end
-        )
-        x = [rate["timestamp"] for rate in filtered_rates]
-        y = [rate["rate"] for rate in filtered_rates]
+    for feature_url, rates in filtered_rates.items():
+        x = [rate["timestamp"] for rate in rates]
+        y = [rate["rate"] for rate in rates]
         
         fig = go.Figure(data=go.Scatter(x=x, y=y, mode='markers', name=feature_url))
 
@@ -57,11 +58,14 @@ async def init_detail_project_report(
         fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
         graph_data = {
             "feature_url": feature_url,
-            "comment_count": len(filtered_rates),
+            "comment_count": len(rates),
             "figure_html": fig_html
         }
         graphs.append(graph_data)
-
+        date_timestamp_start=[rate["date_timestamp_start"] for rate in rates]
+        date_timestamp_end=[rate["date_timestamp_end"] for rate in rates]
+    print(type(date_timestamp_end))
     return html_repository.generate_detail_project_report(
-        id, timerange, timestamp_start, timestamp_end, graphs
+        id, timerange, date_timestamp_start, date_timestamp_end, graphs
     )
+

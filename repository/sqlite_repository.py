@@ -432,7 +432,6 @@ class SQLiteRepository:
 
         if timestamp_end is not None:
             query.append(Comment.timestamp <= timestamp_end)
-
         comments = await Comment.filter(*query)
         rates_with_timestamps = []
 
@@ -448,61 +447,86 @@ class SQLiteRepository:
     
 
     async def filter_rates_by_timerange(
-        self,
-        feature_url: str,
-        timerange: Optional[str] = "week",
-        timestamp_start: Optional[str] = None,
-        timestamp_end: Optional[str] = None
-    ) -> List[Dict[str, Union[str, int]]]:
-        rates = await self.get_rates_from_feature(feature_url, timestamp_start, timestamp_end)
-        filtered_rates = []
+            self, 
+            feature_rates, 
+            timerange: Optional[str] = "week", 
+            timestamp_start: Optional[str] = None, 
+            timestamp_end: Optional[str] = None
+            ):
+        filtered_rates = {}
 
-        for rate in rates:
-            timestamp = rate["timestamp"]
-            if self.is_within_timerange(timestamp, timerange, timestamp_start, timestamp_end):
-                filtered_rates.append(rate)
-
+        for feature_url, rates in feature_rates.items():
+            filtered_rates[feature_url] = []
+            for rate in rates:
+                result = self.is_within_timerange(rate['timestamp'], timerange, timestamp_start, timestamp_end)
+                if result["within_range"]:
+                    filtered_rates[feature_url].append(rate)
+                    rate["date_timestamp_start"] = result["date_timestamp_start"]
+                    rate["date_timestamp_end"] = result["date_timestamp_end"]
+        
         return filtered_rates
 
     
-    async def is_within_timerange(
-        self,
-        timestamp: str,
-        timerange: Optional[str] = "week",
-        timestamp_start: Optional[str] = None,
-        timestamp_end: Optional[str] = None
-    ) -> bool:
-        date = datetime.strptime(timestamp, "%Y-%m-%d")
+    def is_within_timerange(self, timestamp, timerange, timestamp_start, timestamp_end):
+        timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        result={}
 
-        if timerange == "day":
-            if timestamp_start and timestamp_end:
-                start_date = datetime.strptime(timestamp_start, "%Y-%m-%d")
-                end_date = datetime.strptime(timestamp_end, "%Y-%m-%d")
-                return start_date <= date <= end_date
-            else:
-                current_date = datetime.now().date()
-                start_date = current_date - timedelta(days=1)
-                return start_date <= date <= current_date
+        if not timestamp_start and not timestamp_end:
+            if timerange == "day":
+                timestamp_end = datetime.now()
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=1)
+            elif timerange == "week":
+                timestamp_end = datetime.now()
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(weeks=1)
+            else:  # month
+                timestamp_end = datetime.now()
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=30)
+            date_timestamp = timestamp.date()
+            date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
+            date_timestamp_end = timestamp_end.date()
 
-        elif timerange == "week":
-            if timestamp_start and timestamp_end:
-                start_date = datetime.strptime(timestamp_start, "%Y-%m-%d")
-                end_date = datetime.strptime(timestamp_end, "%Y-%m-%d")
-                return start_date <= date <= end_date
-            else:
-                current_date = datetime.now().date()
-                start_date = current_date - timedelta(days=7)
-                return start_date <= date <= current_date
+        elif not timestamp_start:
+            assert timestamp_end, "Missing timestamp_end."
+            if timerange == "day":
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=1)
+            elif timerange == "week":
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(weeks=1)
+            else:  # month
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=30)
+            date_timestamp = timestamp.date()
+            date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
+            date_timestamp_end = timestamp_end.date()
 
-        elif timerange == "month":
-            if timestamp_start and timestamp_end:
-                start_date = datetime.strptime(timestamp_start, "%Y-%m-%d")
-                end_date = datetime.strptime(timestamp_end, "%Y-%m-%d")
-                return start_date <= date <= end_date
-            else:
-                current_date = datetime.now().date()
-                start_date = current_date - timedelta(days=30)
-                return start_date <= date <= current_date
+        elif not timestamp_end:
+            assert timestamp_start, "Missing timestamp_start."
+            if timerange == "day":
+                timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(days=1)
+            elif timerange == "week":
+                timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(weeks=1)
+            else:  # month
+                timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(days=30)
+                
+            date_timestamp = timestamp.date()
+            date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
+            date_timestamp_end = timestamp_end.date()
 
         else:
-            return False
+            date_timestamp = timestamp.date()
+            date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
+            if timerange == "day":
+                # assert (timestamp_end - timestamp_start).days == 1, "Invalid timerange. Day timerange requires a one-day interval."
+                date_timestamp_end = date_timestamp_start + timedelta(days=1)
+            elif timerange == "week":
+                # assert (timestamp_end - timestamp_start).days == 7, "Invalid timerange. Week timerange requires a seven-day interval."
+                date_timestamp_end = date_timestamp_start + timedelta(days=7)
+            else:  # month
+                # assert (timestamp_end - timestamp_start).days >= 30, "Invalid timerange. Month timerange requires at least a 30-day interval."
+                date_timestamp_end = date_timestamp_start + timedelta(days=30)
+
+       
+        result["within_range"] = date_timestamp_start <= date_timestamp <= date_timestamp_end
+        result["date_timestamp"] = date_timestamp
+        result["date_timestamp_start"] = date_timestamp_start
+        result["date_timestamp_end"] = date_timestamp_end
+
+        return result
