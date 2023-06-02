@@ -87,19 +87,20 @@ class SQLiteRepository:
 
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute(
-            f"""
+        query = """
             SELECT average_rating 
             FROM project_rating_avg
-            WHERE project_id = {project_id};
+            WHERE project_id = ?;
         """
-        )
+        cursor.execute(query, (project_id,))
         result = cursor.fetchall()
+        print(result)
         cursor.close()
         conn.close()
         try:
             return result[0][0]
         except IndexError:
+            print("index error")
             return 0
 
     def get_feature_avg_rating(self, project_id: int, feature_url: str):
@@ -124,14 +125,13 @@ class SQLiteRepository:
 
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute(
-            f"""
+        query = """
             SELECT average_rating
             FROM feature_rating_avg
-            WHERE project_id = {project_id}
-                AND feature_url = "{feature_url}";
+            WHERE project_id = ?
+                AND feature_url = ?;
         """
-        )
+        cursor.execute(query, (project_id, feature_url))
         result = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -159,13 +159,12 @@ class SQLiteRepository:
 
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute(
-            f"""
+        query = """
             SELECT number_comment
             FROM number_comment_by_project
-            WHERE project_id = {project_id};
+            WHERE project_id = ?;
         """
-        )
+        cursor.execute(query, (project_id,))
         result = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -194,13 +193,12 @@ class SQLiteRepository:
 
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
-        cursor.execute(
-            f"""
+        query = """
             SELECT number_display
             FROM number_display_by_project
-            WHERE project_id = {project_id};
+            WHERE project_id = ?;
         """
-        )
+        cursor.execute(query, (project_id,))
         result = cursor.fetchall()
         cursor.close()
         conn.close()
