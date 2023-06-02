@@ -156,6 +156,9 @@ class SQLiteRepository:
         """
         project = await self.get_project_by_name(project_name)
 
+        if project is None:
+            return None
+
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
         cursor.execute(
