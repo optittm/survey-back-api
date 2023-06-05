@@ -94,7 +94,6 @@ class SQLiteRepository:
         """
         cursor.execute(query, (project_id,))
         result = cursor.fetchall()
-        print(result)
         cursor.close()
         conn.close()
         try:
