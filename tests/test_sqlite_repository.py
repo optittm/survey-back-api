@@ -190,12 +190,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
 
         Comment.all = AsyncMock(return_value=[comment_a, comment_b])
         result = await self.repository.read_comments()
-        self.assertEqual(result["results"], [comment_a, comment_b])
-        self.assertEqual(result["total"], 2)
-        self.assertEqual(result["page"], 1)
-        self.assertEqual(result["page_size"], 20)
-        self.assertIsNone(result["next_page"])
-        self.assertIsNone(result["prev_page"])
+        self.assertEqual(result, [comment_a, comment_b])
 
         Comment.all.assert_called_once()
 
@@ -216,12 +211,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             Comment.feature_url = AsyncMock(return_value=comment_a.feature_url)
             result = await self.repository.read_comments(feature_url="http://test.com/test")
             mock_filter.assert_called_once_with(Comment.feature_url == "http://test.com/test")
-            self.assertEqual(result["results"], [comment_a])
-            self.assertEqual(result["total"], 1)
-            self.assertEqual(result["page"], 1)
-            self.assertEqual(result["page_size"], 20)
-            self.assertIsNone(result["next_page"])
-            self.assertIsNone(result["prev_page"])
+            self.assertEqual(result, [comment_a])
 
     async def test_read_comments_with_project_name(self):
         comment_a = Comment(
@@ -242,12 +232,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             Comment.project_id = AsyncMock(return_value=comment_a.project_id)
             result = await self.repository.read_comments(project_name=project.name)
             mock_filter.assert_called_once_with(Comment.project_id == 1)
-            self.assertEqual(result["results"], [comment_a])
-            self.assertEqual(result["total"], 1)
-            self.assertEqual(result["page"], 1)
-            self.assertEqual(result["page_size"], 20)
-            self.assertIsNone(result["next_page"])
-            self.assertIsNone(result["prev_page"])
+            self.assertEqual(result, [comment_a])
 
     async def test_read_comments_with_timestamp_start(self):
         comment_a = Comment(
@@ -266,12 +251,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             Comment.timestamp = PropertyMock(return_value=comment_a.timestamp)
             result = await self.repository.read_comments(timestamp_start=timestamp_start)
             mock_filter.assert_called_once_with(Comment.timestamp >= timestamp_start)
-            self.assertEqual(result["results"], [comment_a])
-            self.assertEqual(result["total"], 1)
-            self.assertEqual(result["page"], 1)
-            self.assertEqual(result["page_size"], 20)
-            self.assertIsNone(result["next_page"])
-            self.assertIsNone(result["prev_page"])
+            self.assertEqual(result, [comment_a])
             
     async def test_create_display(self):
         user_id = "123"
@@ -299,108 +279,6 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
                 timestamp=timestamp_dt
             ),
         )
-        
-    async def test_read_comments_pagination(self):
-        comments = [
-            Comment(
-                id=1,
-                project_id=1,
-                user_id="1",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=4,
-                comment="test",
-            ),
-            Comment(
-                id=2,
-                project_id=1,
-                user_id="2",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=5,
-                comment="test2",
-            ),
-            Comment(
-                id=3,
-                project_id=1,
-                user_id="3",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=3,
-                comment="test3",
-            ),
-            Comment(
-                id=4,
-                project_id=1,
-                user_id="4",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=2,
-                comment="test4",
-            ),
-            Comment(
-                id=5,
-                project_id=1,
-                user_id="4",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=2,
-                comment="test4",
-            ),
-        ]
-
-        Comment.all = AsyncMock(return_value=comments)
-
-        page_size = 2
-
-        # Test first page
-        result = await self.repository.read_comments(page=1, page_size=page_size)
-        expected_results = comments[:page_size]
-        expected_total = len(comments)
-        expected_page = 1
-        expected_page_size = page_size
-        expected_next_page = f"/comments?page={expected_page + 1}&pageSize={expected_page_size}"
-        expected_prev_page = None
-
-        self.assertEqual(result["results"], expected_results)
-        self.assertEqual(result["total"], expected_total)
-        self.assertEqual(result["page"], expected_page)
-        self.assertEqual(result["page_size"], expected_page_size)
-        self.assertEqual(result["next_page"], expected_next_page)
-        self.assertEqual(result["prev_page"], expected_prev_page)
-
-        # Test second page
-        result = await self.repository.read_comments(page=2, page_size=page_size)
-        expected_results = comments[page_size : page_size * 2]
-        expected_total = len(comments)
-        expected_page = 2
-        expected_page_size = page_size
-        expected_next_page = f"/comments?page={expected_page + 1}&pageSize={expected_page_size}"
-        expected_prev_page = f"/comments?page={expected_page - 1}&pageSize={expected_page_size}"
-
-        self.assertEqual(result["results"], expected_results)
-        self.assertEqual(result["total"], expected_total)
-        self.assertEqual(result["page"], expected_page)
-        self.assertEqual(result["page_size"], expected_page_size)
-        self.assertEqual(result["next_page"], expected_next_page)
-        self.assertEqual(result["prev_page"], expected_prev_page)
-
-        # Test last page
-        result = await self.repository.read_comments(page=3, page_size=page_size)
-        expected_results = comments[page_size * 2 :]
-        expected_total = len(comments)
-        expected_page = 3
-        expected_page_size = page_size
-        expected_next_page = None
-        expected_prev_page = f"/comments?page={expected_page - 1}&pageSize={expected_page_size}"
-
-        self.assertEqual(result["results"], expected_results)
-        self.assertEqual(result["total"], expected_total)
-        self.assertEqual(result["page"], expected_page)
-        self.assertEqual(result["page_size"], expected_page_size)
-        self.assertEqual(result["next_page"], expected_next_page)
-        self.assertEqual(result["prev_page"], expected_prev_page)
-
 
     def test_get_project_avg_rating(self):
         project_a = Project(id=1, name='Project A')
