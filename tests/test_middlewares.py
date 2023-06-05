@@ -67,4 +67,4 @@ class TestJWTVerification(unittest.TestCase):
         try:
             check_jwt(self.security_scopes, token)
         except HTTPException as e:
-            self.assertEqual(e.status_code, 401)
+            self.assertEqual(e.status_code, 403)
