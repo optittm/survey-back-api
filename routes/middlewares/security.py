@@ -81,7 +81,7 @@ def check_jwt(
         if scope not in token_data.scopes:
             logging.error("Unauthorized JWT scope")
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not enough permissions",
                 headers=exception_headers,
             )
