@@ -141,7 +141,7 @@ class SQLiteRepository:
         project = await self.get_project_by_name(project_name)
 
         if project is None:
-            return None
+            return []
 
         with Session(Comment.__metadata__.database.engine) as session:
             query = session.query(FeatureRatingAvg.feature_url).filter(
