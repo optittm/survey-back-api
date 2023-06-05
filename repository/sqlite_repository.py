@@ -1,15 +1,12 @@
-from math import ceil
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 import logging
 import sqlite3
 from sqlalchemy.orm import Session
-from datetime import datetime
 
-
-from models.comment import Comment, CommentPostBody
+from models.comment import Comment
 from models.display import Display
 from models.project import Project, ProjectEncryption
-from models.views import FeatureRatingAvg
+from models.views import FeatureRatingAvg, NumberCommentByProject, NumberDisplayByProject, ProjectRatingAvg
 from utils.encryption import Encryption
 
 
@@ -88,22 +85,16 @@ class SQLiteRepository:
             IndexError: If the result of the query is empty.
         """
 
-        conn = sqlite3.connect(self.db_name)
-        cursor = conn.cursor()
-        cursor.execute(
-            f"""
-            SELECT average_rating 
-            FROM project_rating_avg
-            WHERE project_id = {project_id};
-        """
-        )
-        result = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        try:
-            return result[0][0]
-        except IndexError:
-            return 0
+        with Session(Comment.__metadata__.database.engine) as session:
+            query = session.query(ProjectRatingAvg.average_rating) \
+               .filter(ProjectRatingAvg.project_id == project_id)
+
+            result = query.all()
+            try:
+                return result[0][0]
+            except IndexError:
+                return 0
+
 
     def get_feature_avg_rating(self, project_id: int, feature_url: str):
         """
@@ -125,23 +116,16 @@ class SQLiteRepository:
                 If the average rating is not found, returns None.
         """
 
-        conn = sqlite3.connect(self.db_name)
-        cursor = conn.cursor()
-        cursor.execute(
-            f"""
-            SELECT average_rating
-            FROM feature_rating_avg
-            WHERE project_id = {project_id}
-                AND feature_url = "{feature_url}";
-        """
-        )
-        result = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        try:
-            return result[0][0]
-        except IndexError:
-            return 0
+        with Session(Comment.__metadata__.database.engine) as session:
+            query = session.query(FeatureRatingAvg.average_rating) \
+               .filter(FeatureRatingAvg.project_id == project_id, 
+                       FeatureRatingAvg.feature_url == feature_url)
+
+            result = query.all()
+            try:
+                return result[0][0]
+            except IndexError:
+                return 0
 
     async def get_features_urls_by_project_name(self, project_name: str):
         """
@@ -187,22 +171,15 @@ class SQLiteRepository:
                 is not found, returns None.
         """
 
-        conn = sqlite3.connect(self.db_name)
-        cursor = conn.cursor()
-        cursor.execute(
-            f"""
-            SELECT number_comment
-            FROM number_comment_by_project
-            WHERE project_id = {project_id};
-        """
-        )
-        result = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        try:
-            return result[0][0]
-        except IndexError:
-            return 0
+        with Session(Comment.__metadata__.database.engine) as session:
+            query = session.query(NumberCommentByProject.number_comment) \
+               .filter(NumberCommentByProject.project_id == project_id)
+
+            result = query.all()
+            try:
+                return result[0][0]
+            except IndexError:
+                return 0
 
     def get_number_of_display(self, project_id: int):
         """
@@ -222,22 +199,15 @@ class SQLiteRepository:
                 is not found, returns None.
         """
 
-        conn = sqlite3.connect(self.db_name)
-        cursor = conn.cursor()
-        cursor.execute(
-            f"""
-            SELECT number_display
-            FROM number_display_by_project
-            WHERE project_id = {project_id};
-        """
-        )
-        result = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        try:
-            return result[0][0]
-        except IndexError:
-            return 0
+        with Session(Comment.__metadata__.database.engine) as session:
+            query = session.query(NumberDisplayByProject.number_display) \
+               .filter(NumberDisplayByProject.project_id == project_id)
+
+            result = query.all()
+            try:
+                return result[0][0]
+            except IndexError:
+                return 0
 
     async def create_comment(
         self,
