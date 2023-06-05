@@ -2,10 +2,12 @@ from math import ceil
 from typing import Any, Dict, List, Optional, Union
 import logging
 import sqlite3
+from sqlalchemy.orm import Session
 
 from models.comment import Comment, CommentPostBody
 from models.display import Display
 from models.project import Project, ProjectEncryption
+from models.views import FeatureRatingAvg
 from utils.encryption import Encryption
 
 
@@ -143,10 +145,6 @@ class SQLiteRepository:
         """
         Retrieves all features_urls for a specific project name from the database.
 
-        This method executes an SQL query to retrieve feature_urls associated with a specific 
-        project name. Feature_urls is extracted from the 'feature_rating_avg' 
-        view created by the '__create_views' method.
-
         Args:
             project_name (str): the Project name representing the project for which the
                 feature_urls should be retrieved.
@@ -159,20 +157,14 @@ class SQLiteRepository:
         if project is None:
             return None
 
-        conn = sqlite3.connect(self.db_name)
-        cursor = conn.cursor()
-        cursor.execute(
-            f"""
-            SELECT feature_url
-            FROM feature_rating_avg
-            WHERE project_id = {project.id};
-        """
-        )
-        result = cursor.fetchall()
-        cursor.close()
-        conn.close()
+        with Session(Comment.__metadata__.database.engine) as session:
+            query = session.query(FeatureRatingAvg.feature_url).filter(
+                FeatureRatingAvg.project_id == project.id
+            )
+
+        result = query.all()
         try:
-            return result
+            return result[0][0]
         except IndexError:
             return 0
 
