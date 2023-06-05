@@ -2,6 +2,8 @@ from math import ceil
 from typing import Any, Dict, List, Optional, Union
 import logging
 import sqlite3
+from sqlalchemy.orm import Session
+from datetime import datetime
 
 from models.comment import Comment, CommentPostBody
 from models.display import Display
@@ -351,7 +353,7 @@ class SQLiteRepository:
                     query_comments = list(query)
                     comments = [x for x in comments_searched if x in query_comments]
 
-                return comments
+            return comments
 
     async def create_project(self, project: Project):
         projects = await Project.filter(name=project.name)

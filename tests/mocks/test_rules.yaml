@@ -1,19 +1,14 @@
-# Optional: Allowed origins for the GET /comments route
-# Add OptiTTM/BugPrediction URL
-get_comments_allowed_origins: '*'
-# Add Modal origins
-front_allowed_origins: '*'
 # Survey rules
 projects:
   project1:
     rules:
     - 
 # Regex URL
-      feature_url: /test
+      feature_url: https://www.example.com/test
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
-# Delay in months before the modal is being displayed again for a given user
-      delay_before_reanswer: 1
+# Delay in days before the modal is being displayed again for a given user
+      delay_before_reanswer: 30
 # Time window in minutes the user has to answer in
 # Only the first answer during the window is saved
 # All answers received outside of the window are discarded to prevent spam
@@ -21,11 +16,11 @@ projects:
       is_active: true
     -
 # Regex URL
-      feature_url: /test1
+      feature_url: https://www.example.com/test1
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
-# Delay in months before the modal is being displayed again for a given user
-      delay_before_reanswer: 1
+# Delay in days before the modal is being displayed again for a given user
+      delay_before_reanswer: 30
 # Time window in minutes the user has to answer in
 # Only the first answer during the window is saved
 # All answers received outside of the window are discarded to prevent spam
@@ -35,11 +30,11 @@ projects:
     rules:
     - 
 # Regex URL
-      feature_url: /test2
+      feature_url: https://www.example.com/test2
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
-# Delay in months before the modal is being displayed again for a given user
-      delay_before_reanswer: 1
+# Delay in days before the modal is being displayed again for a given user
+      delay_before_reanswer: 30
 # Time window in minutes the user has to answer in
 # Only the first answer during the window is saved
 # All answers received outside of the window are discarded to prevent spam
