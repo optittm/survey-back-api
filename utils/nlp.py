@@ -1,23 +1,8 @@
-import string
-from typing import Optional, List
+from typing import List
+import spacy
 import nltk
-from nltk.corpus import stopwords, wordnet
-from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
 
-def pos_tagger(nltk_tag: str) -> Optional[str]:
-    """
-    Converts default NLTK tag (Penn Treebank set) into wordnet tag
-    """
-    if nltk_tag.startswith('J'):
-        return wordnet.ADJ
-    elif nltk_tag.startswith('V'):
-        return wordnet.VERB
-    elif nltk_tag.startswith('N'):
-        return wordnet.NOUN
-    elif nltk_tag.startswith('RB'):
-        return wordnet.ADV
-    else:         
-        return None
 
 def text_preprocess(text: str, lang: str = "english") -> List[str]:
     """
@@ -27,22 +12,20 @@ def text_preprocess(text: str, lang: str = "english") -> List[str]:
     Returns:
     List of processed tokens
     """
-    if lang != "english":
+    if lang == "english":
+        nlp = spacy.load("en_core_web_md")
+    elif lang == "french":
+        nlp = spacy.load("fr_core_news_md")
+    else:
         raise NotImplementedError()
     
-    # Lowercase and remove punctuation using translate method
-    text = text.lower().translate(str.maketrans('', '', string.punctuation))
+    word_tokens = nltk.word_tokenize(text)
     
-    word_tokens_tagged = nltk.pos_tag(nltk.word_tokenize(text))
-    # Convert to wordnet tags
-    wordnet_tagged = list(map(lambda x: (x[0], pos_tagger(x[1])), word_tokens_tagged))
-
-    # Remove stop words
+    doc = nlp(text)
+    pos_lemmas = [[token.pos_, token.lemma_] for token in doc]
+    
+    # Remove stop words and punctuation
     stop_words = set(stopwords.words(lang))
-    wordnet_tagged = [w for w in wordnet_tagged if not w[0] in stop_words]
+    word_tokens = [w[1] for w in pos_lemmas if w[1] not in stop_words and w[0] != 'PUNCT']
     
-    # Lemmatization i.e. converting each word into its base or dictionary form
-    lemmatizer = WordNetLemmatizer()
-    lemmatized_words = [lemmatizer.lemmatize(w[0], w[1]) if w[1] is not None else w[0] for w in wordnet_tagged]
-
-    return lemmatized_words
+    return word_tokens

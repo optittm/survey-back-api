@@ -8,6 +8,7 @@ import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 import logging
+import nltk
 
 from models.comment import Comment
 from models.project import Project, ProjectEncryption
@@ -43,6 +44,8 @@ def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
 @inject
 async def main(config=Provide[Container.config]):
     await init_db()
+    nltk.download("punkt")
+    nltk.download("stopwords")
     # Running the uvicorn server in the function to be able to use the config provider
     config = uvicorn.Config(
         "main:app",
