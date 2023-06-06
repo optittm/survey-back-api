@@ -10,7 +10,6 @@ from models.views import FeatureRatingAvg, NumberCommentByProject, NumberDisplay
 from utils.encryption import Encryption
 
 
-
 class SQLiteRepository:
     def __init__(self, config):
         self.db_name = config["survey_db"].replace("sqlite:///", "")
@@ -128,6 +127,33 @@ class SQLiteRepository:
             except IndexError:
                 return 0
 
+    async def get_features_urls_by_project_name(self, project_name: str):
+        """
+        Retrieves all features_urls for a specific project name from the database.
+
+        Args:
+            project_name (str): the Project name representing the project for which the
+                feature_urls should be retrieved.
+
+        Returns:
+            feature_urls ([str]): the list of feature_urls for the specified project.
+        """
+        project = await self.get_project_by_name(project_name)
+
+        if project is None:
+            return []
+
+        with Session(Comment.__metadata__.database.engine) as session:
+            query = session.query(FeatureRatingAvg.feature_url).filter(
+                FeatureRatingAvg.project_id == project.id
+            )
+
+        result = query.all()
+        try:
+            return result[0][0]
+        except IndexError:
+            return 0
+
     def get_number_of_comment(self, project_id: int):
         """
         Retrieves the number of comments for a specific project from the database.
@@ -235,8 +261,6 @@ class SQLiteRepository:
         comments = await Comment.all()
         return comments
 
-
-
     async def read_comments(
         self,
         project_name: Optional[str] = None,
@@ -246,7 +270,7 @@ class SQLiteRepository:
         timestamp_end: Optional[str] = None,
         content_search: Optional[str] = None,
         rating_min: Optional[int] = None,
-        rating_max: Optional[int] = None
+        rating_max: Optional[int] = None,
     ) -> List[Comment]:
         """
         Get paginated comments from the database that match the given filters.
@@ -277,7 +301,7 @@ class SQLiteRepository:
         ):
             comments = await self.get_all_comments()
             return comments
-            
+
         else:
             query = []
 
@@ -320,7 +344,9 @@ class SQLiteRepository:
                         .where(table.c.comment.regexp_match(content_search))
                         .all()
                     )
-                comments_searched: List[Comment] = Comment.parse_results(result, [], False)
+                comments_searched: List[Comment] = Comment.parse_results(
+                    result, [], False
+                )
                 if len(query) == 0:
                     comments = comments_searched
                 else:
