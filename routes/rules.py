@@ -1,23 +1,37 @@
 from typing import Union
-from fastapi import APIRouter, Depends, Response, Cookie, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Response,
+    Cookie,
+    Security,
+    status,
+    HTTPException,
+)
 from dependency_injector.wiring import Provide, inject
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
 import random
+from models.security import ScopeEnum
 
 from repository.sqlite_repository import SQLiteRepository
 from utils.container import Container
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
-from utils.middleware import remove_search_hash_from_url
+from routes.middlewares.feature_url import remove_search_hash_from_url
+from routes.middlewares.security import check_jwt
 
 
 router = APIRouter()
 
 
-@router.get("/rules", response_model=Union[bool, dict])
+@router.get(
+    "/rules",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.CLIENT.value])],
+    response_model=Union[bool, dict],
+)
 @inject
 async def show_modal(
     response: Response,
@@ -33,8 +47,10 @@ async def show_modal(
     )
     if rulesFromFeature is None:
         logging.error("GET rules::Feature not found")
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {"Error": "Feature not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Feature not found",
+        )
 
     # Retrieve the encryption key of the project
     project_name = rulesYamlConfig.getProjectNameFromFeature(featureUrl)

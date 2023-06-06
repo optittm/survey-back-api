@@ -18,6 +18,9 @@ class TestRulesRoutes(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
         self.route = "/api/v1/rules"
+        # Disable OAuth security for these tests
+        app.container.config.secret_key.from_value("")
+
         self.mock_yaml_repo = Mock(spec=YamlRulesRepository)
         self.mock_db_repo = Mock(spec=SQLiteRepository)
         self.crypt_key = "rg3ENcA7oBCxtxvJ1kk4oAXLizePSnGqPykRi4hvWqY="

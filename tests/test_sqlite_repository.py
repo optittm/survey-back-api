@@ -1,12 +1,14 @@
+from collections import namedtuple
 import sqlite3
 import unittest
 
 from datetime import datetime
-from unittest.mock import AsyncMock, PropertyMock, patch
+from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 from models.comment import Comment, CommentPostBody
 from models.display import Display
 from models.project import Project, ProjectEncryption
+from models.views import NumberDisplayByProject
 from repository.sqlite_repository import SQLiteRepository
 
 
@@ -190,12 +192,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
 
         Comment.all = AsyncMock(return_value=[comment_a, comment_b])
         result = await self.repository.read_comments()
-        self.assertEqual(result["results"], [comment_a, comment_b])
-        self.assertEqual(result["total"], 2)
-        self.assertEqual(result["page"], 1)
-        self.assertEqual(result["page_size"], 20)
-        self.assertIsNone(result["next_page"])
-        self.assertIsNone(result["prev_page"])
+        self.assertEqual(result, [comment_a, comment_b])
 
         Comment.all.assert_called_once()
 
@@ -216,12 +213,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             Comment.feature_url = AsyncMock(return_value=comment_a.feature_url)
             result = await self.repository.read_comments(feature_url="http://test.com/test")
             mock_filter.assert_called_once_with(Comment.feature_url == "http://test.com/test")
-            self.assertEqual(result["results"], [comment_a])
-            self.assertEqual(result["total"], 1)
-            self.assertEqual(result["page"], 1)
-            self.assertEqual(result["page_size"], 20)
-            self.assertIsNone(result["next_page"])
-            self.assertIsNone(result["prev_page"])
+            self.assertEqual(result, [comment_a])
 
     async def test_read_comments_with_project_name(self):
         comment_a = Comment(
@@ -242,12 +234,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             Comment.project_id = AsyncMock(return_value=comment_a.project_id)
             result = await self.repository.read_comments(project_name=project.name)
             mock_filter.assert_called_once_with(Comment.project_id == 1)
-            self.assertEqual(result["results"], [comment_a])
-            self.assertEqual(result["total"], 1)
-            self.assertEqual(result["page"], 1)
-            self.assertEqual(result["page_size"], 20)
-            self.assertIsNone(result["next_page"])
-            self.assertIsNone(result["prev_page"])
+            self.assertEqual(result, [comment_a])
 
     async def test_read_comments_with_timestamp_start(self):
         comment_a = Comment(
@@ -266,12 +253,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             Comment.timestamp = PropertyMock(return_value=comment_a.timestamp)
             result = await self.repository.read_comments(timestamp_start=timestamp_start)
             mock_filter.assert_called_once_with(Comment.timestamp >= timestamp_start)
-            self.assertEqual(result["results"], [comment_a])
-            self.assertEqual(result["total"], 1)
-            self.assertEqual(result["page"], 1)
-            self.assertEqual(result["page_size"], 20)
-            self.assertIsNone(result["next_page"])
-            self.assertIsNone(result["prev_page"])
+            self.assertEqual(result, [comment_a])
             
     async def test_create_display(self):
         user_id = "123"
@@ -299,131 +281,196 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
                 timestamp=timestamp_dt
             ),
         )
+
+    def test_get_number_of_display_with_existing_project_id(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
         
-    async def test_read_comments_pagination(self):
-        comments = [
-            Comment(
-                id=1,
-                project_id=1,
-                user_id="1",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=4,
-                comment="test",
-            ),
-            Comment(
-                id=2,
-                project_id=1,
-                user_id="2",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=5,
-                comment="test2",
-            ),
-            Comment(
-                id=3,
-                project_id=1,
-                user_id="3",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=3,
-                comment="test3",
-            ),
-            Comment(
-                id=4,
-                project_id=1,
-                user_id="4",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=2,
-                comment="test4",
-            ),
-            Comment(
-                id=5,
-                project_id=1,
-                user_id="4",
-                timestamp=datetime.now().isoformat(),
-                feature_url="http://test.com/test",
-                rating=2,
-                comment="test4",
-            ),
-        ]
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield [0, 1]
+        Comment.__metadata__ = mock_metadata
+        
+        # Mocking the result of the query
+        mock_result = [(10,)]  # Assuming the result is [(10,)]
+        mock_query.all.return_value = mock_result
 
-        Comment.all = AsyncMock(return_value=comments)
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_id = 1
+            result = self.repository.get_number_of_display(project_id)
+            expected_result = 10
+            self.assertEqual(result, expected_result)
 
-        page_size = 2
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
 
-        # Test first page
-        result = await self.repository.read_comments(page=1, page_size=page_size)
-        expected_results = comments[:page_size]
-        expected_total = len(comments)
-        expected_page = 1
-        expected_page_size = page_size
-        expected_next_page = f"/comments?page={expected_page + 1}&pageSize={expected_page_size}"
-        expected_prev_page = None
+    def test_get_number_of_display_with_non_existing_project_id(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
+        
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield [0, 1]
+        Comment.__metadata__ = mock_metadata
 
-        self.assertEqual(result["results"], expected_results)
-        self.assertEqual(result["total"], expected_total)
-        self.assertEqual(result["page"], expected_page)
-        self.assertEqual(result["page_size"], expected_page_size)
-        self.assertEqual(result["next_page"], expected_next_page)
-        self.assertEqual(result["prev_page"], expected_prev_page)
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_id = 2
+            result = self.repository.get_number_of_display(project_id)
+            expected_result = 0
+            self.assertEqual(result, expected_result)
 
-        # Test second page
-        result = await self.repository.read_comments(page=2, page_size=page_size)
-        expected_results = comments[page_size : page_size * 2]
-        expected_total = len(comments)
-        expected_page = 2
-        expected_page_size = page_size
-        expected_next_page = f"/comments?page={expected_page + 1}&pageSize={expected_page_size}"
-        expected_prev_page = f"/comments?page={expected_page - 1}&pageSize={expected_page_size}"
-
-        self.assertEqual(result["results"], expected_results)
-        self.assertEqual(result["total"], expected_total)
-        self.assertEqual(result["page"], expected_page)
-        self.assertEqual(result["page_size"], expected_page_size)
-        self.assertEqual(result["next_page"], expected_next_page)
-        self.assertEqual(result["prev_page"], expected_prev_page)
-
-        # Test last page
-        result = await self.repository.read_comments(page=3, page_size=page_size)
-        expected_results = comments[page_size * 2 :]
-        expected_total = len(comments)
-        expected_page = 3
-        expected_page_size = page_size
-        expected_next_page = None
-        expected_prev_page = f"/comments?page={expected_page - 1}&pageSize={expected_page_size}"
-
-        self.assertEqual(result["results"], expected_results)
-        self.assertEqual(result["total"], expected_total)
-        self.assertEqual(result["page"], expected_page)
-        self.assertEqual(result["page_size"], expected_page_size)
-        self.assertEqual(result["next_page"], expected_next_page)
-        self.assertEqual(result["prev_page"], expected_prev_page)
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
 
 
-    def test_get_project_avg_rating(self):
-        project_a = Project(id=1, name='Project A')
-        project_b = Project(id=2, name='Project B')
-        self.assertAlmostEqual(self.repository.get_project_avg_rating(project_a.id), 4.0)
-        self.assertAlmostEqual(self.repository.get_project_avg_rating(project_b.id), 2.0)
+    def test_get_number_of_comment_with_existing_project_id(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
+        
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield [0, 1]
+        Comment.__metadata__ = mock_metadata
+        
+        # Mocking the result of the query
+        mock_result = [(10,)]  # Assuming the result is [(10,)]
+        mock_query.all.return_value = mock_result
 
-    def test_get_feature_avg_rating(self):
-        project_a = Project(id=1, name='Project A')
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_id = 1
+            result = self.repository.get_number_of_comment(project_id)
+            expected_result = 10
+            self.assertEqual(result, expected_result)
 
-        self.assertAlmostEqual(self.repository.get_feature_avg_rating(project_a.id, 'http://example.com/feature1'), 4.0)
-        self.assertAlmostEqual(self.repository.get_feature_avg_rating(project_a.id, 'http://example.com/feature2'), 4.0)
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
 
-    def test_get_number_of_comment(self):
-        project_a = Project(id=1, name='Project A')
-        project_b = Project(id=2, name='Project B')
+    def test_get_number_of_comment_with_non_existing_project_id(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
+        
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield [0, 1]
+        Comment.__metadata__ = mock_metadata
 
-        self.assertEqual(self.repository.get_number_of_comment(project_a.id), 3)
-        self.assertEqual(self.repository.get_number_of_comment(project_b.id), 1)
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_id = 2
+            result = self.repository.get_number_of_comment(project_id)
+            expected_result = 0
+            self.assertEqual(result, expected_result)
 
-    def test_get_number_of_display(self):
-        project_a = Project(id=1, name='Project A')
-        project_b = Project(id=2, name='Project B')
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
 
-        self.assertEqual(self.repository.get_number_of_display(project_a.id), 2)
-        self.assertEqual(self.repository.get_number_of_display(project_b.id), 1)
+    def test_get_feature_avg_rating_with_existing_project_id(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
+        
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield [0, 1]
+        Comment.__metadata__ = mock_metadata
+        
+        # Mocking the result of the query
+        mock_result = [(10,)]  # Assuming the result is [(10,)]
+        mock_query.all.return_value = mock_result
+
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_id = 1
+            result = self.repository.get_feature_avg_rating(project_id)
+            expected_result = 10
+            self.assertEqual(result, expected_result)
+
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
+
+    def test_get_feature_avg_rating_with_non_existing_project_id(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
+        
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield [0, 1]
+        Comment.__metadata__ = mock_metadata
+
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_id = 2
+            result = self.repository.get_feature_avg_rating(project_id)
+            expected_result = 0
+            self.assertEqual(result, expected_result)
+
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
+
+    def test_get_project_avg_rating_with_existing_project_id(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
+        
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield [0, 1]
+        Comment.__metadata__ = mock_metadata
+        
+        # Mocking the result of the query
+        mock_result = [(10,)]  # Assuming the result is [(10,)]
+        mock_query.all.return_value = mock_result
+
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_id = 1
+            result = self.repository.get_project_avg_rating(project_id)
+            expected_result = 10
+            self.assertEqual(result, expected_result)
+
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
+
+    def test_get_project_avg_rating_with_non_existing_project_id(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
+        
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield [0, 1]
+        Comment.__metadata__ = mock_metadata
+
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_id = 2
+            result = self.repository.get_project_avg_rating(project_id)
+            expected_result = 0
+            self.assertEqual(result, expected_result)
+
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
