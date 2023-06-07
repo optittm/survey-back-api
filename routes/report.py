@@ -1,4 +1,9 @@
 from typing import Optional
+from fastapi import APIRouter, Security
+from fastapi.responses import HTMLResponse
+from models.security import ScopeEnum
+from repository.html_repository import HTMLRepository
+
 import jinja2
 import plotly.express as px
 import pandas as pd
@@ -12,17 +17,28 @@ from repository.yaml_rule_repository import YamlRulesRepository
 from utils.container import Container
 from dependency_injector.wiring import inject, Provide
 
+from routes.middlewares.security import check_jwt
+
 router = APIRouter()
 
 templates = jinja2.Template("templates")
 
-@router.get("/survey-report", response_class=HTMLResponse)
+
+@router.get(
+    "/survey-report",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_class=HTMLResponse,
+)
 async def init_report() -> str:
     html_repository = HTMLRepository(reportFile="surveyReport.html")
     return html_repository.generate_report()
 
-@router.get("/survey-report/project/{id}", response_class=HTMLResponse)
-@inject
+
+@router.get(
+    "/survey-report/project/{id}",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_class=HTMLResponse,
+)
 async def init_detail_project_report(
     id: str, 
     timerange: Optional[str] = "week", 
