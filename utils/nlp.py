@@ -19,7 +19,6 @@ def text_preprocess(text: str, lang: str = "english") -> List[str]:
     else:
         raise NotImplementedError()
     
-    word_tokens = nltk.word_tokenize(text)
     
     doc = nlp(text)
     pos_lemmas = [[token.pos_, token.lemma_] for token in doc]
