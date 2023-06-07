@@ -447,24 +447,31 @@ class SQLiteRepository:
     
 
     async def filter_rates_by_timerange(
-            self, 
-            feature_rates, 
-            timerange: Optional[str] = "week", 
-            timestamp_start: Optional[str] = None, 
-            timestamp_end: Optional[str] = None
-            ):
+        self, 
+        feature_rates, 
+        timerange: Optional[str] = "week", 
+        timestamp_start: Optional[str] = None, 
+        timestamp_end: Optional[str] = None
+    ):
         filtered_rates = {}
-
+        
         for feature_url, rates in feature_rates.items():
             filtered_rates[feature_url] = []
+           
             for rate in rates:
                 result = self.is_within_timerange(rate['timestamp'], timerange, timestamp_start, timestamp_end)
                 if result["within_range"]:
-                    filtered_rates[feature_url].append(rate)
-                    rate["date_timestamp_start"] = result["date_timestamp_start"]
-                    rate["date_timestamp_end"] = result["date_timestamp_end"]
-        
+                    filtered_rates[feature_url].append({
+                        "rate": rate["rate"],
+                        "date_timestamp": result["date_timestamp"]                        
+                    })
+                date_timestamp_start= result["date_timestamp_start"] if result["date_timestamp_start"] is not None else None
+                date_timestamp_end= result["date_timestamp_end"] if result["date_timestamp_end"] is not None else None
+
+        filtered_rates['date_timestamp_start']=(date_timestamp_start)    
+        filtered_rates['date_timestamp_end']=(date_timestamp_end)          
         return filtered_rates
+
 
     
     def is_within_timerange(self, timestamp, timerange, timestamp_start, timestamp_end):
@@ -528,5 +535,5 @@ class SQLiteRepository:
         result["date_timestamp"] = date_timestamp
         result["date_timestamp_start"] = date_timestamp_start
         result["date_timestamp_end"] = date_timestamp_end
-
+        
         return result

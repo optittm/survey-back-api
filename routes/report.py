@@ -1,6 +1,7 @@
 from typing import Optional
 import jinja2
-import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
 from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
 
@@ -41,18 +42,26 @@ async def init_detail_project_report(
     for feature_url in feature_urls:
         rates = await sqlite_repo.get_rates_from_feature(feature_url)
         feature_rates[feature_url] = rates
-        filtered_rates= await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
-        
-    print("feature_rates", feature_rates)
-    print("----------------")
-    print("filtered_rates", filtered_rates)
-    graphs = []
-    for feature_url, rates in filtered_rates.items():
-        x = [rate["timestamp"] for rate in rates]
-        y = [rate["rate"] for rate in rates]
-        
-        fig = go.Figure(data=go.Scatter(x=x, y=y, mode='markers', name=feature_url))
 
+    filtered_rates = await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
+    print(filtered_rates)
+
+    graphs = []
+    date_timestamp_start = []
+    date_timestamp_end = []
+
+    for feature_url, rates in filtered_rates.items():
+        if feature_url == 'date_timestamp_start':
+            date_timestamp_start = rates
+            continue
+        elif feature_url == 'date_timestamp_end':
+            date_timestamp_end = rates
+            continue
+
+        x = [rate["date_timestamp"] for rate in rates if "date_timestamp" in rate]
+        y = [rate["rate"] for rate in rates]
+        df = pd.DataFrame({'timestamp': x, 'rates': y})
+        fig = px.box(df, x='timestamp', y='rates', points="all", labels={'timestamp': 'Timestamp','rates': 'Rates'})
         fig.update_layout(yaxis=dict(range=[0, 6]))
 
         fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
@@ -62,9 +71,7 @@ async def init_detail_project_report(
             "figure_html": fig_html
         }
         graphs.append(graph_data)
-        date_timestamp_start=[rate["date_timestamp_start"] for rate in rates]
-        date_timestamp_end=[rate["date_timestamp_end"] for rate in rates]
-    print(type(date_timestamp_end))
+
     return html_repository.generate_detail_project_report(
         id, timerange, date_timestamp_start, date_timestamp_end, graphs
     )
