@@ -40,7 +40,8 @@ class TestCommentsRoutes(unittest.TestCase):
         self.crypt_key = "rg3ENcA7oBCxtxvJ1kk4oAXLizePSnGqPykRi4hvWqY="
         self.encryption = Encryption(self.crypt_key)
 
-    def test_create_comment_endpoint(self):
+    @patch("routes.comments.text_preprocess")
+    def test_create_comment_endpoint(self, _):
         project_name = "project1"
         cookie_user_id = "123"
         return_comment = Comment(
@@ -93,7 +94,8 @@ class TestCommentsRoutes(unittest.TestCase):
             project_name,
         )
 
-    def test_create_comment_endpoint_fingerprint(self):
+    @patch("routes.comments.text_preprocess")
+    def test_create_comment_endpoint_fingerprint(self, _):
         """
         Same as test_create_comment_endpoint but checks if the user_id is taken from the body instead of the cookie
         """
