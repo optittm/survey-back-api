@@ -531,7 +531,6 @@ class SQLiteRepository:
                 # assert (timestamp_end - timestamp_start).days >= 30, "Invalid timerange. Month timerange requires at least a 30-day interval."
                 date_timestamp_end = date_timestamp_start + timedelta(days=30)
 
-       
         result["within_range"] = date_timestamp_start <= date_timestamp <= date_timestamp_end
         result["date_timestamp"] = date_timestamp
         result["date_timestamp_start"] = date_timestamp_start
