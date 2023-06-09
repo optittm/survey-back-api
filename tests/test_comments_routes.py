@@ -10,6 +10,7 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from main import app
 from utils.encryption import Encryption
+from utils.nlp import SentimentAnalysis
 
 
 class TestCommentsRoutes(unittest.TestCase):
@@ -37,12 +38,11 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_yaml = Mock(spec=YamlRulesRepository)
         self.mock_rule = Mock(spec=Rule)
         self.mock_repo = Mock(spec=SQLiteRepository)
+        self.mock_nlp = Mock(spec=SentimentAnalysis)
         self.crypt_key = "rg3ENcA7oBCxtxvJ1kk4oAXLizePSnGqPykRi4hvWqY="
         self.encryption = Encryption(self.crypt_key)
 
-    @patch("routes.comments.sentiment_analysis")
-    def test_create_comment_endpoint(self, _):
-        _.return_value = None, None
+    def test_create_comment_endpoint(self):
         project_name = "project1"
         cookie_user_id = "123"
         return_comment = Comment(
@@ -66,11 +66,14 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_rule.delay_to_answer = 5
         self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
         self.mock_repo.create_comment.return_value = return_comment
+        self.mock_nlp.analyze.return_value = None, None
 
         app.container.config.use_fingerprint.from_value(False)
         with app.container.sqlite_repo.override(
             self.mock_repo
-        ), app.container.rules_config.override(self.mock_yaml):
+        ), app.container.rules_config.override(
+            self.mock_yaml
+        ), app.container.sentiment_analysis.override(self.mock_nlp):
             response = self.client.post(
                 self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
@@ -99,12 +102,10 @@ class TestCommentsRoutes(unittest.TestCase):
             None,
         )
 
-    @patch("routes.comments.sentiment_analysis")
-    def test_create_comment_endpoint_fingerprint(self, _):
+    def test_create_comment_endpoint_fingerprint(self):
         """
         Same as test_create_comment_endpoint but checks if the user_id is taken from the body instead of the cookie
         """
-        _.return_value = None, None
         project_name = "project1"
         cookie_user_id = "123"
         return_comment = Comment(
@@ -128,11 +129,14 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_rule.delay_to_answer = 5
         self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
         self.mock_repo.create_comment.return_value = return_comment
+        self.mock_nlp.analyze.return_value = None, None
 
         app.container.config.use_fingerprint.from_value(True)
         with app.container.sqlite_repo.override(
             self.mock_repo
-        ), app.container.rules_config.override(self.mock_yaml):
+        ), app.container.rules_config.override(
+            self.mock_yaml
+        ), app.container.sentiment_analysis.override(self.mock_nlp):
             response = self.client.post(
                 self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead

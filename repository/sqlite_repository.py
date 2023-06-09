@@ -254,7 +254,7 @@ class SQLiteRepository:
             timestamp=timestamp,
             rating=rating,
             comment=comment,
-            sentiment=sentiment,
+            sentiment=sentiment.value if sentiment is not None else sentiment,
             sentiment_score=sentiment_score,
         )
         id = await new_comment.insert()

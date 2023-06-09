@@ -10,6 +10,8 @@ from pydbantic import Database
 import logging
 import os
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
+# Sets Tensorflow's logs to ERROR
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from transformers import TFRobertaForSequenceClassification, TFCamembertForSequenceClassification, AutoTokenizer
 
 from models.comment import Comment

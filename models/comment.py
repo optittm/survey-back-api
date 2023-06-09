@@ -36,7 +36,7 @@ class CommentCommon(CommentPostBody):
 
     id: Optional[int] = PrimaryKey(autoincrement=True)
     timestamp: str
-    sentiment: Optional[SentimentEnum]
+    sentiment: Optional[str]
     sentiment_score: Optional[float]
 
     @validator("timestamp")
