@@ -15,7 +15,7 @@ from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
 from routes.middlewares.feature_url import comment_body_treatment
 from routes.middlewares.security import check_jwt
-from utils.nlp import sentiment_analysis
+from utils.nlp import SentimentAnalysis
 
 
 router = APIRouter()
@@ -34,6 +34,7 @@ async def create_comment(
     timestamp: Union[str, None] = Cookie(default=None),
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     rules_config: YamlRulesRepository = Depends(Provide[Container.rules_config]),
+    sentiment_analysis: SentimentAnalysis = Depends(Provide[Container.sentiment_analysis]),
     config=Depends(Provide[Container.config]),
 ) -> Comment:
     if (
@@ -73,7 +74,7 @@ async def create_comment(
 
         # Sentiment analysis
         if len(comment_body.comment):
-            sentiment, score = sentiment_analysis(comment_body.comment)
+            sentiment, score = sentiment_analysis.analyze(comment_body.comment)
         else:
             sentiment, score = None, None
 

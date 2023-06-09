@@ -89,20 +89,37 @@ async def init_db(
         await sqlite_repo.create_project(Project(name=project_name))
 
 
+@inject
+def load_nlp_models(sentiment_analysis = Provide[Container.sentiment_analysis]):
+    """
+    This function just serves to call the provider a first time and
+    initialize the singleton, thus loading the models into RAM
+    """
+    pass
+
+
+@inject
 def init_nlp():
     english_path = "./data/sentiment_models/english"
     french_path = "./data/sentiment_models/french"
     
     if not os.path.exists(english_path):
+        logging.info("Downloading English sentiment analysis model...")
         model = TFRobertaForSequenceClassification.from_pretrained("siebert/sentiment-roberta-large-english")
         tokenizer = AutoTokenizer.from_pretrained("siebert/sentiment-roberta-large-english")
         model.save_pretrained(english_path)
         tokenizer.save_pretrained(english_path)
+        logging.info("English sentiment analysis model downloaded and saved")
     if not os.path.exists(french_path):
+        logging.info("Downloading French sentiment analysis model...")
         model = TFCamembertForSequenceClassification.from_pretrained("tblard/tf-allocine")
         tokenizer = AutoTokenizer.from_pretrained("tblard/tf-allocine", use_fast=True)
         model.save_pretrained(french_path)
         tokenizer.save_pretrained(french_path)
+        logging.info("French sentiment analysis model downloaded and saved")
+
+    logging.info("Loading sentiment analysis models into RAM...")
+    load_nlp_models()
 
 
 @inject
