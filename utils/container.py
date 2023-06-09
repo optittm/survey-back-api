@@ -25,4 +25,4 @@ class Container(containers.DeclarativeContainer):
     rules_config = providers.Singleton(YamlRulesRepository)
     sqlite_repo = providers.Singleton(SQLiteRepository, config=config)
 
-    sentiment_analysis = providers.Singleton(SentimentAnalysis)
+    sentiment_analysis = providers.Singleton(SentimentAnalysis, config=config)
