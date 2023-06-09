@@ -15,7 +15,7 @@ from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
 from routes.middlewares.feature_url import comment_body_treatment
 from routes.middlewares.security import check_jwt
-from utils.nlp import text_preprocess
+from utils.nlp import sentiment_analysis
 
 
 router = APIRouter()
@@ -73,8 +73,9 @@ async def create_comment(
 
         # Sentiment analysis
         if len(comment_body.comment):
-            word_tokens = text_preprocess(comment_body.comment)
-            # TODO analysis from tokens
+            sentiment, score = sentiment_analysis(comment_body.comment)
+        else:
+            sentiment, score = None, None
 
         iso_timestamp = dt_timestamp.isoformat()
         new_comment = await sqlite_repo.create_comment(
@@ -85,6 +86,8 @@ async def create_comment(
             comment_body.user_id if config["use_fingerprint"] else user_id,
             iso_timestamp,
             project_name,
+            sentiment,
+            score,
         )
         return new_comment
     else:

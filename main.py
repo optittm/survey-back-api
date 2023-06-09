@@ -8,7 +8,9 @@ import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 import logging
-import nltk
+import os
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
+from transformers import TFRobertaForSequenceClassification, TFCamembertForSequenceClassification, AutoTokenizer
 
 from models.comment import Comment
 from models.project import Project, ProjectEncryption
@@ -51,8 +53,7 @@ def init_fastapi(prefix="/api/v1", config=Provide[Container.config]) -> FastAPI:
 @inject
 async def main(config=Provide[Container.config]):
     await init_db()
-    nltk.download("punkt")
-    nltk.download("stopwords")
+    init_nlp()
     # Running the uvicorn server in the function to be able to use the config provider
     config = uvicorn.Config(
         "main:app",
@@ -86,6 +87,22 @@ async def init_db(
     project_names = rules_config.getProjectNames()
     for project_name in project_names:
         await sqlite_repo.create_project(Project(name=project_name))
+
+
+def init_nlp():
+    english_path = "./data/sentiment_models/english"
+    french_path = "./data/sentiment_models/french"
+    
+    if not os.path.exists(english_path):
+        model = TFRobertaForSequenceClassification.from_pretrained("siebert/sentiment-roberta-large-english")
+        tokenizer = AutoTokenizer.from_pretrained("siebert/sentiment-roberta-large-english")
+        model.save_pretrained(english_path)
+        tokenizer.save_pretrained(english_path)
+    if not os.path.exists(french_path):
+        model = TFCamembertForSequenceClassification.from_pretrained("tblard/tf-allocine")
+        tokenizer = AutoTokenizer.from_pretrained("tblard/tf-allocine", use_fast=True)
+        model.save_pretrained(french_path)
+        tokenizer.save_pretrained(french_path)
 
 
 @inject

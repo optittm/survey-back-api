@@ -40,8 +40,9 @@ class TestCommentsRoutes(unittest.TestCase):
         self.crypt_key = "rg3ENcA7oBCxtxvJ1kk4oAXLizePSnGqPykRi4hvWqY="
         self.encryption = Encryption(self.crypt_key)
 
-    @patch("routes.comments.text_preprocess")
+    @patch("routes.comments.sentiment_analysis")
     def test_create_comment_endpoint(self, _):
+        _.return_value = None, None
         project_name = "project1"
         cookie_user_id = "123"
         return_comment = Comment(
@@ -52,6 +53,8 @@ class TestCommentsRoutes(unittest.TestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            sentiment=None,
+            sentiment_score=None,
         )
         self.mock_yaml.getProjectNameFromFeature.return_value = project_name
         self.mock_repo.get_project_by_name.return_value = Mock()
@@ -92,13 +95,16 @@ class TestCommentsRoutes(unittest.TestCase):
             cookie_user_id,
             self.datetime.isoformat(),
             project_name,
+            None,
+            None,
         )
 
-    @patch("routes.comments.text_preprocess")
+    @patch("routes.comments.sentiment_analysis")
     def test_create_comment_endpoint_fingerprint(self, _):
         """
         Same as test_create_comment_endpoint but checks if the user_id is taken from the body instead of the cookie
         """
+        _.return_value = None, None
         project_name = "project1"
         cookie_user_id = "123"
         return_comment = Comment(
@@ -109,6 +115,8 @@ class TestCommentsRoutes(unittest.TestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            sentiment=None,
+            sentiment_score=None,
         )
         self.mock_yaml.getProjectNameFromFeature.return_value = project_name
         self.mock_repo.get_project_by_name.return_value = Mock()
@@ -149,6 +157,8 @@ class TestCommentsRoutes(unittest.TestCase):
             self.comment_body.user_id,
             self.datetime.isoformat(),
             project_name,
+            None,
+            None,
         )
 
     def test_create_comment_endpoint_unknown_feature(self):

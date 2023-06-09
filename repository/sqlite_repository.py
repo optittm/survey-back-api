@@ -3,7 +3,7 @@ import logging
 import sqlite3
 from sqlalchemy.orm import Session
 
-from models.comment import Comment
+from models.comment import Comment, SentimentEnum
 from models.display import Display
 from models.project import Project, ProjectEncryption
 from models.views import FeatureRatingAvg, NumberCommentByProject, NumberDisplayByProject, ProjectRatingAvg
@@ -217,15 +217,21 @@ class SQLiteRepository:
         user_id: str,
         timestamp: str,
         project_name: str,
+        sentiment: SentimentEnum = None,
+        sentiment_score: float = None,
     ) -> Comment:
         """
         Creates a comment in the database
 
         Args:
-            - comment_body: main part of the comment
+            - feature_url: URL of the feature the comment is for
+            - rating: the ratong of the comment, from 1 to 5 stars
+            - comment: the text of the comment
             - user_id: the UUID of the user posting the comment
             - timestamp: timestamp of the comment in ISO 6801 format
             - project_name: the project name
+            - sentiment: whether the comment is positive or negative, given by sentiment analysis. None when comment has no text
+            - sentiment_score: the score of confidence for the sentiment, given by sentiment analysis. None when comment has no text
 
         Returns:
             The saved Comment object
@@ -248,6 +254,8 @@ class SQLiteRepository:
             timestamp=timestamp,
             rating=rating,
             comment=comment,
+            sentiment=sentiment,
+            sentiment_score=sentiment_score,
         )
         id = await new_comment.insert()
         new_comment.id = id
