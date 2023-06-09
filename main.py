@@ -8,11 +8,13 @@ import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 import logging
+import nltk
 
 from models.comment import Comment
 from models.project import Project, ProjectEncryption
 from routes.comments import router as comment_router
 from routes.rules import router as rule_router
+from routes.security import router as security_router
 from routes.projects import router as project_router
 from routes.report import router as report_router
 from utils.container import Container
@@ -20,10 +22,10 @@ from utils.formatter import str_to_bool
 
 
 @inject
-def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
+def init_fastapi(prefix="/api/v1", config=Provide[Container.config]) -> FastAPI:
     logging.info("Init FastAPI app")
     # Creates the FastAPI instance inside the function to be able to use the config provider
-    app = FastAPI()
+    app = FastAPI(debug=config["debug_mode"])
     app.add_middleware(
         CORSMiddleware,
         allow_origins=config["cors_allow_origins"].split(","),
@@ -36,6 +38,12 @@ def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
     app.include_router(rule_router, prefix=prefix)
     app.include_router(project_router, prefix=prefix)
     app.include_router(report_router, prefix=prefix)
+    # OAuth security is disabled if no key is present
+    if config["secret_key"] != "":
+        logging.info("Enabling OAuth2 security")
+        app.include_router(security_router, prefix=prefix)
+    else:
+        logging.warning("OAuth2 security is disabled")
 
     return app
 
@@ -43,6 +51,8 @@ def init_fastapi(config=Provide[Container.config], prefix="/api/v1") -> FastAPI:
 @inject
 async def main(config=Provide[Container.config]):
     await init_db()
+    nltk.download("punkt")
+    nltk.download("stopwords")
     # Running the uvicorn server in the function to be able to use the config provider
     config = uvicorn.Config(
         "main:app",
@@ -113,8 +123,15 @@ container.config.cors_allow_credentials.from_env(
     as_=lambda x: str_to_bool(x) if x != "" else False,
     default="False",
 )
-container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", default="GET, POST")
+container.config.cors_allow_methods.from_env("CORS_ALLOW_METHODS", default="GET,POST,OPTIONS")
 container.config.cors_allow_headers.from_env("CORS_ALLOW_HEADERS", default="*")
+container.config.secret_key.from_env("SECRET_KEY", default="")
+container.config.access_token_expire_minutes.from_env(
+    "ACCESS_TOKEN_EXPIRE_MINUTES", as_=int, default=15
+)
+container.config.auth_url.from_env("AUTH_URL", default="")
+container.config.jwk_url.from_env("JWK_URL", default="")
+container.config.client_secrets.from_env("CLIENT_SECRETS", default="")
 container.config.debug_mode.from_env(
     "DEBUG_MODE",
     required=True,

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 
 from dependency_injector.wiring import Provide, inject
 from typing import Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, Security
 from fastapi.responses import HTMLResponse
+from models.security import ScopeEnum
 from repository.html_repository import HTMLRepository
 
 from utils.container import Container
@@ -12,6 +13,7 @@ import jinja2
 
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
+from routes.middlewares.security import check_jwt
 
 router = APIRouter()
 
@@ -19,8 +21,11 @@ router = APIRouter()
 templates = jinja2.Template("templates")
 
 
-@router.get("/survey-report", response_class=HTMLResponse)
-@inject
+@router.get(
+    "/survey-report",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_class=HTMLResponse,
+)
 async def init_report(
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     rulesYamlConfig: YamlRulesRepository = Depends(Provide[Container.rules_config]),
@@ -53,7 +58,11 @@ async def init_report(
     return html_repository.generate_report(projects)
 
 
-@router.get("/survey-report/project/{id}", response_class=HTMLResponse)
+@router.get(
+    "/survey-report/project/{id}",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_class=HTMLResponse,
+)
 async def init_detail_project_report(
     id: str, timestamp_start: Optional[str] = None, timestamp_end: Optional[str] = None
 ) -> str:

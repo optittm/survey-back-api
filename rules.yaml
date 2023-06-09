@@ -1,15 +1,10 @@
-# Optional: Allowed origins for the GET /comments route
-# Add OptiTTM/BugPrediction URL
-get_comments_allowed_origins: '*'
-# Add Modal origins
-front_allowed_origins: '*'
 # Survey rules
 projects:
   project1:
     rules:
     - 
 # Regex URL
-      feature_url: /test
+      feature_url: http://localhost/test
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
 # Delay in days before the modal is being displayed again for a given user
@@ -21,7 +16,7 @@ projects:
       is_active: true
     -
 # Regex URL
-      feature_url: /test1
+      feature_url: http://localhost/test1
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
 # Delay in days before the modal is being displayed again for a given user
@@ -35,7 +30,7 @@ projects:
     rules:
     - 
 # Regex URL
-      feature_url: /test2
+      feature_url: http://localhost/test2
 # Probability of modal being displayed between 0 and 1
       ratio: 0.4
 # Delay in days before the modal is being displayed again for a given user

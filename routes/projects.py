@@ -1,19 +1,25 @@
 import logging
 from typing import List, Union
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 
 from dependency_injector.wiring import Provide, inject
 from models.project import Project
 from models.rule import Rule
+from models.security import ScopeEnum
 
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
+from routes.middlewares.security import check_jwt
 from utils.container import Container
 
 router = APIRouter()
 
 
-@router.get("/projects", response_model=List)
+@router.get(
+    "/projects",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_model=List,
+)
 @inject
 async def get_projects(
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
@@ -40,7 +46,11 @@ async def get_projects(
     return output
 
 
-@router.get("/project/{id}/avg_feature_rating", response_model=Union[List, dict])
+@router.get(
+    "/project/{id}/avg_feature_rating",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_model=Union[List, dict],
+)
 @inject
 async def get_projects_feature_rating(
     id: int,
@@ -77,7 +87,11 @@ async def get_projects_feature_rating(
     return output
 
 
-@router.get("/projects/{id}/rules", response_model=Union[List, Rule])
+@router.get(
+    "/projects/{id}/rules",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_model=Union[List, dict],
+)
 @inject
 async def get_projects_rules(
     id: int,
@@ -107,7 +121,11 @@ async def get_projects_rules(
     return yaml_repo.getRulesFromProjectName(project.name)
 
 
-@router.get("/project/{id}/avg_rating", response_model=dict)
+@router.get(
+    "/project/{id}/avg_rating",
+    dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
+    response_model=dict,
+)
 @inject
 async def get_project_rating(
     id: int,
