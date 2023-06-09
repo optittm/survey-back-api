@@ -458,7 +458,18 @@ class SQLiteRepository:
         
         for feature_url, rates in feature_rates.items():
             filtered_rates[feature_url] = []
-           
+            if len(rates) == 0:
+                # Handle the case where there are no rates for the feature
+                filtered_rates[feature_url] = []
+
+                timestamp=datetime.now()
+                timestamp_string = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f")
+
+                result = self.is_within_timerange(timestamp_string, timerange, timestamp_start, timestamp_end)
+                date_timestamp_start= result["date_timestamp_start"] if result["date_timestamp_start"] is not None else None
+                date_timestamp_end= result["date_timestamp_end"] if result["date_timestamp_end"] is not None else None
+                continue
+        
             for rate in rates:
                 result = self.is_within_timerange(rate['timestamp'], timerange, timestamp_start, timestamp_end)
                 if result["within_range"]:
@@ -478,19 +489,20 @@ class SQLiteRepository:
     def is_within_timerange(self, timestamp, timerange, timestamp_start, timestamp_end):
         timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
         result={}
-
+        
         if not timestamp_start and not timestamp_end:
             if timerange == "day":
                 timestamp_end = datetime.now()
-                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=1)
+                timestamp_start = timestamp_end.date() - timedelta(days=1)
             elif timerange == "week":
                 timestamp_end = datetime.now()
-                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(weeks=1)
+                timestamp_start = timestamp_end.date() - timedelta(weeks=1)
             else:  # month
                 timestamp_end = datetime.now()
-                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=30)
+                timestamp_start = timestamp_end.date() - timedelta(days=30)
+
             date_timestamp = timestamp.date()
-            date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
+            date_timestamp_start = timestamp_start
             date_timestamp_end = timestamp_end.date()
 
         elif not timestamp_start:
@@ -501,9 +513,10 @@ class SQLiteRepository:
                 timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(weeks=1)
             else:  # month
                 timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=30)
+            
             date_timestamp = timestamp.date()
-            date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
-            date_timestamp_end = timestamp_end.date()
+            date_timestamp_start = timestamp_start.date()
+            date_timestamp_end = datetime.strptime(timestamp_end, "%Y-%m-%d").date()
 
         elif not timestamp_end:
             assert timestamp_start, "Missing timestamp_start."
@@ -513,7 +526,7 @@ class SQLiteRepository:
                 timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(weeks=1)
             else:  # month
                 timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(days=30)
-                
+            
             date_timestamp = timestamp.date()
             date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
             date_timestamp_end = timestamp_end.date()

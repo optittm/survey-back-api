@@ -39,6 +39,7 @@ async def init_report() -> str:
     dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
     response_class=HTMLResponse,
 )
+@inject
 async def init_detail_project_report(
     id: str, 
     timerange: Optional[str] = "week", 
@@ -47,20 +48,17 @@ async def init_detail_project_report(
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> str:
-    
+
     html_repository = HTMLRepository(reportFile="surveyProjectDetailReport.html")
-    
     project = await sqlite_repo.get_project_by_id(id)
     project_name = project.name
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project_name)
     feature_rates = {}
-
+    
     for feature_url in feature_urls:
         rates = await sqlite_repo.get_rates_from_feature(feature_url)
         feature_rates[feature_url] = rates
-
     filtered_rates = await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
-    print(filtered_rates)
 
     graphs = []
     date_timestamp_start = []
