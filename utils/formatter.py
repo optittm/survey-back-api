@@ -32,6 +32,7 @@ async def comment_to_comment_get_body(
         feature_url=comment.feature_url,
         rating=comment.rating,
         comment=comment.comment,
+        language=comment.language,
         sentiment=comment.sentiment,
         sentiment_score=comment.sentiment_score,
     )

@@ -15,7 +15,7 @@ from utils.encryption import Encryption
 from utils.formatter import comment_to_comment_get_body
 from routes.middlewares.feature_url import comment_body_treatment
 from routes.middlewares.security import check_jwt
-from utils.nlp import SentimentAnalysis
+from utils.nlp import SentimentAnalysis, detect_language
 
 
 router = APIRouter()
@@ -74,7 +74,12 @@ async def create_comment(
 
         # Sentiment analysis
         if len(comment_body.comment):
-            sentiment, score = sentiment_analysis.analyze(comment_body.comment)
+            language = detect_language(comment_body.comment)
+            try:
+                sentiment, score = sentiment_analysis.analyze(comment_body.comment, language)
+            except Exception:
+                logging.error(f"Could not analyze sentiment of comment of language {language}")
+                sentiment, score = None, None
         else:
             sentiment, score = None, None
 
@@ -87,6 +92,7 @@ async def create_comment(
             comment_body.user_id if config["use_fingerprint"] else user_id,
             iso_timestamp,
             project_name,
+            language,
             sentiment,
             score,
         )

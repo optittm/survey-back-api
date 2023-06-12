@@ -36,6 +36,7 @@ class CommentCommon(CommentPostBody):
 
     id: Optional[int] = PrimaryKey(autoincrement=True)
     timestamp: str
+    language: str # two-character ISO639-1 code
     sentiment: Optional[str]
     sentiment_score: Optional[float]
 

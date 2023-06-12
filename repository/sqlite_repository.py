@@ -217,6 +217,7 @@ class SQLiteRepository:
         user_id: str,
         timestamp: str,
         project_name: str,
+        language: str,
         sentiment: SentimentEnum = None,
         sentiment_score: float = None,
     ) -> Comment:
@@ -230,6 +231,7 @@ class SQLiteRepository:
             - user_id: the UUID of the user posting the comment
             - timestamp: timestamp of the comment in ISO 6801 format
             - project_name: the project name
+            - language: two-character ISO639-1 code
             - sentiment: whether the comment is positive or negative, given by sentiment analysis. None when comment has no text
             - sentiment_score: the score of confidence for the sentiment, given by sentiment analysis. None when comment has no text
 
@@ -254,6 +256,7 @@ class SQLiteRepository:
             timestamp=timestamp,
             rating=rating,
             comment=comment,
+            language=language,
             sentiment=sentiment.value if sentiment is not None else sentiment,
             sentiment_score=sentiment_score,
         )

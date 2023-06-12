@@ -1,7 +1,16 @@
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
+from langdetect import DetectorFactory, detect, LangDetectException
 from transformers import pipeline, TFRobertaForSequenceClassification, TFCamembertForSequenceClassification, AutoTokenizer
 
 from models.comment import SentimentEnum
+
+DetectorFactory.seed = 0
+
+def detect_language(text: str) -> str:
+    try:
+        return detect(text)
+    except LangDetectException:
+        return 'unknown'
 
 class SentimentAnalysis:
     MODELS_FOLDER = "./data/sentiment_models"
@@ -18,13 +27,24 @@ class SentimentAnalysis:
             pipeline_fr = pipeline("sentiment-analysis", model=model_fr, tokenizer=tokenizer_fr)
 
             self.pipelines = {
-                "english": pipeline_en,
-                "french": pipeline_fr,
+                "en": pipeline_en,
+                "fr": pipeline_fr,
             }
 
-    def analyze(self, text: str, lang: str = "english") -> Tuple[Optional[SentimentEnum], Optional[float]]:
+    def analyze(self, text: str, lang: str = "en") -> Tuple[Optional[SentimentEnum], Optional[float]]:
+        """
+        Analyzes the sentiment from the given text.
+
+        Args:
+            - text (str): the text to analyze
+            - lang (str): the two-character ISO639-1 language code
+        
+        Returns:
+            - The sentiment POSITIVE or NEGATIVE and the confidence score of the model
+            - (None, None) if sentiment analysis is disabled
+        """
         if self.analysis_enabled:
-            if lang not in ["english", "french"]:
+            if lang not in ["en", "fr"]:
                 raise NotImplementedError()
 
             result = self.pipelines[lang](text)

@@ -53,6 +53,7 @@ class TestCommentsRoutes(unittest.TestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            language="en",
             sentiment=None,
             sentiment_score=None,
         )
@@ -98,6 +99,7 @@ class TestCommentsRoutes(unittest.TestCase):
             cookie_user_id,
             self.datetime.isoformat(),
             project_name,
+            "en",
             None,
             None,
         )
@@ -116,6 +118,7 @@ class TestCommentsRoutes(unittest.TestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            language="en",
             sentiment=None,
             sentiment_score=None,
         )
@@ -161,6 +164,7 @@ class TestCommentsRoutes(unittest.TestCase):
             self.comment_body.user_id,
             self.datetime.isoformat(),
             project_name,
+            "en",
             None,
             None,
         )
@@ -281,6 +285,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=4,
                 comment="test",
+                language="en",
             ),
             Comment(
                 id=2,
@@ -290,6 +295,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=5,
                 comment="test2",
+                language="en",
             ),
             Comment(
                 id=3,
@@ -299,6 +305,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=3,
                 comment="test3",
+                language="en",
             ),
             Comment(
                 id=4,
@@ -308,6 +315,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=2,
                 comment="test4",
+                language="en",
             ),
             Comment(
                 id=5,
@@ -317,6 +325,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=2,
                 comment="test4",
+                language="en",
             ),
         ]
 
