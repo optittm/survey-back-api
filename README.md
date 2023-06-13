@@ -130,7 +130,7 @@ Example usage: GET `/survey-report/project/23?timestamp_start=01-01-2020&timesta
 3. Create a file in the project directory called `.env`, and copy the `.env.example` file to it.
 4. Update the values in .env as needed. You should at least add the URL of your frontend app in `CORS_ALLOW_ORIGINS`.
 5. If you want a third-party app to fetch feedback, add its URL to the `CORS_ALLOW_ORIGINS` field, separated by commas.
-You can read details about how to setup sentiment analysis [here](.) and OAuth security [here](./docs/security.md).
+You can read details about how to setup sentiment analysis [here](./docs/nlp.md) and OAuth security [here](./docs/security.md).
 6. Fill in the rules.yaml file with the rules for displaying the feedback modal for your projects.
 7. Run the API by running `python main.py`.
 
