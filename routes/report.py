@@ -26,6 +26,7 @@ templates = jinja2.Template("templates")
     dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
     response_class=HTMLResponse,
 )
+@inject
 async def init_report(
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     rulesYamlConfig: YamlRulesRepository = Depends(Provide[Container.rules_config]),
@@ -39,15 +40,25 @@ async def init_report(
         average_rating = sqlite_repo.get_project_avg_rating(project.id)
         comments_number = sqlite_repo.get_number_of_comment(project.id)
         display_modal_number = sqlite_repo.get_number_of_display(project.id)
+        feature_urls = await sqlite_repo.get_features_urls_by_project_name(project_name)
         active_rules = [
             rule
             for rule in rulesYamlConfig.getRulesFromProjectName(project_name)
             if rule.is_active == True
         ]
+        feature_data = []
+        for feature_url in feature_urls:
+            feature_avg_rating = sqlite_repo.get_feature_avg_rating(project.id, feature_url)
+            feature_avg_rating= round(feature_avg_rating, 1)
+            feature_data.append({
+                'feature_url': feature_url,
+                'feature_avg_rating': feature_avg_rating
+            })
 
         projects.append(
             {
                 "name": project_name,
+                "feature_data": feature_data,
                 "average_rating": round(average_rating, 1),
                 "comments_number": comments_number,
                 "display_modal_number": display_modal_number,
