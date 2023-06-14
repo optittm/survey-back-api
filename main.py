@@ -8,6 +8,7 @@ import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 import logging
+import nltk
 import os
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 # Sets Tensorflow's logs to ERROR
@@ -102,6 +103,10 @@ def load_nlp_models(sentiment_analysis=Provide[Container.sentiment_analysis]):
 def init_nlp(config=Provide[Container.config]):
     if not config["use_sentiment_analysis"]:
         return
+    
+    logging.info("Loading NLTK packages...")
+    nltk.download("punkt")
+    nltk.download("stopwords")
     
     english_path = "./data/sentiment_models/english"
     french_path = "./data/sentiment_models/french"
