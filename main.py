@@ -92,7 +92,15 @@ async def init_db(
 
 
 @inject
-def load_nlp_models(sentiment_analysis=Provide[Container.sentiment_analysis]):
+def load_sentiment_models(sentiment_analysis=Provide[Container.sentiment_analysis]):
+    """
+    This function just serves to call the provider a first time and
+    initialize the singleton, thus loading the models into RAM
+    """
+    pass
+
+@inject
+def load_nlp_models(npl_preprocess=Provide[Container.nlp_preprocess]):
     """
     This function just serves to call the provider a first time and
     initialize the singleton, thus loading the models into RAM
@@ -101,13 +109,14 @@ def load_nlp_models(sentiment_analysis=Provide[Container.sentiment_analysis]):
 
 @inject
 def init_nlp(config=Provide[Container.config]):
+    if config["use_nlp_preprocess"]:
+        nltk.download("punkt")
+        nltk.download("stopwords")
+        logging.info("Loading NLP models into RAM...")
+        load_nlp_models()
+    
     if not config["use_sentiment_analysis"]:
         return
-    
-    logging.info("Loading NLTK packages...")
-    nltk.download("punkt")
-    nltk.download("stopwords")
-    
     english_path = "./data/sentiment_models/english"
     french_path = "./data/sentiment_models/french"
     try:
@@ -127,7 +136,7 @@ def init_nlp(config=Provide[Container.config]):
             logging.info("French sentiment analysis model downloaded and saved")
 
         logging.info("Loading sentiment analysis models into RAM...")
-        load_nlp_models()
+        load_sentiment_models()
     except Exception:
         container.config.use_sentiment_analysis.from_value(False)
         logging.warning("Could not retrieve sentiment analysis models. Analysis is disabled.")
@@ -165,6 +174,11 @@ container.config.use_fingerprint.from_env(
 container.config.use_sentiment_analysis.from_env(
     "USE_SENTIMENT_ANALYSIS",
     required=True,
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
+)
+container.config.use_nlp_preprocess.from_env(
+    "USE_NLP_PREPROCESS",
     as_=lambda x: str_to_bool(x) if x != "" else False,
     default="False",
 )
