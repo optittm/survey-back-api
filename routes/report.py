@@ -48,6 +48,21 @@ async def init_detail_project_report(
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
     yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> str:
+    """
+    Generates the detailed project report for the specified project ID.
+
+    Args:
+        id (str): The ID of the project.
+        timerange (str, optional): The time range for the report. Defaults to "week".
+        timestamp_start (str, optional): The start timestamp for filtering the rates. Defaults to None.
+        timestamp_end (str, optional): The end timestamp for filtering the rates. Defaults to None.
+        sqlite_repo (SQLiteRepository, optional): The SQLite repository. Defaults to Depends(Provide[Container.sqlite_repo]).
+        yaml_repo (YamlRulesRepository, optional): The YAML rules repository. Defaults to Depends(Provide[Container.rules_config]).
+
+    Returns:
+        str: The generated detailed project report in HTML format.
+
+    """
 
     html_repository = HTMLRepository(reportFile="surveyProjectDetailReport.html")
     project = await sqlite_repo.get_project_by_id(id)
@@ -75,7 +90,7 @@ async def init_detail_project_report(
         x = [rate["date_timestamp"] for rate in rates if "date_timestamp" in rate]
         y = [rate["rate"] for rate in rates]
         df = pd.DataFrame({'timestamp': x, 'rates': y})
-        fig = px.box(df, x='timestamp', y='rates', points="all", labels={'timestamp': 'Timestamp','rates': 'Rates'})
+        fig = px.box(df, x='timestamp', y='rates', labels={'timestamp': 'Timestamp','rates': 'Rates'})
         fig.update_layout(yaxis=dict(range=[0, 6]))
 
         fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
