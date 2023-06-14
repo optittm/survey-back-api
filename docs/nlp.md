@@ -21,3 +21,6 @@ Théophile Blard,
 French sentiment analysis with BERT, (2020),  
 GitHub repository, https://github.com/TheophileBlard/french-sentiment-analysis-with-bert  
 https://huggingface.co/tblard/tf-allocine
+
+If you want to do further NLP using the comments from Survey Back API, we have provided a preprocess of the text which includes lowercase, removing punctuation and stopwords, tokenization and lemmatization.  
+This returns you a list of word tokens. It is available in the response from the GET /comments endpoint.
