@@ -59,20 +59,22 @@
                                 </p>
                                 
                             </div>
-                            <ul>
-                                {% for feature in project.feature_data %}
-                                    <li>{{ feature.feature_url }} - Average rating: {{ feature.feature_avg_rating }}</li>
-                                    {% if feature.feature_avg_rating >= 4 -%}
-                                        <span class="badge text-bg-success">{{ feature.feature_avg_rating }}/5</span>
-                                    {%- elif feature.feature_avg_rating < 2.5 -%}
-                                        <span class="badge text-bg-danger">{{ feature.feature_avg_rating }}/5</span>
-                                    {%- else -%}
-                                        <span class="badge text-bg-warning">{{ feature.feature_avg_rating }}/5</span>
-                                    {%- endif %}
-                                {% endfor %}
-                            </ul>
+                            {% for feature in project.feature_data %}
+                            <div class="d-flex flex-row align-items-center justify-content-between mt-4">
+                                 
+                                {{ feature.feature_url }}
+                                {% if feature.feature_avg_rating >= 4 -%}
+                                    <span class="badge text-bg-success">{{ feature.feature_avg_rating }}/5</span>
+                                {%- elif feature.feature_avg_rating < 2.5 -%}
+                                    <span class="badge text-bg-danger">{{ feature.feature_avg_rating }}/5</span>
+                                {%- else -%}
+                                    <span class="badge text-bg-warning">{{ feature.feature_avg_rating }}/5</span>
+                                {%- endif %}
+                            </div>
+                            {% endfor %}
                             
-                            <p class="d-flex justify-content-center fw-bold">Modal displayed {{ project.display_modal_number }} 
+                   
+                            <p class="d-flex justify-content-center mt-4 fw-bold">Modal displayed {{ project.display_modal_number }} 
                                 {% if project.display_modal_number > 1 -%}
                                     times
                                 {%- else -%}
