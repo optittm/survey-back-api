@@ -27,7 +27,13 @@ async def comment_to_comment_get_body(
     Convert a Comment to a CommentGetBody with project name
     """
     project: Project = await sqliterepo.get_project_by_id(comment.project_id)
-    processed_text = nlp_preprocess.text_preprocess(comment.comment, comment.language)
+    try:
+        processed_text = nlp_preprocess.text_preprocess(comment.comment, comment.language)
+    except Exception:
+        logging.error(f"Could not preprocess text of language {comment.language}")
+        logging.debug(f"Unable to do NLP preprocess on this text: {comment.comment}")
+        processed_text = None
+    
     new_comment = CommentGetBody(
         id=comment.id,
         project_name=project.name,
