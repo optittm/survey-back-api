@@ -49,16 +49,16 @@ This represents the tables `Comment`, `Display`, `Project`, and `ProjectEncrypti
 
 ## Relationships between Tables  
 
-Relationship between Comment and Project tables:
+The Survey Back API database includes the following relationships between tables:
 
-Each comment in the Comment table is associated with a project from the Project table.
-The project_id column in the Comment table is a foreign key referencing the id column in the Project table.
-Relationship between Display and Project tables:
+1. Relationship between `Comment` and `Project` tables:
+   - Each comment in the `Comment` table is associated with a project from the `Project` table.
+   - The `project_id` column in the `Comment` table is a foreign key referencing the `id` column in the `Project` table.
 
-Each display in the Display table is associated with a project from the Project table.
-The project_id column in the Display table is a foreign key referencing the id column in the Project table.
-Relationship between ProjectEncryption and Project tables:
+2. Relationship between `Display` and `Project` tables:
+   - Each display in the `Display` table is associated with a project from the `Project` table.
+   - The `project_id` column in the `Display` table is a foreign key referencing the `id` column in the `Project` table.
 
-Each project encryption record in the ProjectEncryption table is associated with a project from the Project table.
-The project_id column in the ProjectEncryption table is a foreign key referencing the id column in the Project table.
-These relationships maintain the integrity of the data and facilitate efficient querying and retrieval across the related tables.
+3. Relationship between `ProjectEncryption` and `Project` tables:
+   - Each project encryption record in the `ProjectEncryption` table is associated with a project from the `Project` table.
+   - The `project_id` column in the `ProjectEncryption` table is a foreign key referencing the `id` column in the `Project` table.
