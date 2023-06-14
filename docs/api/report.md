@@ -20,5 +20,6 @@ The Survey Report API is a web application that generates reports based on surve
   - `timerange` (optional): The time range for the report. Default is "week".
   - `timestamp_start` (optional): The start timestamp for filtering the rates.
   - `timestamp_end` (optional): The end timestamp for filtering the rates.
-
+- **Example usage:** GET `/survey-report/project/23?timestamp_start=2020-01-01&timestamp_end=2020-01-08&timerange=week`
+--
 The detailed project report includes graphs with box plots, which provide insights into the distribution and statistical summary of the rates. The x-axis represents the timestamps, and the y-axis represents the rates.
