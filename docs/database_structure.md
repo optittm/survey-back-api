@@ -4,7 +4,6 @@ The database (DB) of the Survey Back API is designed to store user comments, fee
 
 ## Database Schema
 
-```plaintext
 Table: Comment
 +----------------+-------------------+---------------------------------------+
 | Column         | Type              | Description                           |

@@ -27,6 +27,7 @@ Please refer to the following documentation for detailed information about the S
 - [Survey Reporting API](docs/api/report.md)
 - [Projects API](docs/api/projects.md)
 - [Security](docs/security.md)
+- [Database structure](docs/database_structure.md)
 
 ## Usage
 
