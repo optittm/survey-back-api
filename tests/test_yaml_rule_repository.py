@@ -5,6 +5,82 @@ from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
 
 
+class TestGetRulesFromProjectName(unittest.TestCase):
+    def setUp(self):
+        self.data = {
+            "projects": {
+                "project1": {
+                    "rules": [
+                        {
+                            "feature_url": "/test1",
+                            "ratio": 0.5,
+                            "delay_before_reanswer": 10,
+                            "delay_to_answer": 2,
+                            "is_active": True,
+                        },
+                        {
+                            "feature_url": "/test",
+                            "ratio": 0.8,
+                            "delay_before_reanswer": 20,
+                            "delay_to_answer": 3,
+                            "is_active": False,
+                        },
+                    ]
+                },
+                "project2": {
+                    "rules": [
+                        {
+                            "feature_url": "/test2",
+                            "ratio": 0.4,
+                            "delay_before_reanswer": 30,
+                            "delay_to_answer": 5,
+                            "is_active": True,
+                        }
+                    ]
+                },
+            }
+        }
+
+    def test_existing_project(self):
+        project_name = "project2"
+        rules = YamlRulesRepository.getRulesFromProjectName(project_name)
+        self.assertIsInstance(rules, list)
+        self.assertIsInstance(rules[0], Rule)
+        
+        self.assertEqual(rules[0].ratio, 0.4)
+        self.assertEqual(rules[0].delay_before_reanswer, 30)
+        self.assertEqual(rules[0].delay_to_answer, 5)
+        self.assertEqual(rules[0].is_active, True)
+
+    def test_noexisting_project(self):
+        project_name = "projectInvalid"
+        rules = YamlRulesRepository.getRulesFromProjectName(project_name)
+        self.assertIsNone(rules)
+
+    def test_regex_matching(self):
+        project_name = "project2"
+        with patch(
+            "repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig",
+            return_value=self.data,
+        ):
+            rules = YamlRulesRepository.getRulesFromProjectName(project_name)
+
+        self.assertIsInstance(rules[0], Rule)
+        self.assertEqual(rules[0].ratio, 0.4)
+        self.assertEqual(rules[0].delay_before_reanswer, 30)
+        self.assertEqual(rules[0].delay_to_answer, 5)
+        self.assertEqual(rules[0].is_active, True)
+
+    def test_regex_non_matching(self):
+        project_name = "projectInvalid"
+        with patch(
+            "repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig",
+            return_value=self.data,
+        ):
+            rules = YamlRulesRepository.getRulesFromProjectName(project_name)
+        self.assertIsNone(rules)
+
+
 class TestGetRuleFromFeature(unittest.TestCase):
     def setUp(self):
         YamlRulesRepository._RULES_CONFIG_FILE = "tests/mocks/test_rules.yaml"
