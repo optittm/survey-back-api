@@ -506,7 +506,8 @@ class SQLiteRepository:
             date_timestamp_end = timestamp_end.date()
 
         elif not timestamp_start:
-            assert timestamp_end, "Missing timestamp_end."
+            if not timestamp_end:
+                raise ValueError("Missing timestamp_end.")
             if timerange == "day":
                 timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=1)
             elif timerange == "week":
@@ -519,7 +520,8 @@ class SQLiteRepository:
             date_timestamp_end = datetime.strptime(timestamp_end, "%Y-%m-%d").date()
 
         elif not timestamp_end:
-            assert timestamp_start, "Missing timestamp_start."
+            if not timestamp_start:
+                raise ValueError("Missing timestamp_start.")
             if timerange == "day":
                 timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(days=1)
             elif timerange == "week":
@@ -535,13 +537,10 @@ class SQLiteRepository:
             date_timestamp = timestamp.date()
             date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
             if timerange == "day":
-                # assert (timestamp_end - timestamp_start).days == 1, "Invalid timerange. Day timerange requires a one-day interval."
                 date_timestamp_end = date_timestamp_start + timedelta(days=1)
             elif timerange == "week":
-                # assert (timestamp_end - timestamp_start).days == 7, "Invalid timerange. Week timerange requires a seven-day interval."
                 date_timestamp_end = date_timestamp_start + timedelta(days=7)
             else:  # month
-                # assert (timestamp_end - timestamp_start).days >= 30, "Invalid timerange. Month timerange requires at least a 30-day interval."
                 date_timestamp_end = date_timestamp_start + timedelta(days=30)
 
         result["within_range"] = date_timestamp_start <= date_timestamp <= date_timestamp_end
