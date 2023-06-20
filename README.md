@@ -10,7 +10,7 @@ Here are the repositories related to the Survey project:
 
 - [Survey Front Library](https://github.com/optittm/survey-front-library): The front-end library for the Survey project.
 - Survey Back API: The back-end API for the Survey project. You are currently in this repository.
-- [Survey Reporting Module](https://github.com/optittm/survey-reporting-module): The reporting module for the Survey project.
+- [Survey Front Modal](https://github.com/optittm/survey-front-modal): The reporting module for the Survey project. A popup modal asking the user for feedback.
 
 ## Requirements
 
