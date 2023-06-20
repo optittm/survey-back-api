@@ -90,7 +90,7 @@ async def get_projects_feature_rating(
 @router.get(
     "/projects/{id}/rules",
     dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
-    response_model=Union[List, Rule],
+    response_model=Union[List, dict],
 )
 @inject
 async def get_projects_rules(
@@ -109,19 +109,16 @@ async def get_projects_rules(
     Returns:
         Union[List, dict]: a list of rules for the project, or an error dictionary if the project is not found
     """
-    output = []
     project = await sqlite_repo.get_project_by_id(id)
+
     if not project or project.name not in yaml_repo.getProjectNames():
         logging.error("Project not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"id": id, "Error": "Project not found"},
         )
-    feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project.name)
-    for url in feature_urls:
-        rule = yaml_repo.getRuleFromFeature(url)
-        output.append(rule)
-    return output
+
+    return yaml_repo.getRulesFromProjectName(project.name)
 
 
 @router.get(
