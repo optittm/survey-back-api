@@ -20,12 +20,10 @@ class HTMLRepository:
         self.template_env = jinja2.Environment(loader=self.template_loader)
         self.template = self.template_env.get_template(reportFile)
 
-    def generate_report(self) -> str:
+    def generate_report(self, projects) -> str:
         logging.info("Generate HTML report")
 
-        data = {
-            "project": "TestName",
-        }
+        data = {"projects": projects}
 
         # Render the template and return Report
         html_report = self.template.render(data)

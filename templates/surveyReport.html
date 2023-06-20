@@ -22,15 +22,70 @@
 
 <body>
     <div class="container-fluid">
-        
-        <div class="row">
-            <div class="col">
-                <h1>Project {{ project }}</h1>
-            </div>
-        </div>
-        
-        
+        <h1>Survey Report</h1>
 
+        <div class="container">
+            <ul class="row row-cols-3 gap-4">
+                {% for project in projects -%}
+                    <li class="card col">
+                        <div class="card-body">
+                            <div class="d-flex flex-row-reverse align-items-center justify-content-between">
+                                <h2 class="card-title fs-6 fw-bold">{{ project.name }}</h2>
+
+                                {% if project.average_rating >= 4 -%}
+                                    <span class="badge text-bg-success">{{ project.average_rating }}/5</span>
+                                {%- elif project.average_rating < 2.5 -%}
+                                    <span class="badge text-bg-danger">{{ project.average_rating }}/5</span>
+                                {%- else -%}
+                                    <span class="badge text-bg-warning">{{ project.average_rating }}/5</span>
+                                {%- endif %}
+                            </div>
+
+                            <div class="d-flex flex-row align-items-center justify-content-between mt-4">
+                                <p>{{ project.comments_number }}
+                                    {% if project.comments_number > 1 -%}
+                                        comments
+                                    {%- else -%}
+                                        comment
+                                    {%- endif %}
+                                </p>
+
+                                <p>{{ project.active_rules_number }} active 
+                                    {% if project.active_rules_number > 1 -%}
+                                        rules
+                                    {%- else -%}
+                                        rule
+                                    {%- endif %}
+                                </p>
+                                
+                            </div>
+                            {% for feature in project.feature_data %}
+                            <div class="d-flex flex-row align-items-center justify-content-between mt-4">
+                                 
+                                {{ feature.feature_url }}
+                                {% if feature.feature_avg_rating >= 4 -%}
+                                    <span class="badge text-bg-success">{{ feature.feature_avg_rating }}/5</span>
+                                {%- elif feature.feature_avg_rating < 2.5 -%}
+                                    <span class="badge text-bg-danger">{{ feature.feature_avg_rating }}/5</span>
+                                {%- else -%}
+                                    <span class="badge text-bg-warning">{{ feature.feature_avg_rating }}/5</span>
+                                {%- endif %}
+                            </div>
+                            {% endfor %}
+                            
+                   
+                            <p class="d-flex justify-content-center mt-4 fw-bold">Modal displayed {{ project.display_modal_number }} 
+                                {% if project.display_modal_number > 1 -%}
+                                    times
+                                {%- else -%}
+                                    time
+                                {%- endif %}
+                            </p>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </body>
 </html>

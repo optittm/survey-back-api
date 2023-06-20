@@ -147,13 +147,9 @@ class SQLiteRepository:
         with Session(Comment.__metadata__.database.engine) as session:
             query = session.query(FeatureRatingAvg.feature_url).filter(
                 FeatureRatingAvg.project_id == project.id
-            )
+            ).all()
 
-        result = query.all()
-        try:
-            return result[0][0]
-        except IndexError:
-            return 0
+        return [row[0] for row in query]
 
     def get_number_of_comment(self, project_id: int):
         """

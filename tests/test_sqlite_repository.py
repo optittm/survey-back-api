@@ -470,6 +470,8 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             result = self.repository.get_project_avg_rating(project_id)
             expected_result = 0
             self.assertEqual(result, expected_result)
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
 
     async def test_get_rates_from_feature(self):
 
@@ -497,7 +499,8 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
 
             expected_rates = [{"rate": 4, "timestamp": comment_a.timestamp}]
             self.assertEqual(rates, expected_rates)
-
+            
+    
     
     def test_is_within_timerange_day(self):
         timestamp = "2023-06-06T12:00:00.000"
@@ -546,3 +549,25 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         }
         
         self.assertEqual(result, expected_result)
+            
+    def test_get_features_urls_by_project_name(self):
+        # Mocking the Session object and query method
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_session.query.return_value = mock_query
+        mockMeta = namedtuple("__metadata__", ["database"])
+        mockdb = namedtuple("database", ["engine"])
+        
+        mock_metadata = mockMeta(database=mockdb(engine=Mock()))
+        mock_metadata.database.engine.keys.return_value = yield ["url1", "url2"]
+        Comment.__metadata__ = mock_metadata
+
+        # Patching the Session class to return the mock_session
+        with patch('sqlalchemy.orm.Session', return_value=mock_session):
+            project_name = "project_name"
+            result = self.repository.get_features_urls_by_project_name(project_name)
+            expected_result = ["url1", "url2"]
+            self.assertEqual(result, expected_result)
+
+            # Assert that the query was called with the correct filter
+            mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
