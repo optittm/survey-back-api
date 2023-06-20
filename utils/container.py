@@ -15,7 +15,7 @@ class Container(containers.DeclarativeContainer):
             "routes.projects",
             "utils.formatter",
             "routes.middlewares.security",
-            "routes.security",
+            "survey_logic.security",
         ]
     )
 
