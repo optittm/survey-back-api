@@ -10,7 +10,7 @@ class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
             "routes.comments",
-            "routes.rules",
+            "survey_logic.rules",
             "routes.report",
             "routes.projects",
             "utils.formatter",
