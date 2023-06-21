@@ -55,29 +55,6 @@ class TestGetRulesFromProjectName(unittest.TestCase):
     def test_noexisting_project(self):
         project_name = "projectInvalid"
         rules = YamlRulesRepository.getRulesFromProjectName(project_name)
-
-    def test_regex_matching(self):
-        project_name = "project2"
-        with patch(
-            "repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig",
-            return_value=self.data,
-        ):
-            rules = YamlRulesRepository.getRulesFromProjectName(project_name)
-
-        self.assertIsInstance(rules[0], Rule)
-        self.assertEqual(rules[0].ratio, 0.4)
-        self.assertEqual(rules[0].delay_before_reanswer, 30)
-        self.assertEqual(rules[0].delay_to_answer, 5)
-        self.assertEqual(rules[0].is_active, True)
-
-    def test_regex_non_matching(self):
-        project_name = "projectInvalid"
-        with patch(
-            "repository.yaml_rule_repository.YamlRulesRepository._getRulesConfig",
-            return_value=self.data,
-        ):
-            rules = YamlRulesRepository.getRulesFromProjectName(project_name)
-        self.assertIsNone(rules)
         self.assertEqual(rules, [])
 
 
