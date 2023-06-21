@@ -1,4 +1,5 @@
-from typing import List, Optional, Union
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Union
 import logging
 import sqlite3
 from sqlalchemy.orm import Session
@@ -146,13 +147,9 @@ class SQLiteRepository:
         with Session(Comment.__metadata__.database.engine) as session:
             query = session.query(FeatureRatingAvg.feature_url).filter(
                 FeatureRatingAvg.project_id == project.id
-            )
+            ).all()
 
-        result = query.all()
-        try:
-            return result[0][0]
-        except IndexError:
-            return 0
+        return [row[0] for row in query]
 
     def get_number_of_comment(self, project_id: int):
         """
@@ -428,3 +425,134 @@ class SQLiteRepository:
         new_display.id = id
         logging.debug(f"Display created in DB: {new_display}")
         return new_display
+
+
+    async def get_rates_from_feature(
+            self, 
+            feature_url: str,
+            timestamp_start: Optional[str] = None, 
+            timestamp_end: Optional[str] = None
+    )-> Dict[int, List[str]]:
+        query=[Comment.feature_url == feature_url]
+
+        if timestamp_start is not None:
+            query.append(Comment.timestamp >= timestamp_start)
+
+        if timestamp_end is not None:
+            query.append(Comment.timestamp <= timestamp_end)
+        comments = await Comment.filter(*query)
+        rates_with_timestamps = []
+
+        for comment in comments:
+            rate_timestamp = {
+                "rate": comment.rating,
+                "timestamp": comment.timestamp
+            }
+
+            rates_with_timestamps.append(rate_timestamp)
+
+        return rates_with_timestamps
+    
+
+    async def filter_rates_by_timerange(
+        self, 
+        feature_rates, 
+        timerange: Optional[str] = "week", 
+        timestamp_start: Optional[str] = None, 
+        timestamp_end: Optional[str] = None
+    ):
+        filtered_rates = {}
+        
+        for feature_url, rates in feature_rates.items():
+            filtered_rates[feature_url] = []
+            if len(rates) == 0:
+                # Handle the case where there are no rates for the feature
+                filtered_rates[feature_url] = []
+
+                timestamp=datetime.now()
+                timestamp_string = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f")
+
+                result = self.is_within_timerange(timestamp_string, timerange, timestamp_start, timestamp_end)
+                date_timestamp_start= result["date_timestamp_start"] if result["date_timestamp_start"] is not None else None
+                date_timestamp_end= result["date_timestamp_end"] if result["date_timestamp_end"] is not None else None
+                continue
+        
+            for rate in rates:
+                result = self.is_within_timerange(rate['timestamp'], timerange, timestamp_start, timestamp_end)
+                if result["within_range"]:
+                    filtered_rates[feature_url].append({
+                        "rate": rate["rate"],
+                        "date_timestamp": result["date_timestamp"]                        
+                    })
+                date_timestamp_start= result["date_timestamp_start"] if result["date_timestamp_start"] is not None else None
+                date_timestamp_end= result["date_timestamp_end"] if result["date_timestamp_end"] is not None else None
+
+        filtered_rates['date_timestamp_start']=(date_timestamp_start)    
+        filtered_rates['date_timestamp_end']=(date_timestamp_end)          
+        return filtered_rates
+
+
+    
+    def is_within_timerange(self, timestamp, timerange, timestamp_start, timestamp_end):
+        timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        result={}
+        
+        if not timestamp_start and not timestamp_end:
+            if timerange == "day":
+                timestamp_end = datetime.now()
+                timestamp_start = timestamp_end.date() - timedelta(days=1)
+            elif timerange == "week":
+                timestamp_end = datetime.now()
+                timestamp_start = timestamp_end.date() - timedelta(weeks=1)
+            else:  # month
+                timestamp_end = datetime.now()
+                timestamp_start = timestamp_end.date() - timedelta(days=30)
+
+            date_timestamp = timestamp.date()
+            date_timestamp_start = timestamp_start
+            date_timestamp_end = timestamp_end.date()
+
+        elif not timestamp_start:
+            if not timestamp_end:
+                raise ValueError("Missing timestamp_end.")
+            if timerange == "day":
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=1)
+            elif timerange == "week":
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(weeks=1)
+            else:  # month
+                timestamp_start = datetime.strptime(timestamp_end, "%Y-%m-%d") - timedelta(days=30)
+            
+            date_timestamp = timestamp.date()
+            date_timestamp_start = timestamp_start.date()
+            date_timestamp_end = datetime.strptime(timestamp_end, "%Y-%m-%d").date()
+
+        elif not timestamp_end:
+            if not timestamp_start:
+                raise ValueError("Missing timestamp_start.")
+            if timerange == "day":
+                timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(days=1)
+            elif timerange == "week":
+                timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(weeks=1)
+            else:  # month
+                timestamp_end = datetime.strptime(timestamp_start, "%Y-%m-%d") + timedelta(days=30)
+            
+            date_timestamp = timestamp.date()
+            date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
+            date_timestamp_end = timestamp_end.date()
+
+        else:
+            date_timestamp = timestamp.date()
+            date_timestamp_start = datetime.strptime(timestamp_start, "%Y-%m-%d").date()
+            if timerange == "day":
+                date_timestamp_end = date_timestamp_start + timedelta(days=1)
+            elif timerange == "week":
+                date_timestamp_end = date_timestamp_start + timedelta(days=7)
+            else:  # month
+                date_timestamp_end = date_timestamp_start + timedelta(days=30)
+
+        result["within_range"] = date_timestamp_start <= date_timestamp <= date_timestamp_end
+        result["date_timestamp"] = date_timestamp
+        result["date_timestamp_start"] = date_timestamp_start
+        result["date_timestamp_end"] = date_timestamp_end
+        
+        return result

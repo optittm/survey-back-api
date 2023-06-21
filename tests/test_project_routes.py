@@ -117,19 +117,16 @@ class TestProjectRoute(unittest.TestCase):
         # Create a mock YamlRulesRepository instance with a getProjectNames method that returns a list with the mock project name
         self.mock_yaml_repo.getProjectNames.return_value = [mock_project.name]
 
-        # Create a mock YamlRulesRepository instance with a getFeatureUrlsFromProjectName method that returns a list with the feature url
-        self.mock_yaml_repo.getFeatureUrlsFromProjectName.return_value = [
-            "http://example.com/feature1"
+        # Create a mock YamlRulesRepository instance with a getRulesFromProjectName method that returns a Rule
+        self.mock_yaml_repo.getRulesFromProjectName.return_value = [
+            Rule(
+                feature_url=expected_output[0]["feature_url"],
+                ratio=expected_output[0]["ratio"],
+                delay_before_reanswer=expected_output[0]["delay_before_reanswer"],
+                delay_to_answer=expected_output[0]["delay_to_answer"],
+                is_active=expected_output[0]["is_active"],
+            )
         ]
-
-        # Create a mock YamlRulesRepository instance with a getRuleFromFeature method that returns a Rule
-        self.mock_yaml_repo.getRuleFromFeature.return_value = Rule(
-            feature_url=expected_output[0]["feature_url"],
-            ratio=expected_output[0]["ratio"],
-            delay_before_reanswer=expected_output[0]["delay_before_reanswer"],
-            delay_to_answer=expected_output[0]["delay_to_answer"],
-            is_active=expected_output[0]["is_active"],
-        )
 
         with app.container.sqlite_repo.override(
             self.mock_sqlite_repo
@@ -137,9 +134,9 @@ class TestProjectRoute(unittest.TestCase):
             # Make request to /projects/{id}/rules endpoint
             response = self.client.get(self.prefix + "/projects/1/rules")
 
-        # Check that the response is valid and matches the expected output
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), expected_output)
+            # Check that the response is valid and matches the expected output
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), expected_output)
 
     def test_get_project_rules_with_wrong_id(self):
         # Create a mock SQLiteRepository instance with a get_project_by_id method that returns the mock project
@@ -151,11 +148,11 @@ class TestProjectRoute(unittest.TestCase):
             # Make request to /projects/{id}/rules endpoint
             response = self.client.get(self.prefix + "/projects/1/rules")
 
-        # Check that the response is valid and matches the expected output
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(
-            response.json(), {"detail": {"id": 1, "Error": "Project not found"}}
-        )
+            # Check that the response is valid and matches the expected output
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(
+                response.json(), {"detail": {"id": 1, "Error": "Project not found"}}
+            )
 
     def test_get_project_rating(self):
         # Arrange
