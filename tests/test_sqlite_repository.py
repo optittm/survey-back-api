@@ -472,6 +472,33 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result, expected_result)
             # Assert that the query was called with the correct filter
             mock_query.filter.assert_called_once_with(NumberDisplayByProject.project_id == project_id)
+            
+    async def test_get_rates_from_feature(self):
+
+        comment_a = Comment(
+            id=1,
+            project_id=1,
+            user_id="1",
+            timestamp=datetime.now().isoformat(),
+            feature_url="http://test.com/test",
+            rating=4,
+            comment="test",
+        )
+        with patch('models.comment.Comment.filter') as mock_filter:
+            mock_filter.return_value = [comment_a]
+            Comment.timestamp = PropertyMock(return_value=comment_a.timestamp)
+            Comment.feature_url = PropertyMock(return_value=comment_a.feature_url)
+
+            rates = await self.repository.get_rates_from_feature(
+                feature_url="http://example.com/feature1"
+            )
+
+            mock_filter.assert_called_once_with(
+                Comment.feature_url == "http://example.com/feature1"
+            )
+
+            expected_rates = [{"rate": 4, "timestamp": comment_a.timestamp}]
+            self.assertEqual(rates, expected_rates)
 
     async def test_get_rates_from_feature(self):
 
@@ -500,8 +527,6 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             expected_rates = [{"rate": 4, "timestamp": comment_a.timestamp}]
             self.assertEqual(rates, expected_rates)
             
-    
-    
     def test_is_within_timerange_day(self):
         timestamp = "2023-06-06T12:00:00.000"
         timerange = "day"
@@ -549,6 +574,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
         }
         
         self.assertEqual(result, expected_result)
+                
             
     def test_get_features_urls_by_project_name(self):
         # Mocking the Session object and query method
