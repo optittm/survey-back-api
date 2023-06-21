@@ -493,32 +493,6 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             rating=4,
             comment="test",
         )
-        with patch('models.comment.Comment.filter') as mock_filter:
-            mock_filter.return_value = [comment_a]
-            Comment.timestamp = PropertyMock(return_value=comment_a.timestamp)
-            Comment.feature_url = PropertyMock(return_value=comment_a.feature_url)
-
-            rates = await self.repository.get_rates_from_feature(
-                feature_url="http://example.com/feature1"
-            )
-
-            mock_filter.assert_called_once_with(
-                Comment.feature_url == "http://example.com/feature1"
-            )
-
-            expected_rates = [{"rate": 4, "timestamp": comment_a.timestamp}]
-            self.assertEqual(rates, expected_rates)
-
-    async def test_get_rates_from_feature(self):
-
-        comment_a = Comment(
-            id=1,
-            project_id=1,
-            user_id="1",
-            timestamp=datetime.now().isoformat(),
-            feature_url="http://test.com/test",
-            rating=4,
-            comment="test",
         )
         with patch('models.comment.Comment.filter') as mock_filter:
             mock_filter.return_value = [comment_a]
