@@ -492,7 +492,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=4,
             comment="test",
-        )
+            language="en",
         )
         with patch('models.comment.Comment.filter') as mock_filter:
             mock_filter.return_value = [comment_a]
