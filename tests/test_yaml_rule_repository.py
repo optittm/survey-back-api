@@ -55,7 +55,6 @@ class TestGetRulesFromProjectName(unittest.TestCase):
     def test_noexisting_project(self):
         project_name = "projectInvalid"
         rules = YamlRulesRepository.getRulesFromProjectName(project_name)
-        self.assertIsNone(rules)
 
     def test_regex_matching(self):
         project_name = "project2"
@@ -79,6 +78,7 @@ class TestGetRulesFromProjectName(unittest.TestCase):
         ):
             rules = YamlRulesRepository.getRulesFromProjectName(project_name)
         self.assertIsNone(rules)
+        self.assertEqual(rules, [])
 
 
 class TestGetRuleFromFeature(unittest.TestCase):

@@ -68,7 +68,7 @@ class YamlRulesRepository:
             name (str): the name of the project to retrieve rules for
 
         Returns:
-            Union[List, dict]: a list of rules for the project
+            List[Rule]: a list of rules for the project
         """
         data = YamlRulesRepository._getRulesConfig(
             YamlRulesRepository._RULES_CONFIG_FILE
@@ -86,6 +86,7 @@ class YamlRulesRepository:
                         )
                         for rule in project_data["rules"]
                     ]
+        return []
 
     @staticmethod
     def getRuleFromFeature(feature_url: str):
