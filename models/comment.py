@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 from pydantic import validator
 from pydbantic import DataBaseModel, PrimaryKey, ForeignKey
 from datetime import datetime
@@ -63,3 +63,4 @@ class CommentGetBody(CommentCommon):
     """
 
     project_name: str
+    comment_nlp: Optional[List[str]] # Pre-processed version of the comment for NLP purposes

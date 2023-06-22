@@ -1,7 +1,9 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from langdetect import DetectorFactory, detect, LangDetectException
-from transformers import pipeline, TFRobertaForSequenceClassification, TFCamembertForSequenceClassification, AutoTokenizer
+import spacy
 import os
+from nltk.corpus import stopwords
+from transformers import pipeline, TFRobertaForSequenceClassification, TFCamembertForSequenceClassification, AutoTokenizer
 
 from models.comment import SentimentEnum
 
@@ -12,6 +14,46 @@ def detect_language(text: str) -> str:
         return detect(text)
     except LangDetectException:
         return 'unknown'
+
+class NlpPreprocess:
+    def __init__(self, config):
+        self.nlp_enabled = config["use_nlp_preprocess"]
+        if self.nlp_enabled:
+            nlp_en = spacy.load("en_core_web_md")
+            nlp_fr = spacy.load("fr_core_news_md")
+            self.pipelines = {
+                "en": nlp_en,
+                "fr": nlp_fr,
+            }
+
+    def text_preprocess(self, text: str, lang: str = "en") -> Optional[List[str]]:
+        """
+        Does some preprocessing to better analyze a text.
+        Lowercase, remove punctuation and stopwords, tokenization and lemmatization
+
+        Returns:
+            - List of processed tokens
+            - None if preprocess is disabled
+        """
+        if lang == "en":
+            nltk_lang = "english"
+        elif lang == "fr":
+            nltk_lang = "french"
+        else:
+            raise NotImplementedError()
+
+        if self.nlp_enabled:
+            doc = self.pipelines[lang](text)
+            pos_lemmas = [[token.pos_, token.lemma_] for token in doc]
+
+            # Remove stop words and punctuation
+            stop_words = set(stopwords.words(nltk_lang))
+            word_tokens = [w[1] for w in pos_lemmas if w[1] not in stop_words and w[0] != 'PUNCT']
+
+            return word_tokens
+        else:
+            return None
+
 
 class SentimentAnalysis:
     def __init__(self, config):

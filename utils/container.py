@@ -2,7 +2,7 @@ from dependency_injector import containers, providers
 
 from repository.yaml_rule_repository import YamlRulesRepository
 from repository.sqlite_repository import SQLiteRepository
-from utils.nlp import SentimentAnalysis
+from utils.nlp import SentimentAnalysis, NlpPreprocess
 
 
 class Container(containers.DeclarativeContainer):
@@ -26,3 +26,4 @@ class Container(containers.DeclarativeContainer):
     sqlite_repo = providers.Singleton(SQLiteRepository, config=config)
 
     sentiment_analysis = providers.Singleton(SentimentAnalysis, config=config)
+    nlp_preprocess = providers.Singleton(NlpPreprocess, config=config)

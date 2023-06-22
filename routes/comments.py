@@ -79,6 +79,7 @@ async def create_comment(
                 sentiment, score = sentiment_analysis.analyze(comment_body.comment, language)
             except Exception:
                 logging.error(f"Could not analyze sentiment of comment of language {language}")
+                logging.debug(f"Unable to do sentiment analysis on this comment: {comment_body.comment}")
                 sentiment, score = None, None
         else:
             sentiment, score = None, None

@@ -1,11 +1,12 @@
 import unittest
 from datetime import datetime
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 from models.comment import Comment, CommentGetBody
 from models.project import Project
 from repository.sqlite_repository import SQLiteRepository
 from utils.formatter import comment_to_comment_get_body
+from utils.nlp import NlpPreprocess
 
 
 class TestUtils(unittest.IsolatedAsyncioTestCase):
@@ -26,8 +27,11 @@ class TestUtils(unittest.IsolatedAsyncioTestCase):
         self.sqliterepo.get_project_by_id = AsyncMock(
             return_value=Project(id=1, name="test_project")
         )
+        nlp = Mock(spec=NlpPreprocess)
+        nlp.text_preprocess.return_value = None
+        
         result = await comment_to_comment_get_body(
-            self.comment, sqliterepo=self.sqliterepo
+            self.comment, sqliterepo=self.sqliterepo, nlp_preprocess=nlp
         )
         self.assertEqual(
             result,

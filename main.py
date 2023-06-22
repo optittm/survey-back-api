@@ -8,6 +8,7 @@ import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 import logging
+import nltk
 import os
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 # Sets Tensorflow's logs to ERROR
@@ -91,7 +92,15 @@ async def init_db(
 
 
 @inject
-def load_nlp_models(sentiment_analysis=Provide[Container.sentiment_analysis]):
+def load_sentiment_models(sentiment_analysis=Provide[Container.sentiment_analysis]):
+    """
+    This function just serves to call the provider a first time and
+    initialize the singleton, thus loading the models into RAM
+    """
+    pass
+
+@inject
+def load_nlp_models(npl_preprocess=Provide[Container.nlp_preprocess]):
     """
     This function just serves to call the provider a first time and
     initialize the singleton, thus loading the models into RAM
@@ -100,6 +109,12 @@ def load_nlp_models(sentiment_analysis=Provide[Container.sentiment_analysis]):
 
 @inject
 def init_nlp(config=Provide[Container.config]):
+    if config["use_nlp_preprocess"]:
+        nltk.download("punkt")
+        nltk.download("stopwords")
+        logging.info("Loading NLP models into RAM...")
+        load_nlp_models()
+    
     if not config["use_sentiment_analysis"]:
         return
     
@@ -122,6 +137,7 @@ def init_nlp(config=Provide[Container.config]):
             logging.info("French sentiment analysis model downloaded and saved")
 
         logging.info("Loading sentiment analysis models into RAM...")
+        load_sentiment_models()
         load_nlp_models()
     except Exception:
         container.config.use_sentiment_analysis.from_value(False)
@@ -168,6 +184,11 @@ container.config.sentiment_analysis_models_folder.from_env(
     required=True,
     as_=lambda x: x if x != "" else "./data/sentiment_models",
     default="./data/sentiment_models",
+)
+container.config.use_nlp_preprocess.from_env(
+    "USE_NLP_PREPROCESS",
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
 )
 container.config.cors_allow_origins.from_env("CORS_ALLOW_ORIGINS", default="*")
 container.config.cors_allow_credentials.from_env(
