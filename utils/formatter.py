@@ -29,7 +29,7 @@ async def comment_to_comment_get_body(
     project: Project = await sqliterepo.get_project_by_id(comment.project_id)
     try:
         processed_text = nlp_preprocess.text_preprocess(comment.comment, comment.language)
-    except Exception:
+    except NotImplementedError:
         logging.error(f"Could not preprocess text of language {comment.language}")
         logging.debug(f"Unable to do NLP preprocess on this text: {comment.comment}")
         processed_text = None
