@@ -117,8 +117,9 @@ def init_nlp(config=Provide[Container.config]):
     
     if not config["use_sentiment_analysis"]:
         return
-    english_path = "./data/sentiment_models/english"
-    french_path = "./data/sentiment_models/french"
+    
+    english_path = os.path.join(config["sentiment_analysis_models_folder"], "english")
+    french_path = os.path.join(config["sentiment_analysis_models_folder"], "french")
     try:
         if not os.path.exists(english_path):
             logging.info("Downloading English sentiment analysis model...")
@@ -137,6 +138,7 @@ def init_nlp(config=Provide[Container.config]):
 
         logging.info("Loading sentiment analysis models into RAM...")
         load_sentiment_models()
+        load_nlp_models()
     except Exception:
         container.config.use_sentiment_analysis.from_value(False)
         logging.warning("Could not retrieve sentiment analysis models. Analysis is disabled.")
@@ -176,6 +178,12 @@ container.config.use_sentiment_analysis.from_env(
     required=True,
     as_=lambda x: str_to_bool(x) if x != "" else False,
     default="False",
+)
+container.config.sentiment_analysis_models_folder.from_env(
+    "SENTIMENT_ANALYSIS_MODELS_FOLDER",
+    required=True,
+    as_=lambda x: x if x != "" else "./data/sentiment_models",
+    default="./data/sentiment_models",
 )
 container.config.use_nlp_preprocess.from_env(
     "USE_NLP_PREPROCESS",

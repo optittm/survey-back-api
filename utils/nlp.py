@@ -1,6 +1,7 @@
 from typing import Optional, Tuple, List
 from langdetect import DetectorFactory, detect, LangDetectException
 import spacy
+import os
 from nltk.corpus import stopwords
 from transformers import pipeline, TFRobertaForSequenceClassification, TFCamembertForSequenceClassification, AutoTokenizer
 
@@ -55,17 +56,17 @@ class NlpPreprocess:
 
 
 class SentimentAnalysis:
-    MODELS_FOLDER = "./data/sentiment_models"
-
     def __init__(self, config):
         self.analysis_enabled = config.get("use_sentiment_analysis")
         if self.analysis_enabled:
-            model_en = TFRobertaForSequenceClassification.from_pretrained(self.MODELS_FOLDER + "/english")
-            tokenizer_en = AutoTokenizer.from_pretrained(self.MODELS_FOLDER + "/english")
+            en_folder = os.path.join(config["sentiment_analysis_models_folder"], "english")
+            model_en = TFRobertaForSequenceClassification.from_pretrained(en_folder)
+            tokenizer_en = AutoTokenizer.from_pretrained(en_folder)
             pipeline_en = pipeline("sentiment-analysis", model=model_en, tokenizer=tokenizer_en)
             
-            model_fr = TFCamembertForSequenceClassification.from_pretrained(self.MODELS_FOLDER + "/french")
-            tokenizer_fr = AutoTokenizer.from_pretrained(self.MODELS_FOLDER + "/french")
+            fr_folder = os.path.join(config["sentiment_analysis_models_folder"], "french")
+            model_fr = TFCamembertForSequenceClassification.from_pretrained(fr_folder)
+            tokenizer_fr = AutoTokenizer.from_pretrained(fr_folder)
             pipeline_fr = pipeline("sentiment-analysis", model=model_fr, tokenizer=tokenizer_fr)
 
             self.pipelines = {

@@ -1,7 +1,8 @@
 import logging
 import os
+from typing import List
 import jinja2
-
+import plotly.graph_objects as go
 
 class HTMLRepository:
     """
@@ -19,26 +20,31 @@ class HTMLRepository:
         self.template_env = jinja2.Environment(loader=self.template_loader)
         self.template = self.template_env.get_template(reportFile)
 
-    def generate_report(self) -> str:
+    def generate_report(self, projects) -> str:
         logging.info("Generate HTML report")
 
-        data = {
-            "project": "TestName",
-        }
+        data = {"projects": projects}
 
         # Render the template and return Report
         html_report = self.template.render(data)
         return html_report
 
     def generate_detail_project_report(
-        self, id: str, timestamp_start: str = None, timestamp_end: str = None
+        self, 
+        id: str,
+        timerange: str= "week",
+        timestamp_start: str = None, 
+        timestamp_end: str = None,
+        graphs: List[go.Figure] = None,
     ) -> str:
         logging.info("Generate Detail Project Report")
-
+        
         data = {
             "project": {"id": id},
             "timestamp_start": timestamp_start,
             "timestamp_end": timestamp_end,
+            "graphs": graphs,
+            "timerange":timerange,
         }
 
         # Render the template and return Report
