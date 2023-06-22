@@ -1,9 +1,14 @@
+from enum import Enum
 from typing import Optional
 from pydantic import validator
 from pydbantic import DataBaseModel, PrimaryKey, ForeignKey
 from datetime import datetime
 import logging
 from models.project import Project
+
+class SentimentEnum(Enum):
+    POSITIVE = "POSITIVE"
+    NEGATIVE = "NEGATIVE"
 
 
 class CommentPostBody(DataBaseModel):
@@ -31,6 +36,9 @@ class CommentCommon(CommentPostBody):
 
     id: Optional[int] = PrimaryKey(autoincrement=True)
     timestamp: str
+    language: str # two-character ISO639-1 code
+    sentiment: Optional[str]
+    sentiment_score: Optional[float]
 
     @validator("timestamp")
     def encode_timestamp(cls, value):

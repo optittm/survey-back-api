@@ -102,6 +102,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             user_id=self.comment_body.user_id,
             timestamp=timestamp_dt,
             project_name=self.project_name,
+            language="en",
         )
         
         Comment.insert.assert_called_once()
@@ -115,6 +116,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
                 timestamp=timestamp_dt,
                 rating=self.comment_body.rating,
                 comment=self.comment_body.comment,
+                language="en",
             ),
         )
         
@@ -152,6 +154,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=4,
             comment="test",
+            language="en",
         )
         comment_b = Comment(
             id=2,
@@ -161,6 +164,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=5,
             comment="test2",
+            language="en",
         )
 
         Comment.all = AsyncMock(return_value=[comment_a, comment_b])
@@ -178,6 +182,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=4,
             comment="test",
+            language="en",
         )
         comment_b = Comment(
             id=2,
@@ -187,6 +192,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=5,
             comment="test2",
+            language="en",
         )
 
         Comment.all = AsyncMock(return_value=[comment_a, comment_b])
@@ -205,6 +211,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=4,
             comment="test",
+            language="en",
         )
 
         with patch('models.comment.Comment.filter') as mock_filter:
@@ -223,6 +230,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=4,
             comment="test",
+            language="en",
         )
         project = Project(
             id=1,
@@ -244,6 +252,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=4,
             comment="test",
+            language="en",
         )
         timestamp_start = datetime(2023, 5, 1).isoformat()
 
@@ -483,33 +492,7 @@ class TestSQLiteRepository(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com/test",
             rating=4,
             comment="test",
-        )
-        with patch('models.comment.Comment.filter') as mock_filter:
-            mock_filter.return_value = [comment_a]
-            Comment.timestamp = PropertyMock(return_value=comment_a.timestamp)
-            Comment.feature_url = PropertyMock(return_value=comment_a.feature_url)
-
-            rates = await self.repository.get_rates_from_feature(
-                feature_url="http://example.com/feature1"
-            )
-
-            mock_filter.assert_called_once_with(
-                Comment.feature_url == "http://example.com/feature1"
-            )
-
-            expected_rates = [{"rate": 4, "timestamp": comment_a.timestamp}]
-            self.assertEqual(rates, expected_rates)
-
-    async def test_get_rates_from_feature(self):
-
-        comment_a = Comment(
-            id=1,
-            project_id=1,
-            user_id="1",
-            timestamp=datetime.now().isoformat(),
-            feature_url="http://test.com/test",
-            rating=4,
-            comment="test",
+            language="en",
         )
         with patch('models.comment.Comment.filter') as mock_filter:
             mock_filter.return_value = [comment_a]
