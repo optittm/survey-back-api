@@ -4,7 +4,7 @@ from typing import List
 import jinja2
 import plotly.graph_objects as go
 
-class HTMLRepository:
+class HTMLReport:
     """
     Generate an HTML report
     """

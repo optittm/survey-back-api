@@ -12,7 +12,7 @@ class Container(containers.DeclarativeContainer):
         modules=[
             "routes.comments",
             "survey_logic.rules",
-            "routes.report",
+            "survey_logic.report",
             "routes.projects",
             "utils.formatter",
             "routes.middlewares.security",
