@@ -7,10 +7,10 @@ from uuid import uuid4
 import random
 
 from repository.sqlite_repository import SQLiteRepository
+from survey_logic.projects import get_encryption_from_project_name
 from utils.container import Container
 from models.rule import Rule
 from repository.yaml_rule_repository import YamlRulesRepository
-from utils.encryption import Encryption
 
 @inject
 def _get_rule_from_feature(
@@ -28,17 +28,6 @@ def _get_rule_from_feature(
             detail="Feature not found",
         )
     return rulesFromFeature
-
-@inject
-async def _get_encryption_from_project_name(
-    project_name: str,
-    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-) -> Encryption:
-    # Retrieve the encryption key of the project
-    project = await sqlite_repo.get_project_by_name(project_name)
-    encryption_db = await sqlite_repo.get_encryption_by_project_id(project.id)
-    encryption = Encryption(encryption_db.encryption_key)
-    return encryption
 
 @inject
 async def _log_display(
@@ -64,7 +53,7 @@ async def show_modal_or_not(
 ) -> bool:
     rulesFromFeature = _get_rule_from_feature(featureUrl)
     project_name = rulesYamlConfig.getProjectNameFromFeature(featureUrl)
-    encryption = await _get_encryption_from_project_name(project_name)    
+    encryption = await get_encryption_from_project_name(project_name)    
 
     # Set user_id Cookie if is None
     if user_id is None:

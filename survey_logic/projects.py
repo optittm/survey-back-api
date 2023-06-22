@@ -8,6 +8,18 @@ from models.rule import Rule
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.container import Container
+from utils.encryption import Encryption
+
+@inject
+async def get_encryption_from_project_name(
+    project_name: str,
+    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
+) -> Encryption:
+    # Retrieve the encryption key of the project
+    project = await sqlite_repo.get_project_by_name(project_name)
+    encryption_db = await sqlite_repo.get_encryption_by_project_id(project.id)
+    encryption = Encryption(encryption_db.encryption_key)
+    return encryption
 
 @inject
 async def get_all_projects(
