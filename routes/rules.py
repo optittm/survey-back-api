@@ -2,7 +2,7 @@ from typing import Union
 from fastapi import APIRouter, Depends, Response, Cookie, Security
 from models.security import ScopeEnum
 
-from survey_logic.rules import show_modal_or_not
+from survey_logic import rules as logic
 from routes.middlewares.feature_url import remove_search_hash_from_url
 from routes.middlewares.security import check_jwt
 
@@ -21,4 +21,4 @@ async def show_modal(
     user_id: Union[str, None] = Cookie(default=None),
     timestamp: Union[str, None] = Cookie(default=None),
 ) -> bool:
-    return await show_modal_or_not(response, featureUrl, user_id, timestamp)
+    return await logic.show_modal_or_not(response, featureUrl, user_id, timestamp)

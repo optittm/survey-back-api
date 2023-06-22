@@ -3,7 +3,7 @@ from fastapi import APIRouter, Security
 
 from models.rule import Rule
 from models.security import ScopeEnum
-from survey_logic import projects
+from survey_logic import projects as logic
 from routes.middlewares.security import check_jwt
 
 router = APIRouter()
@@ -15,7 +15,7 @@ router = APIRouter()
     response_model=List[dict],
 )
 async def get_projects() -> List[dict]:
-    return await projects.get_all_projects()
+    return await logic.get_all_projects()
 
 
 @router.get(
@@ -24,7 +24,7 @@ async def get_projects() -> List[dict]:
     response_model=List[dict],
 )
 async def get_projects_feature_rating(id: int) -> List[dict]:
-    return await projects.get_avg_rating_by_feature_from_project_id(id)
+    return await logic.get_avg_rating_by_feature_from_project_id(id)
 
 
 @router.get(
@@ -33,7 +33,7 @@ async def get_projects_feature_rating(id: int) -> List[dict]:
     response_model=List[Rule],
 )
 async def get_projects_rules(id: int) -> List[Rule]:
-    return await projects.get_rules_from_project_id(id)
+    return await logic.get_rules_from_project_id(id)
 
 
 @router.get(
@@ -42,4 +42,4 @@ async def get_projects_rules(id: int) -> List[Rule]:
     response_model=float,
 )
 async def get_project_rating(id: int) -> float:
-    return await projects.get_avg_project_rating_from_id(id)
+    return await logic.get_avg_project_rating_from_id(id)

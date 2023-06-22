@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Security
 from fastapi.responses import HTMLResponse
 
-from survey_logic import report
+from survey_logic import report as logic
 from models.security import ScopeEnum
 from routes.middlewares.security import check_jwt
 
@@ -15,7 +15,7 @@ router = APIRouter()
     response_class=HTMLResponse,
 )
 async def init_project_report() -> str:
-    return await report.generate_project_report()
+    return await logic.generate_project_report()
 
 
 @router.get(
@@ -29,7 +29,7 @@ async def init_detail_project_report(
     timestamp_start: Optional[str] = None, 
     timestamp_end: Optional[str] = None,
 ) -> str:
-    return await report.generate_detailed_report_from_project_id(
+    return await logic.generate_detailed_report_from_project_id(
         id, timerange, timestamp_start, timestamp_end
     )
 
