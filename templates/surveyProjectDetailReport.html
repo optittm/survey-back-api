@@ -30,12 +30,18 @@
                 <ul>
                     <li>Start : {{ timestamp_start }}</li>
                     <li>End : {{ timestamp_end }}</li>
+                    <li>Timerange : {{ timerange }}</li>
                 </ul>
             </div>
         </div>
         
-        
-
+        <div id="graphs-container">
+            {% for graph in graphs %}
+                <h3>{{ graph.feature_url }}</h3>
+                <p>Number of comments : {{ graph.comment_count }}</p>
+                {{ graph.figure_html }}
+            {% endfor %}
+        </div>
     </div>
 </body>
 </html>

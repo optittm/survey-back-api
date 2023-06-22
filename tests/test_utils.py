@@ -19,6 +19,7 @@ class TestUtils(unittest.IsolatedAsyncioTestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            language="en",
         )
 
     async def test_comment_to_comment_get_body(self):
@@ -38,6 +39,7 @@ class TestUtils(unittest.IsolatedAsyncioTestCase):
                 feature_url="http://test.com",
                 rating=5,
                 comment="This is a test comment",
+                language="en",
             ),
         )
         self.sqliterepo.get_project_by_id.assert_called_once_with(1)

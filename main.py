@@ -8,7 +8,11 @@ import uvicorn
 from sqlalchemy.exc import ArgumentError
 from pydbantic import Database
 import logging
-import nltk
+import os
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
+# Sets Tensorflow's logs to ERROR
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+from transformers import TFRobertaForSequenceClassification, TFCamembertForSequenceClassification, AutoTokenizer
 
 from models.comment import Comment
 from models.project import Project, ProjectEncryption
@@ -51,8 +55,6 @@ def init_fastapi(prefix="/api/v1", config=Provide[Container.config]) -> FastAPI:
 @inject
 async def main(config=Provide[Container.config]):
     await init_db()
-    nltk.download("punkt")
-    nltk.download("stopwords")
     # Running the uvicorn server in the function to be able to use the config provider
     config = uvicorn.Config(
         "main:app",
@@ -89,6 +91,44 @@ async def init_db(
 
 
 @inject
+def load_nlp_models(sentiment_analysis=Provide[Container.sentiment_analysis]):
+    """
+    This function just serves to call the provider a first time and
+    initialize the singleton, thus loading the models into RAM
+    """
+    pass
+
+@inject
+def init_nlp(config=Provide[Container.config]):
+    if not config["use_sentiment_analysis"]:
+        return
+    
+    english_path = os.path.join(config["sentiment_analysis_models_folder"], "english")
+    french_path = os.path.join(config["sentiment_analysis_models_folder"], "french")
+    try:
+        if not os.path.exists(english_path):
+            logging.info("Downloading English sentiment analysis model...")
+            model = TFRobertaForSequenceClassification.from_pretrained("siebert/sentiment-roberta-large-english")
+            tokenizer = AutoTokenizer.from_pretrained("siebert/sentiment-roberta-large-english")
+            model.save_pretrained(english_path)
+            tokenizer.save_pretrained(english_path)
+            logging.info("English sentiment analysis model downloaded and saved")
+        if not os.path.exists(french_path):
+            logging.info("Downloading French sentiment analysis model...")
+            model = TFCamembertForSequenceClassification.from_pretrained("tblard/tf-allocine")
+            tokenizer = AutoTokenizer.from_pretrained("tblard/tf-allocine", use_fast=True)
+            model.save_pretrained(french_path)
+            tokenizer.save_pretrained(french_path)
+            logging.info("French sentiment analysis model downloaded and saved")
+
+        logging.info("Loading sentiment analysis models into RAM...")
+        load_nlp_models()
+    except Exception:
+        container.config.use_sentiment_analysis.from_value(False)
+        logging.warning("Could not retrieve sentiment analysis models. Analysis is disabled.")
+
+
+@inject
 def config_logging(config=Provide[Container.config]):
     logging.basicConfig(level=config["log_level"])
 
@@ -116,6 +156,18 @@ container.config.use_fingerprint.from_env(
     required=True,
     as_=lambda x: str_to_bool(x) if x != "" else False,
     default="False",
+)
+container.config.use_sentiment_analysis.from_env(
+    "USE_SENTIMENT_ANALYSIS",
+    required=True,
+    as_=lambda x: str_to_bool(x) if x != "" else False,
+    default="False",
+)
+container.config.sentiment_analysis_models_folder.from_env(
+    "SENTIMENT_ANALYSIS_MODELS_FOLDER",
+    required=True,
+    as_=lambda x: x if x != "" else "./data/sentiment_models",
+    default="./data/sentiment_models",
 )
 container.config.cors_allow_origins.from_env("CORS_ALLOW_ORIGINS", default="*")
 container.config.cors_allow_credentials.from_env(
@@ -147,6 +199,8 @@ container.config.log_level.from_env(
 container.wire(modules=[__name__])
 
 config_logging()
+# NLP has to be init here else the override of the config value isn't registered
+init_nlp()
 app = init_fastapi()
 app.container = container
 

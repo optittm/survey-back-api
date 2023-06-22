@@ -10,6 +10,7 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from main import app
 from utils.encryption import Encryption
+from utils.nlp import SentimentAnalysis
 
 
 class TestCommentsRoutes(unittest.TestCase):
@@ -37,11 +38,11 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_yaml = Mock(spec=YamlRulesRepository)
         self.mock_rule = Mock(spec=Rule)
         self.mock_repo = Mock(spec=SQLiteRepository)
+        self.mock_nlp = Mock(spec=SentimentAnalysis)
         self.crypt_key = "rg3ENcA7oBCxtxvJ1kk4oAXLizePSnGqPykRi4hvWqY="
         self.encryption = Encryption(self.crypt_key)
 
-    @patch("routes.comments.text_preprocess")
-    def test_create_comment_endpoint(self, _):
+    def test_create_comment_endpoint(self):
         project_name = "project1"
         cookie_user_id = "123"
         return_comment = Comment(
@@ -52,6 +53,9 @@ class TestCommentsRoutes(unittest.TestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            language="en",
+            sentiment=None,
+            sentiment_score=None,
         )
         self.mock_yaml.getProjectNameFromFeature.return_value = project_name
         self.mock_repo.get_project_by_name.return_value = Mock()
@@ -63,11 +67,14 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_rule.delay_to_answer = 5
         self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
         self.mock_repo.create_comment.return_value = return_comment
+        self.mock_nlp.analyze.return_value = None, None
 
         app.container.config.use_fingerprint.from_value(False)
         with app.container.sqlite_repo.override(
             self.mock_repo
-        ), app.container.rules_config.override(self.mock_yaml):
+        ), app.container.rules_config.override(
+            self.mock_yaml
+        ), app.container.sentiment_analysis.override(self.mock_nlp):
             response = self.client.post(
                 self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
@@ -92,10 +99,12 @@ class TestCommentsRoutes(unittest.TestCase):
             cookie_user_id,
             self.datetime.isoformat(),
             project_name,
+            "en",
+            None,
+            None,
         )
 
-    @patch("routes.comments.text_preprocess")
-    def test_create_comment_endpoint_fingerprint(self, _):
+    def test_create_comment_endpoint_fingerprint(self):
         """
         Same as test_create_comment_endpoint but checks if the user_id is taken from the body instead of the cookie
         """
@@ -109,6 +118,9 @@ class TestCommentsRoutes(unittest.TestCase):
             feature_url="http://test.com",
             rating=5,
             comment="This is a test comment",
+            language="en",
+            sentiment=None,
+            sentiment_score=None,
         )
         self.mock_yaml.getProjectNameFromFeature.return_value = project_name
         self.mock_repo.get_project_by_name.return_value = Mock()
@@ -120,11 +132,14 @@ class TestCommentsRoutes(unittest.TestCase):
         self.mock_rule.delay_to_answer = 5
         self.mock_yaml.getRuleFromFeature.return_value = self.mock_rule
         self.mock_repo.create_comment.return_value = return_comment
+        self.mock_nlp.analyze.return_value = None, None
 
         app.container.config.use_fingerprint.from_value(True)
         with app.container.sqlite_repo.override(
             self.mock_repo
-        ), app.container.rules_config.override(self.mock_yaml):
+        ), app.container.rules_config.override(
+            self.mock_yaml
+        ), app.container.sentiment_analysis.override(self.mock_nlp):
             response = self.client.post(
                 self.route,
                 # Somehow CommentPostBody isn't json serializable when passed to this parameter, so passing it as dict instead
@@ -149,6 +164,9 @@ class TestCommentsRoutes(unittest.TestCase):
             self.comment_body.user_id,
             self.datetime.isoformat(),
             project_name,
+            "en",
+            None,
+            None,
         )
 
     def test_create_comment_endpoint_unknown_feature(self):
@@ -267,6 +285,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=4,
                 comment="test",
+                language="en",
             ),
             Comment(
                 id=2,
@@ -276,6 +295,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=5,
                 comment="test2",
+                language="en",
             ),
             Comment(
                 id=3,
@@ -285,6 +305,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=3,
                 comment="test3",
+                language="en",
             ),
             Comment(
                 id=4,
@@ -294,6 +315,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=2,
                 comment="test4",
+                language="en",
             ),
             Comment(
                 id=5,
@@ -303,6 +325,7 @@ class TestCommentsRoutes(unittest.TestCase):
                 feature_url="http://test.com/test",
                 rating=2,
                 comment="test4",
+                language="en",
             ),
         ]
 
