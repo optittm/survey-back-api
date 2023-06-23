@@ -62,6 +62,10 @@ def paginate_results(
     resource_url: str,
     request_filters: Optional[Dict[str, Union[str, int]]] = None,
 ) -> Pagination[T]:
+    """
+    Create a paginated result from the full list of results
+    
+    """
 
     if page_size < 1 or page < 1:
         raise ValueError("Invalid page or page size")
@@ -72,8 +76,8 @@ def paginate_results(
     end_index = start_index + page_size
     page_of_values = all_values[start_index:end_index]
 
-    return Pagination(
-        values=page_of_values,
+    return Pagination.paginate(
+        results=page_of_values,
         page=page,
         total=total,
         total_pages=total_pages,

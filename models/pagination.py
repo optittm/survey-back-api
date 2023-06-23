@@ -12,17 +12,33 @@ class Pagination(Generic[T], BaseModel):
     next_page: Optional[str]
     previous_page: Optional[str]
 
-    def __init__(
-        self,
-        values: List[T],
+    @classmethod
+    def paginate(
+        cls,
+        results: List[T],
         page: int,
         total: int,
         total_pages: int,
         resource_url: str,
         request_filters: Optional[Dict[str, Union[str, int]]] = None,
         page_size: Optional[int] = None,
-    ):
-        page_size = page_size if page_size is not None else len(values)
+    ) -> 'Pagination[T]':
+        """
+        Create a paginated result for the API
+
+        Args:
+            - results: list of items to return on this page
+            - page: the number of the page
+            - total: the total number of items across all pages
+            - total_pages: the total number of pages
+            - resource_url: the URL of the request without the query string
+            - request_filters: a dictionary representing the additional params in the request URL, apart from page and page_size
+            - page_size: the number of items to display in one page, defaults to len(results)
+        
+        Returns:
+            A Pagination object
+        """
+        page_size = page_size if page_size is not None else len(results)
         # Regenerate the query string
         filters = "&".join([f"{k}={v}" for k, v in request_filters.items()]) if request_filters else ""
         
@@ -38,8 +54,8 @@ class Pagination(Generic[T], BaseModel):
             previous_page = f"{resource_url}?page={page-1}&page_size={page_size}"
             previous_page += f"&{filters}" if filters else ""
 
-        super().__init__(
-            results=values,
+        return Pagination(
+            results=results,
             total_pages=total_pages,
             page=page,
             page_size=page_size,
