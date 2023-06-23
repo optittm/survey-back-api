@@ -63,18 +63,31 @@ def paginate_results(
     request_filters: Optional[Dict[str, Union[str, int]]] = None,
 ) -> Pagination[T]:
     """
-    Create a paginated result from the full list of results
+    Create a paginated result from the full list of items
+
+    Args:
+        - all_values: the full list of items to slice into pages
+        - page_size: the number of items to display in one page
+        - page: the number of the page to return
+        - resource_url: the URL of the request without the query string
+        - request_filters: a dictionary representing the additional params in the request URL, apart from page and page_size
     
+    Returns:
+        A Pagination object reprensenting the page to return
     """
 
     if page_size < 1 or page < 1:
         raise ValueError("Invalid page or page size")
 
     total = len(all_values)
-    total_pages = ceil(total / page_size)
-    start_index = (page - 1) * page_size
-    end_index = start_index + page_size
-    page_of_values = all_values[start_index:end_index]
+    if total > 0:
+        total_pages = ceil(total / page_size)
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        page_of_values = all_values[start_index:end_index]
+    else:
+        total_pages = 1
+        page_of_values = []
 
     return Pagination.paginate(
         results=page_of_values,
