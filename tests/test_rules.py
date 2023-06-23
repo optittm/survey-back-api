@@ -37,7 +37,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
 
         with patch("survey_logic.rules.random.random") as mock_random, \
             patch("survey_logic.rules._get_rule_from_feature") as mock_rule, \
-            patch("survey_logic.rules._get_encryption_from_project_name") as mock_crypto, \
+            patch("survey_logic.rules.get_encryption_from_project_name") as mock_crypto, \
             patch("survey_logic.rules._log_display"):
 
             mock_random.return_value = 0.4
@@ -64,7 +64,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
 
         with patch("survey_logic.rules.random.random") as mock_random, \
             patch("survey_logic.rules._get_rule_from_feature") as mock_rule, \
-            patch("survey_logic.rules._get_encryption_from_project_name") as mock_crypto, \
+            patch("survey_logic.rules.get_encryption_from_project_name") as mock_crypto, \
             patch("survey_logic.rules._log_display"):
 
             mock_random.return_value = 0.4
@@ -89,7 +89,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
 
         with patch("survey_logic.rules.random.random") as mock_random, \
             patch("survey_logic.rules._get_rule_from_feature") as mock_rule, \
-            patch("survey_logic.rules._get_encryption_from_project_name") as mock_crypto, \
+            patch("survey_logic.rules.get_encryption_from_project_name") as mock_crypto, \
             patch("survey_logic.rules._log_display"):
 
             mock_random.return_value = 0.4
@@ -110,7 +110,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
 
         with patch("survey_logic.rules.random.random") as mock_random, \
             patch("survey_logic.rules._get_rule_from_feature") as mock_rule, \
-            patch("survey_logic.rules._get_encryption_from_project_name") as mock_crypto, \
+            patch("survey_logic.rules.get_encryption_from_project_name") as mock_crypto, \
             patch("survey_logic.rules._log_display"):
 
             mock_random.return_value = 1
@@ -136,7 +136,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
         
         with patch("survey_logic.rules.random.random") as mock_random, \
             patch("survey_logic.rules._get_rule_from_feature") as mock_rule, \
-            patch("survey_logic.rules._get_encryption_from_project_name") as mock_crypto, \
+            patch("survey_logic.rules.get_encryption_from_project_name") as mock_crypto, \
             patch("survey_logic.rules._log_display"):
 
             mock_random.return_value = 0.4
@@ -159,7 +159,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
 
         with patch("survey_logic.rules.random.random") as mock_random, \
             patch("survey_logic.rules._get_rule_from_feature") as mock_rule, \
-            patch("survey_logic.rules._get_encryption_from_project_name") as mock_crypto, \
+            patch("survey_logic.rules.get_encryption_from_project_name") as mock_crypto, \
             patch("survey_logic.rules._log_display"):
 
             mock_random.return_value = 0.4
