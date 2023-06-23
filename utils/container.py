@@ -10,7 +10,7 @@ class Container(containers.DeclarativeContainer):
     # If you need to use Provide in a file other than main.py, add it to the list of modules here
     wiring_config = containers.WiringConfiguration(
         modules=[
-            "routes.comments",
+            "survey_logic.comments",
             "survey_logic.rules",
             "survey_logic.report",
             "routes.projects",
