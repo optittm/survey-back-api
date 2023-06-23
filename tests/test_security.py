@@ -6,7 +6,7 @@ from jwcrypto import jwk
 import jwt
 from jwt.api_jwk import PyJWK
 
-from survey_logic import security
+from survey_logic import security as logic
 from models.security import OAuthBody, ScopeEnum
 from utils.encryption import create_jwtoken
 
@@ -16,7 +16,7 @@ class TestSecurityGrant(unittest.TestCase):
     def test_unsupported_grant_type(self):
         body = OAuthBody(grant_type="something else")
         with self.assertRaises(HTTPException) as cm:
-            security.token_request(body)
+            logic.token_request(body)
         self.assertEqual(cm.exception.status_code, 400)
 
 
@@ -48,7 +48,7 @@ class TestAuthCodeFlow(unittest.TestCase):
         with patch("survey_logic.security.PyJWKClient") as jwk_client:
             mock_client = jwk_client.return_value
             mock_client.get_signing_keys.return_value = [jwk]
-            response = security.authorization_code_flow(self.auth_code, config=self.config)
+            response = logic.authorization_code_flow(self.auth_code, config=self.config)
 
         response_dict = response.dict()
         self.assertEqual(response_dict["token_type"], token_type)
@@ -64,7 +64,7 @@ class TestAuthCodeFlow(unittest.TestCase):
 
     def test_auth_code_missing(self):
         with self.assertRaises(HTTPException) as cm:
-            security.authorization_code_flow(None, config=self.config)
+            logic.authorization_code_flow(None, config=self.config)
         self.assertEqual(cm.exception.status_code, 400)
 
     def test_auth_code_invalid(self):
@@ -77,7 +77,7 @@ class TestAuthCodeFlow(unittest.TestCase):
             mock_client = jwk_client.return_value
             mock_client.get_signing_keys.return_value = [jwk]
             with self.assertRaises(HTTPException) as cm:
-                security.authorization_code_flow("1234", config=self.config)
+                logic.authorization_code_flow("1234", config=self.config)
 
         self.assertEqual(cm.exception.status_code, 401)
 
@@ -100,7 +100,7 @@ class TestClientCredentialsFlow(unittest.TestCase):
         expires_in = 600
         scope = ScopeEnum.DATA.value
 
-        response = security.client_credentials_flow(self.client_id, self.client_secret, config=self.config)
+        response = logic.client_credentials_flow(self.client_id, self.client_secret, config=self.config)
 
         response_dict = response.dict()
         self.assertEqual(response_dict["token_type"], token_type)
@@ -116,15 +116,15 @@ class TestClientCredentialsFlow(unittest.TestCase):
 
     def test_credentials_missing(self):
         with self.assertRaises(HTTPException) as cm:
-            security.client_credentials_flow(None, None, config=self.config)
+            logic.client_credentials_flow(None, None, config=self.config)
         self.assertEqual(cm.exception.status_code, 400)
 
     def test_invalid_client_id(self):
         with self.assertRaises(HTTPException) as cm:
-            security.client_credentials_flow(4, self.client_secret, config=self.config)
+            logic.client_credentials_flow(4, self.client_secret, config=self.config)
         self.assertEqual(cm.exception.status_code, 401)
 
     def test_invalid_client_secret(self):
         with self.assertRaises(HTTPException) as cm:
-            security.client_credentials_flow(self.client_id, "something", config=self.config)
+            logic.client_credentials_flow(self.client_id, "something", config=self.config)
         self.assertEqual(cm.exception.status_code, 401)

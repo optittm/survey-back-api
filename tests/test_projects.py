@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock
 from fastapi import HTTPException
 
-from survey_logic import projects
+from survey_logic import projects as logic
 from models.project import Project
 from models.rule import Rule
 from repository.sqlite_repository import SQLiteRepository
@@ -29,7 +29,7 @@ class TestProjects(unittest.IsolatedAsyncioTestCase):
         # Create mock YamlRulesRepository instance with a getProjectNames method that returns a list of project names
         self.mock_yaml_repo.getProjectNames.return_value = ["project1", "project2"]
         
-        response = await projects.get_all_projects(
+        response = await logic.get_all_projects(
             sqlite_repo=self.mock_sqlite_repo,
             yaml_repo=self.mock_yaml_repo,
         )
@@ -61,7 +61,7 @@ class TestProjects(unittest.IsolatedAsyncioTestCase):
         # Create a mock YamlRulesRepository instance with a getFeatureUrlsFromProjectName method that returns a list with the feature_url
         self.mock_yaml_repo.getProjectNames.return_value = ["project1"]
         
-        response = await projects.get_avg_rating_by_feature_from_project_id(
+        response = await logic.get_avg_rating_by_feature_from_project_id(
             1,
             sqlite_repo=self.mock_sqlite_repo,
             yaml_repo=self.mock_yaml_repo,
@@ -74,7 +74,7 @@ class TestProjects(unittest.IsolatedAsyncioTestCase):
         self.mock_sqlite_repo.get_project_by_id.return_value = None
         
         with self.assertRaises(HTTPException) as cm:
-            response = await projects.get_avg_rating_by_feature_from_project_id(
+            response = await logic.get_avg_rating_by_feature_from_project_id(
                 1,
                 sqlite_repo=self.mock_sqlite_repo,
                 yaml_repo=self.mock_yaml_repo,
@@ -111,7 +111,7 @@ class TestProjects(unittest.IsolatedAsyncioTestCase):
             )
         ]
         
-        response = await projects.get_rules_from_project_id(
+        response = await logic.get_rules_from_project_id(
             1,
             sqlite_repo=self.mock_sqlite_repo,
             yaml_repo=self.mock_yaml_repo,
@@ -124,7 +124,7 @@ class TestProjects(unittest.IsolatedAsyncioTestCase):
         self.mock_sqlite_repo.get_project_by_id.return_value = None
         
         with self.assertRaises(HTTPException) as cm:
-            response = await projects.get_rules_from_project_id(
+            response = await logic.get_rules_from_project_id(
                 1,
                 sqlite_repo=self.mock_sqlite_repo,
                 yaml_repo=self.mock_yaml_repo,
@@ -146,7 +146,7 @@ class TestProjects(unittest.IsolatedAsyncioTestCase):
         self.mock_yaml_repo.getProjectNames.return_value = [project_name]
         self.mock_sqlite_repo.get_project_by_id.return_value = mock_project
         
-        response = await projects.get_avg_project_rating_from_id(
+        response = await logic.get_avg_project_rating_from_id(
             project_id,
             sqlite_repo=self.mock_sqlite_repo,
             yaml_repo=self.mock_yaml_repo,
@@ -171,7 +171,7 @@ class TestProjects(unittest.IsolatedAsyncioTestCase):
         self.mock_sqlite_repo.get_project_by_id.return_value = None
         
         with self.assertRaises(HTTPException) as cm:
-            response = await projects.get_avg_project_rating_from_id(
+            response = await logic.get_avg_project_rating_from_id(
                 2,
                 sqlite_repo=self.mock_sqlite_repo,
                 yaml_repo=self.mock_yaml_repo,

@@ -1,12 +1,11 @@
 import unittest
 from unittest.mock import ANY, Mock, patch
-from fastapi.testclient import TestClient
 from fastapi import HTTPException, Response
 from datetime import datetime, timedelta
 
 from main import app
 from models.rule import Rule
-from survey_logic import rules
+from survey_logic import rules as logic
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.encryption import Encryption
@@ -44,7 +43,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
             mock_rule.return_value = self.rule
             mock_crypto.return_value = self.encryption
 
-            result = await rules.show_modal_or_not(
+            result = await logic.show_modal_or_not(
                 self.response,
                 "/test",
                 "1",
@@ -71,7 +70,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
             mock_rule.return_value = self.rule
             mock_crypto.return_value = self.encryption
 
-            result = await rules.show_modal_or_not(
+            result = await logic.show_modal_or_not(
                 self.response,
                 "/test",
                 "1",
@@ -96,7 +95,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
             mock_rule.return_value = self.rule
             mock_crypto.return_value = self.encryption
 
-            result = await rules.show_modal_or_not(
+            result = await logic.show_modal_or_not(
                 self.response,
                 "/test",
                 "1",
@@ -117,7 +116,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
             mock_rule.return_value = self.rule
             mock_crypto.return_value = self.encryption
 
-            result = await rules.show_modal_or_not(
+            result = await logic.show_modal_or_not(
                 self.response,
                 "/test",
                 "1",
@@ -143,7 +142,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
             mock_rule.return_value = self.rule
             mock_crypto.return_value = self.encryption
 
-            result = await rules.show_modal_or_not(
+            result = await logic.show_modal_or_not(
                 self.response,
                 "/test",
                 rulesYamlConfig=self.mock_yaml_repo,
@@ -167,7 +166,7 @@ class TestRules(unittest.IsolatedAsyncioTestCase):
             mock_crypto.return_value = self.encryption
             
             with self.assertRaises(HTTPException) as cm:
-                result = await rules.show_modal_or_not(
+                result = await logic.show_modal_or_not(
                     self.response,
                     "/test",
                     "1",
@@ -191,11 +190,11 @@ class TestRuleFromFeature(unittest.TestCase):
             is_active=True,
         )
         self.mock_yaml.getRuleFromFeature.return_value = return_rule
-        result = rules._get_rule_from_feature(self.feature_url, rulesYamlConfig=self.mock_yaml)
+        result = logic._get_rule_from_feature(self.feature_url, rulesYamlConfig=self.mock_yaml)
         self.assertEqual(result, return_rule)
         
     def test_feature_not_found(self):
         self.mock_yaml.getRuleFromFeature.return_value = None
         with self.assertRaises(HTTPException) as cm:
-            rules._get_rule_from_feature(self.feature_url, rulesYamlConfig=self.mock_yaml)
+            logic._get_rule_from_feature(self.feature_url, rulesYamlConfig=self.mock_yaml)
         self.assertEqual(cm.exception.status_code, 404)
