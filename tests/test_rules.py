@@ -3,7 +3,6 @@ from unittest.mock import ANY, Mock, patch
 from fastapi import HTTPException, Response
 from datetime import datetime, timedelta
 
-from main import app
 from models.rule import Rule
 from survey_logic import rules as logic
 from repository.sqlite_repository import SQLiteRepository
