@@ -33,7 +33,7 @@ async def generate_project_report(
         active_rules = [
             rule
             for rule in rulesYamlConfig.getRulesFromProjectName(project_name)
-            if rule.is_active == True
+            if rule.is_active
         ]
         feature_data = []
         for feature_url in feature_urls:
