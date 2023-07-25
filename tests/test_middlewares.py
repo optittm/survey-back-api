@@ -17,6 +17,11 @@ class TestURLMiddleware(unittest.TestCase):
         result = remove_search_hash_from_url(full_url)
         self.assertEqual(result, main_url)
 
+    def test_invalid_url(self):
+        url = "http://tes[t.com/test"
+        with self.assertRaises(HTTPException) as cm:
+            remove_search_hash_from_url(url)
+        self.assertEqual(cm.exception.status_code, 422)
 
 class TestJWTVerification(unittest.TestCase):
     def setUp(self):

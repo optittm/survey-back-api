@@ -1,21 +1,13 @@
-from math import ceil
-from typing import Any, List, Optional, Union, Dict
-from fastapi import APIRouter, Depends, Security, status, Cookie, HTTPException
-from dependency_injector.wiring import Provide, inject
-from datetime import datetime, timedelta
-import logging
+from typing import Optional
+from fastapi import APIRouter, Depends, Security, status, Cookie, Request
+from models.pagination import Pagination
 
-from models.comment import Comment, CommentGetBody, CommentPostBody
-from models.rule import Rule
+from survey_logic import comments as logic
+from models.comment import Comment, CommentPostBody
 from models.security import ScopeEnum
-from utils.container import Container
-from repository.sqlite_repository import SQLiteRepository
-from repository.yaml_rule_repository import YamlRulesRepository
-from utils.encryption import Encryption
-from utils.formatter import comment_to_comment_get_body
-from routes.middlewares.feature_url import comment_body_treatment
+from utils.formatter import comment_to_comment_get_body, paginate_results
+from routes.middlewares.feature_url import comment_body_treatment, remove_search_hash_from_url
 from routes.middlewares.security import check_jwt
-from utils.nlp import SentimentAnalysis, detect_language
 
 
 router = APIRouter()
@@ -25,94 +17,30 @@ router = APIRouter()
     "/comments",
     dependencies=[Security(check_jwt, scopes=[ScopeEnum.CLIENT.value])],
     status_code=status.HTTP_201_CREATED,
-    response_model=Union[Comment, dict],
+    response_model=Comment,
 )
-@inject
 async def create_comment(
     comment_body: CommentPostBody = Depends(comment_body_treatment),
-    user_id: Union[str, None] = Cookie(default=None),
-    timestamp: Union[str, None] = Cookie(default=None),
-    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-    rules_config: YamlRulesRepository = Depends(Provide[Container.rules_config]),
-    sentiment_analysis: SentimentAnalysis = Depends(Provide[Container.sentiment_analysis]),
-    config=Depends(Provide[Container.config]),
+    user_id: Optional[str] = Cookie(default=None),
+    timestamp: Optional[str] = Cookie(default=None),
 ) -> Comment:
-    if (
-        project_name := rules_config.getProjectNameFromFeature(comment_body.feature_url)
-    ) is not None:
-        if user_id is None or timestamp is None:
-            logging.error("POST comments::Missing cookies")
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Missing cookies",
-            )
-
-        # Retrieve the encryption key of the project
-        project = await sqlite_repo.get_project_by_name(project_name)
-        encryption_db = await sqlite_repo.get_encryption_by_project_id(project.id)
-        encryption = Encryption(encryption_db.encryption_key)
-
-        # Decrypt timestamp
-        try:
-            decrypted_timestamp = encryption.decrypt(timestamp)
-        except Exception:
-            logging.error("POST comments::Invalid timestamp, cannot decrypt")
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Invalid timestamp, cannot decrypt",
-            )
-
-        dt_timestamp = datetime.fromtimestamp(float(decrypted_timestamp))
-        # Check delay to answer
-        rule: Rule = rules_config.getRuleFromFeature(comment_body.feature_url)
-        if (datetime.now() - dt_timestamp) >= timedelta(minutes=rule.delay_to_answer):
-            logging.error("POST comments::Time to submit a comment has elapsed")
-            raise HTTPException(
-                status_code=status.HTTP_408_REQUEST_TIMEOUT,
-                detail="Time to submit a comment has elapsed",
-            )
-
-        # Sentiment analysis
-        if len(comment_body.comment):
-            language = detect_language(comment_body.comment)
-            try:
-                sentiment, score = sentiment_analysis.analyze(comment_body.comment, language)
-            except Exception:
-                logging.error(f"Could not analyze sentiment of comment of language {language}")
-                logging.debug(f"Unable to do sentiment analysis on this comment: {comment_body.comment}")
-                sentiment, score = None, None
-        else:
-            sentiment, score = None, None
-
-        iso_timestamp = dt_timestamp.isoformat()
-        new_comment = await sqlite_repo.create_comment(
-            comment_body.feature_url,
-            comment_body.rating,
-            comment_body.comment,
-            # Depending on config, use either the fingerprint passed in body, or the UUID from cookie
-            comment_body.user_id if config["use_fingerprint"] else user_id,
-            iso_timestamp,
-            project_name,
-            language,
-            sentiment,
-            score,
-        )
-        return new_comment
-    else:
-        logging.error("POST comments::Feature not found")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Feature not found",
-        )
+    return await logic.create_comment(
+        comment_body.feature_url,
+        comment_body.rating,
+        comment_body.comment,
+        comment_body.user_id,
+        user_id,
+        timestamp,
+    )
 
 
 @router.get(
     "/comments",
     dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
-    response_model=Dict[str, Any],
+    response_model=Pagination[Comment],
 )
-@inject
 async def get_comments(
+    request: Request,
     project_name: Optional[str] = None,
     feature_url: Optional[str] = None,
     user_id: Optional[str] = None,
@@ -123,9 +51,8 @@ async def get_comments(
     rating_max: Optional[int] = None,
     page: Optional[int] = 1,
     page_size: Optional[int] = 20,
-    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-) -> Dict[str, Any]:
-    comments = await sqlite_repo.read_comments(
+) -> Pagination[Comment]:
+    comments = await logic.get_comments(
         project_name=project_name,
         feature_url=feature_url,
         user_id=user_id,
@@ -135,31 +62,38 @@ async def get_comments(
         rating_min=rating_min,
         rating_max=rating_max,
     )
-    # Perform pagination
-    total_comments = len(comments)
-    total_pages = ceil(total_comments / page_size)
-    start_index = (page - 1) * page_size
-    end_index = start_index + page_size
-    paginated_comments = comments[start_index:end_index]
+    
+    if not any([
+        project_name,
+        feature_url,
+        user_id,
+        timestamp_start,
+        timestamp_end,
+        content_search,
+        rating_min,
+        rating_max,
+    ]):
+        filters = None
+    else:
+        # Writes the filters used in the request, apart from the pagination ones
+        filters = {}
+        queries = request.url.query.split("&")
+        for query in queries:
+            k, v = query.split("=")
+            if k in ["page", "page_size"]:
+                continue
+            filters[k] = v
 
-    commentsreturn = [
-        await comment_to_comment_get_body(comment) for comment in paginated_comments
-    ]
-
-    # Prepare pagination information
-    next_page = (
-        f"/comments?page={page + 1}&pageSize={page_size}"
-        if page < total_pages
-        else None
+    pagination = paginate_results(
+        all_values=comments,
+        page_size=page_size,
+        page=page,
+        resource_url=remove_search_hash_from_url(str(request.url)),
+        request_filters=filters,
     )
-    prev_page = f"/comments?page={page - 1}&pageSize={page_size}" if page > 1 else None
+    pagination.results = [
+        await comment_to_comment_get_body(comment) for comment in pagination.results
+    ]
+    return pagination
 
-    return {
-        "results": commentsreturn,
-        "page": page,
-        "page_size": page_size,
-        "total_comments": total_comments,
-        "total_pages": total_pages,
-        "next_page": next_page,
-        "prev_page": prev_page,
-    }
+    

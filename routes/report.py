@@ -1,82 +1,21 @@
-from fastapi import APIRouter, Depends
-
-from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter
 from typing import Optional
 from fastapi import APIRouter, Security
 from fastapi.responses import HTMLResponse
+
+from survey_logic import report as logic
 from models.security import ScopeEnum
-from repository.html_repository import HTMLRepository
-
-from utils.container import Container
-
-import jinja2
-import plotly.express as px
-import pandas as pd
-from fastapi import APIRouter, Depends
-from fastapi.responses import HTMLResponse
-
-from repository.html_repository import HTMLRepository
-from repository.sqlite_repository import SQLiteRepository
-from repository.yaml_rule_repository import YamlRulesRepository
-
-from utils.container import Container
-from dependency_injector.wiring import inject, Provide
-
-from repository.sqlite_repository import SQLiteRepository
-from repository.yaml_rule_repository import YamlRulesRepository
 from routes.middlewares.security import check_jwt
 
 router = APIRouter()
-
-templates = jinja2.Template("templates")
-
 
 @router.get(
     "/survey-report",
     dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
     response_class=HTMLResponse,
 )
-@inject
-async def init_report(
-    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-    rulesYamlConfig: YamlRulesRepository = Depends(Provide[Container.rules_config]),
-) -> str:
-    html_repository = HTMLRepository(reportFile="surveyReport.html")
-
-    projects = []
-
-    for project_name in rulesYamlConfig.getProjectNames():
-        project = await sqlite_repo.get_project_by_name(project_name)
-        average_rating = sqlite_repo.get_project_avg_rating(project.id)
-        comments_number = sqlite_repo.get_number_of_comment(project.id)
-        display_modal_number = sqlite_repo.get_number_of_display(project.id)
-        feature_urls = await sqlite_repo.get_features_urls_by_project_name(project_name)
-        active_rules = [
-            rule
-            for rule in rulesYamlConfig.getRulesFromProjectName(project_name)
-            if rule.is_active == True
-        ]
-        feature_data = []
-        for feature_url in feature_urls:
-            feature_avg_rating = sqlite_repo.get_feature_avg_rating(project.id, feature_url)
-            feature_avg_rating= round(feature_avg_rating, 1)
-            feature_data.append({
-                'feature_url': feature_url,
-                'feature_avg_rating': feature_avg_rating
-            })
-
-        projects.append(
-            {
-                "name": project_name,
-                "feature_data": feature_data,
-                "average_rating": round(average_rating, 1),
-                "comments_number": comments_number,
-                "display_modal_number": display_modal_number,
-                "active_rules_number": len(active_rules),
-            }
-        )
-
-    return html_repository.generate_report(projects)
+async def init_project_report() -> str:
+    return await logic.generate_project_report()
 
 
 @router.get(
@@ -84,69 +23,13 @@ async def init_report(
     dependencies=[Security(check_jwt, scopes=[ScopeEnum.DATA.value])],
     response_class=HTMLResponse,
 )
-@inject
 async def init_detail_project_report(
-    id: str, 
+    id: int, 
     timerange: Optional[str] = "week", 
     timestamp_start: Optional[str] = None, 
     timestamp_end: Optional[str] = None,
-    sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
-    yaml_repo: YamlRulesRepository = Depends(Provide[Container.rules_config])
 ) -> str:
-    """
-    Generates the detailed project report for the specified project ID.
-
-    Args:
-        id (str): The ID of the project.
-        timerange (str, optional): The time range for the report. Defaults to "week".
-        timestamp_start (str, optional): The start timestamp for filtering the rates. Defaults to None.
-        timestamp_end (str, optional): The end timestamp for filtering the rates. Defaults to None.
-        sqlite_repo (SQLiteRepository, optional): The SQLite repository. Defaults to Depends(Provide[Container.sqlite_repo]).
-        yaml_repo (YamlRulesRepository, optional): The YAML rules repository. Defaults to Depends(Provide[Container.rules_config]).
-
-    Returns:
-        str: The generated detailed project report in HTML format.
-
-    """
-
-    html_repository = HTMLRepository(reportFile="surveyProjectDetailReport.html")
-    project = await sqlite_repo.get_project_by_id(id)
-    project_name = project.name
-    feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project_name)
-    feature_rates = {}
-    
-    for feature_url in feature_urls:
-        rates = await sqlite_repo.get_rates_from_feature(feature_url)
-        feature_rates[feature_url] = rates
-    filtered_rates = await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
-
-    graphs = []
-    date_timestamp_start = []
-    date_timestamp_end = []
-
-    for feature_url, rates in filtered_rates.items():
-        if feature_url == 'date_timestamp_start':
-            date_timestamp_start = rates
-            continue
-        elif feature_url == 'date_timestamp_end':
-            date_timestamp_end = rates
-            continue
-
-        x = [rate["date_timestamp"] for rate in rates if "date_timestamp" in rate]
-        y = [rate["rate"] for rate in rates]
-        df = pd.DataFrame({'timestamp': x, 'rates': y})
-        fig = px.box(df, x='timestamp', y='rates', labels={'timestamp': 'Timestamp','rates': 'Rates'})
-        fig.update_layout(yaxis=dict(range=[0, 6]))
-
-        fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
-        graph_data = {
-            "feature_url": feature_url,
-            "comment_count": len(rates),
-            "figure_html": fig_html
-        }
-        graphs.append(graph_data)
-
-    return html_repository.generate_detail_project_report(
-        id, timerange, date_timestamp_start, date_timestamp_end, graphs
+    return await logic.generate_detailed_report_from_project_id(
+        id, timerange, timestamp_start, timestamp_end
     )
 
