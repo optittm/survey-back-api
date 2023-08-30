@@ -8,16 +8,14 @@ Survey is a feedback collection tool that allows users to provide comments, rati
 
 Here are the repositories related to the Survey project:
 
+- [Survey Back API](https://github.com/optittm/survey-back-api)*: The back-end API for the Survey project.
 - [Survey Front Library](https://github.com/optittm/survey-front-library): The front-end library for the Survey project.
-- Survey Back API: The back-end API for the Survey project. You are currently in this repository.
 - [Survey Front Modal](https://github.com/optittm/survey-front-modal): The reporting module for the Survey project. A popup modal asking the user for feedback.
 
 ## Requirements
 
-- Python >= 3.8
-  OR
-- Docker
-
+This tool works with `python3:8`.\
+You can dockerized it if you want.
 ## Documentation
 
 Please refer to the following documentation for detailed information about the Survey back-end API:
@@ -34,15 +32,15 @@ Please refer to the following documentation for detailed information about the S
 
 ### Local Installation
 
-To run the Survey back-end API locally, follow these steps:
-
-1. Clone the repository.
-2. Install dependencies by running `pip install -r requirements.txt`.
-3. Create a file in the project directory called `.env` and copy the `.env.example` file to it.
-4. Update the values in `.env` as needed. Make sure to add the URL of your frontend app to `CORS_ALLOW_ORIGINS`.
-5. If you want a third-party app to fetch feedback, add its URL to the `CORS_ALLOW_ORIGINS` field, separated by commas.
-6. Fill in the `rules.yaml` file with the rules for displaying the feedback modal for your projects.
-7. Run the API by executing `python main.py`.
+1. Go to go in dev branch `git checkout dev`
+2. Create .env file `cp .env.example .env`
+3. Create the venv `python -m venv venv`
+4. Activate the venv `source venv/bin/activate`
+5. Install requirements `python -m pip install -r requirements.txt`
+6. Update `.env` and put these `CORS_ALLOW_ORIGINS=*` and `CORS_ALLOW_CREDENTIALS=True` for the minimal and unsecure case. Else you need to do :
+    - Make sure to add the URL of your frontend app to `CORS_ALLOW_ORIGINS`
+    - If you want a third-party app to fetch feedback, add its URL to the `CORS_ALLOW_ORIGINS` field, separated by commas.
+7. Run the python script `python -u main.py`
 
 ### Docker
 
@@ -67,3 +65,13 @@ You can also run the tests within a Docker container:
 
 1. Build the Docker image as described in the Docker section above.
 2. Run the tests by executing `docker run --rm [image-name] python -m unittest discover tests`.
+
+
+## TODO
+
+- [ ] Create a doc to help you to create a new rule or a new project
+- [ ] Rework Dockerfile/workflow or delete it.
+
+## Licence
+
+Survey back api is available under the MIT license. See the LICENSE file for more info.

@@ -4,16 +4,16 @@ projects:
     rules:
     - 
 # Regex URL
-      feature_url: http://localhost/test
+      feature_url: http://localhost:4000/test
 # Probability of modal being displayed between 0 and 1
-      ratio: 0.4
+      ratio: 1.0
 # Delay in days before the modal is being displayed again for a given user
-      delay_before_reanswer: 30
+      delay_before_reanswer: 0
 # Time window in minutes the user has to answer in
 # Only the first answer during the window is saved
 # All answers received outside of the window are discarded to prevent spam
       delay_to_answer: 5
-      is_active: true
+      is_active: True
     -
 # Regex URL
       feature_url: http://localhost/test1
