@@ -9,6 +9,8 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.container import Container
 
+import numpy as np
+
 @inject
 async def generate_project_report(
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
@@ -57,6 +59,39 @@ async def generate_project_report(
 
     return html_repository.generate_report(projects)
 
+#Ponderates an array of notes by score and date
+#Curently the date is registered as DD/MM/YYYY so the granularity is daily
+#This function has been added to improve the graph design
+
+def ponderate(notes)->[] : 
+    if len(notes) <=0 :
+        return []
+    notes_pond=[]
+    notes=sorted(notes,key=lambda x: (x['note'], x['day']))
+    for note in notes : 
+        added = 0
+        i=0
+        for note_p in notes_pond :
+            
+            if note_p["day"] == note["day"] and note_p["note"] == note["note"]:
+                count=note_p["count"] +1
+                del notes_pond[i]
+                notes_pond.append({
+                'note' : note["note"],
+                    'count' : count,
+                    'day' : note["day"]
+            })
+                added = 1
+                break
+            i +=1
+        if added == 0 : 
+            notes_pond.append({
+                'note' : note["note"],
+                    'count' : note["count"],
+                    'day' : note["day"]
+            })
+    return notes_pond
+
 @inject
 async def generate_detailed_report_from_project_id(
     project_id: int,
@@ -96,6 +131,7 @@ async def generate_detailed_report_from_project_id(
     graphs = []
     date_timestamp_start = []
     date_timestamp_end = []
+    notes_sec = []
 
     for feature_url, rates in filtered_rates.items():
         if feature_url == 'date_timestamp_start':
@@ -118,6 +154,25 @@ async def generate_detailed_report_from_project_id(
             "figure_html": fig_html
         }
         graphs.append(graph_data)
+        notes_sec=[({
+            'note': str(rate["rate"]),
+            'count': 1,
+            'day':str(rate["date_timestamp"])
+        }) for rate in rates]
+        notes_sec_pond=[]
+        #If empty the graph lib shows an error about x (first argument) that receive a bad format []
+        if(len(notes_sec)>0) :
+            notes_sec_pond=ponderate(notes_sec)
+            fig_sec = px.bar(notes_sec_pond, x="day", y="count", color="note", title="Totals notes", color_discrete_map={
+                "1": "red", "2": "orange", "3": "yellow", "4": "lightGreen", "5": "green"
+            })
+            fig_html_2 = fig_sec.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_2 = {
+                "feature_url": feature_url,
+                "comment_count": len(notes_sec),
+                "figure_html": fig_html_2
+            }
+            graphs.append(graph_data_2)
 
     return html_repository.generate_detail_project_report(
         project_id, timerange, date_timestamp_start, date_timestamp_end, graphs
