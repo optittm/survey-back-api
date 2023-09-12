@@ -74,7 +74,6 @@ def ponderate_generated(list,x_name,y_name,count_name, color_name)->[] :
             
             if val_p[x_name] == val[x_name] and val_p[y_name] == val[y_name] and val_p[color_name] == val[color_name]:
                 count=val_p[count_name] +1
-                count =12
                 del list_pond[i]
                 list_pond.append({
                 y_name : val[y_name],
