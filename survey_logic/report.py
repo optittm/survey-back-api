@@ -58,38 +58,39 @@ async def generate_project_report(
 
     return html_repository.generate_report(projects)
 
-#Ponderates an array of notes by score and date
-#Curently the date is registered as DD/MM/YYYY so the granularity is daily
-#This function has been added to improve the graph design
+#Ponderates an array of dict based on 4 parameters add one to count if the three others are equals
+#Possibly make some optional like the color for other array to be ponderate
 
 def ponderate_generated(list,x_name,y_name,count_name, color_name)->[] : 
     if len(list) <=0 :
         return []
     list_pond=[]
-    list=sorted(list,key=lambda x: (x[y_name], x[x_name]))
+    list = sorted(list,key=lambda x: (x[y_name], x[x_name]))
     for val in list : 
         added = 0
         i=0
         for val_p in list_pond :
             
-            if val_p[x_name] == val[x_name] and val_p[y_name] == val[y_name] and val_p[color_name] == val[color_name]:
+            if (val_p[x_name] == val[x_name] and 
+                val_p[y_name] == val[y_name] and 
+                val_p[color_name] == val[color_name] ):
                 count=val_p[count_name] +1
                 del list_pond[i]
                 list_pond.append({
-                y_name : val[y_name],
+                    y_name : val[y_name],
                     count_name : count,
                     x_name : val[x_name],
-                    color_name : val[color_name]
+                    color_name : val[color_name],
             })
                 added = 1
                 break
             i +=1
         if added == 0 : 
             list_pond.append({
-                y_name : val[y_name],
+                    y_name : val[y_name],
                     count_name : val[count_name],
                     x_name : val[x_name],
-                    color_name : val[color_name]
+                    color_name : val[color_name],
             })
     return list_pond
 
@@ -154,51 +155,58 @@ async def generate_detailed_report_from_project_id(
         graph_data = {
             "feature_url": feature_url,
             "comment_count": len(rates),
-            "figure_html": fig_html
+            "figure_html": fig_html,
         }
         graphs.append(graph_data)
-
-    # for feature_url in feature_url:
+        
     for feature,comment_list in comments.items() : 
         comments = []
         for comment in comment_list : 
-            #rating (1-5), sentiment: POSITIVE/NEGATIVE, sentiment_score 0.99234253245
-            # print(comment.comment)
             if(comment.sentiment_score) : 
             
                 comments.append({
                     'rating' : comment.rating,
                     'sentiment_score' : comment.sentiment_score,
                     'color' : comment.sentiment,
-                    'count' : 1
+                    'count' : 1,
                 })
         if(len(comments)>0): 
-            fig_1 = px.scatter(comments, y="rating", x="sentiment_score",size = "count", color="color", color_discrete_map={
-                "NEGATIVE": "red", "POSITIVE": "green"
+            fig_1 = px.scatter(
+                comments, 
+                y="rating", 
+                x="sentiment_score",
+                size = "count", 
+                olor="color", 
+                color_discrete_map={
+                    "NEGATIVE": "red", 
+                    "POSITIVE": "green",
             })
-            # fig_1.update_layout(yaxis=dict(range=[0, 6]))
 
             fig_html_1 = fig_1.to_html(full_html=False, include_plotlyjs=False)
             graph_data_1 = {
                 "feature_url": feature,
                 "comment_count": len(comments),
-                "figure_html": fig_html_1
+                "figure_html": fig_html_1,
             }
             graphs.append(graph_data_1)
-            print(comments)
             comments_pond = ponderate_generated(comments,'sentiment_score', 'rating','count',"color" )
-            print(comments_pond)
-            # print(comments_pound[0]["sentiment_score"])
-            fig = px.scatter(comments_pond, y="rating", x="sentiment_score",size = "count", color="color", color_discrete_map={
-                "NEGATIVE": "red", "POSITIVE": "green"
+            fig = px.scatter(
+                comments_pond, 
+                y="rating", 
+                x="sentiment_score",
+                size = "count", 
+                color="color", 
+                color_discrete_map={
+                    "NEGATIVE": "red", 
+                    "POSITIVE": "green",
             })
-            fig.update_layout(yaxis=dict(range=[0, 6]))
+            fig.update_layout(yaxis = dict(range=[0, 6]))
 
             fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
             graph_data = {
                 "feature_url": feature,
                 "comment_count": len(comments_pond),
-                "figure_html": fig_html
+                "figure_html": fig_html,
             }
             graphs.append(graph_data)
     
