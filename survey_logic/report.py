@@ -77,18 +77,17 @@ def ponderate(notes)->[] :
                 count=note_p["count"] +1
                 del notes_pond[i]
                 notes_pond.append({
-                'note' : note["note"],
+                    'note' : note["note"],
                     'count' : count,
-                    'day' : note["day"]
-            })
+                    'day' : note["day"],
+                })
                 added = 1
-                break
             i +=1
         if added == 0 : 
             notes_pond.append({
                 'note' : note["note"],
-                    'count' : note["count"],
-                    'day' : note["day"]
+                'count' : note["count"],
+                'day' : note["day"],
             })
     return notes_pond
 
@@ -151,26 +150,35 @@ async def generate_detailed_report_from_project_id(
         graph_data = {
             "feature_url": feature_url,
             "comment_count": len(rates),
-            "figure_html": fig_html
+            "figure_html": fig_html,
         }
         graphs.append(graph_data)
         notes_sec=[({
             'note': str(rate["rate"]),
             'count': 1,
-            'day':str(rate["date_timestamp"])
-        }) for rate in rates]
+            'day':str(rate["date_timestamp"]),
+            }) for rate in rates]
         notes_sec_pond=[]
         #If empty the graph lib shows an error about x (first argument) that receive a bad format []
         if(len(notes_sec)>0) :
             notes_sec_pond=ponderate(notes_sec)
-            fig_sec = px.bar(notes_sec_pond, x="day", y="count", color="note", title="Totals notes", color_discrete_map={
-                "1": "red", "2": "orange", "3": "yellow", "4": "lightGreen", "5": "green"
+            fig_sec = px.bar(
+                notes_sec_pond, 
+                x="day", y="count", 
+                color="note", 
+                title="Totals notes", 
+                color_discrete_map={
+                    "1": "red", 
+                    "2": "orange", 
+                    "3": "yellow", 
+                    "4": "lightGreen", 
+                    "5": "green",
             })
             fig_html_2 = fig_sec.to_html(full_html=False, include_plotlyjs=False)
             graph_data_2 = {
                 "feature_url": feature_url,
                 "comment_count": len(notes_sec),
-                "figure_html": fig_html_2
+                "figure_html": fig_html_2,
             }
             graphs.append(graph_data_2)
 
