@@ -9,8 +9,6 @@ from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.container import Container
 
-import numpy as np
-
 @inject
 async def generate_project_report(
     sqlite_repo: SQLiteRepository = Depends(Provide[Container.sqlite_repo]),
