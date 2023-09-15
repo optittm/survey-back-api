@@ -8,6 +8,9 @@ from utils.html_report import HTMLReport
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.container import Container
+from datetime import datetime
+
+import numpy as np
 
 @inject
 async def generate_project_report(
@@ -160,9 +163,16 @@ async def generate_detailed_report_from_project_id(
         #If empty the graph lib shows an error about x (first argument) that receive a bad format []
         if(len(notes_sec)>0) :
             notes_sec_pond=ponderate(notes_sec)
-            fig_sec = px.bar(
-                notes_sec_pond, 
-                x="day", y="count", 
+            first_day_of_the_month = datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d').replace(day=1)
+            first_day_of_next_month = (datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d')+pd.DateOffset(months=1)).replace(day=1)
+            first_day_of_two_month_back=(datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d')-pd.DateOffset(months=2)).replace(day=1)
+            
+            n_p_month=[note for note in notes_sec_pond if datetime.strptime(note['day'], '%Y-%m-%d') >= first_day_of_the_month and datetime.strptime(note['day'], '%Y-%m-%d') < first_day_of_next_month]
+            n_p_three_month=[note for note in notes_sec_pond if datetime.strptime(note['day'], '%Y-%m-%d') >= first_day_of_two_month_back and datetime.strptime(note['day'], '%Y-%m-%d') < first_day_of_next_month]
+            fig__monthly = px.bar(
+                n_p_month, 
+                x="day", 
+                y="count", 
                 color="note", 
                 title="Totals notes", 
                 color_discrete_map={
@@ -171,14 +181,40 @@ async def generate_detailed_report_from_project_id(
                     "3": "yellow", 
                     "4": "lightGreen", 
                     "5": "green",
-            })
-            fig_html_2 = fig_sec.to_html(full_html=False, include_plotlyjs=False)
-            graph_data_2 = {
+            }   )
+            
+            fig_three_month = px.bar(
+                n_p_three_month, 
+                x="day", 
+                y="count", 
+                color="note", 
+                title="Totals notes", 
+                color_discrete_map={
+                    "1": "red", 
+                    "2": "orange", 
+                    "3": "yellow", 
+                    "4": "lightGreen", 
+                    "5": "green",
+            }   )
+            total = sum([note['count'] for note in notes_sec])
+            #For future use
+            moyenne = sum([note['count'] * int(note['note']) for note in notes_sec ]) / total
+            median = np.median(np.sort([int(note['note']) for note in notes_sec for _ in range(note['count'])]))
+
+            fig_html_monthly = fig__monthly.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_monthly = {
                 "feature_url": feature_url,
-                "comment_count": len(notes_sec),
-                "figure_html": fig_html_2,
+                "comment_count": total,
+                "figure_html": fig_html_monthly,
             }
-            graphs.append(graph_data_2)
+            graphs.append(graph_data_monthly)
+            fig_html_three_month = fig_three_month.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_three_month = {
+                "feature_url": feature_url,
+                "comment_count": total,
+                "figure_html": fig_html_three_month,
+            }
+            graphs.append(graph_data_three_month)
 
     return html_repository.generate_detail_project_report(
         project_id, timerange, date_timestamp_start, date_timestamp_end, graphs
