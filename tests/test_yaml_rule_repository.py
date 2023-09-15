@@ -245,7 +245,7 @@ class TestGetFeatureUrlsFromProjectName(unittest.TestCase):
             feature_urls = self.yaml_repo.getFeatureUrlsFromProjectName(name)
 
         # Assert
-        self.assertIsNone(feature_urls)
+        self.assertEqual(feature_urls, [])
 
     def test_getFeatureUrlsFromProjectName_returns_empty_set_if_project_has_no_rules(
         self,

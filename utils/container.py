@@ -13,6 +13,7 @@ class Container(containers.DeclarativeContainer):
             "survey_logic.comments",
             "survey_logic.rules",
             "survey_logic.report",
+            "survey_logic.projects",
             "routes.projects",
             "utils.formatter",
             "routes.middlewares.security",

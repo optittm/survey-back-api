@@ -150,7 +150,7 @@ class YamlRulesRepository:
         )
         if data:
             return data["projects"].keys()
-        return None
+        return []
 
     @staticmethod
     def getFeatureUrlsFromProjectName(name) -> List:
@@ -173,4 +173,4 @@ class YamlRulesRepository:
                     for rule in project_data["rules"]:
                         feature_urls.add(rule["feature_url"])
                     return list(feature_urls)
-        return None
+        return []
