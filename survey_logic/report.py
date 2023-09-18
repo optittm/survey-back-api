@@ -101,7 +101,7 @@ def generic_ponderate(list,x_name,y_name,count_name, color_name, optional : Opti
             if(optional) :
                 list_pond.append({
                     y_name : val[y_name],
-                    count_name : count,
+                    count_name : val[count_name],
                     x_name : val[x_name],
                     color_name : val[color_name],
                     optional : val[optional],
@@ -181,21 +181,14 @@ async def generate_detailed_report_from_project_id(
     for feature_url in feature_urls:
         rates = await sqlite_repo.get_rates_from_feature(feature_url)
         feature_rates[feature_url] = rates
-        comments[feature_url] = await get_comments(project_name, feature_url)
-    filtered_rates = await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
+        comments[feature_url] = await get_comments(project_name, feature_url,timestamp_start= timestamp_start, timestamp_end = timestamp_end)
 
-    
+    filtered_rates = await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
     graphs = []
     date_timestamp_start = []
     date_timestamp_end = []
     notes_sec = []
-    first_day_of_the_month = datetime.today().replace(day=1)
-    print(datetime.today().replace(day=1))
-    print(str(datetime.today()))
-    tempo_ = str(datetime.today())
-    print(datetime.strptime(tempo_, '%Y-%m-%d'))
-    first_day_of_next_month = (datetime.strptime(str(datetime.today()), '%Y-%m-%d')+pd.DateOffset(months=1)).replace(day=1)
-    first_day_of_two_month_back=(datetime.strptime(str(datetime.today()), '%Y-%m-%d')-pd.DateOffset(months=2)).replace(day=1)
+
     for feature,comment_list in comments.items() : 
         comments = []
         for comment in comment_list : 
@@ -206,37 +199,12 @@ async def generate_detailed_report_from_project_id(
                     'sentiment_score' : comment.sentiment_score,
                     'color' : comment.sentiment,
                     'count' : 1,
-                    'date' : comment.timestamp,
+                    'date' : str((comment.timestamp).split("T",1)[0]),
                 })
         if(len(comments)>0): 
-            # fig_1 = px.scatter(
-            #     comments, 
-            #     y="rating", 
-            #     x="sentiment_score",
-            #     size = "count", 
-            #     color="color", 
-            #     color_discrete_map={
-            #         "NEGATIVE": "red", 
-            #         "POSITIVE": "green",
-            # })
-            # fig_html_1 = fig_1.to_html(full_html=False, include_plotlyjs=False)
-            # graph_data_1 = {
-            #     "feature_url": feature,
-            #     "comment_count": len(comments),
-            #     "figure_html": fig_html_1,
-            # }
-            # graphs.append(graph_data_1)
-            print('-----|||||------')
-            print(comments[0].timestamp)
-            comments_pond = generic_ponderate(comments,'sentiment_score', 'rating','count',"color" )
-            #TODO : 
-            #Optional comment to add date and filter by date the comments
-            #On a "timestamp" au format YYYY-MM-DDTHH:MM..... "T" étant le format Timestamp je suppose 
-            c_p_month=[comment for comment in comments_pond if datetime.strptime(comment['date'], '%Y-%m-%d') >= first_day_of_the_month and datetime.strptime(comment['date'], '%Y-%m-%d') < first_day_of_next_month]
-            c_p_three_month=[comment for comment in comments_pond if datetime.strptime(comment['date'], '%Y-%m-%d') >= first_day_of_two_month_back and datetime.strptime(comment['date'], '%Y-%m-%d') < first_day_of_next_month]
-            
-            comment_fig_monthly = px.scatter(
-                c_p_month, 
+            comments_pond = generic_ponderate(comments,'sentiment_score', 'rating','count','color','date' )
+            comment_fig = px.scatter(
+                comments_pond, 
                 y="rating", 
                 x="sentiment_score",
                 size = "count", 
@@ -245,35 +213,15 @@ async def generate_detailed_report_from_project_id(
                     "NEGATIVE": "red", 
                     "POSITIVE": "green",
             })
-            comment_fig_monthly.update_layout(yaxis = dict(range=[0, 6]))
-
-            comment_fig_monthly_html = comment_fig_monthly.to_html(full_html=False, include_plotlyjs=False)
-            graph_data_comment_monthly = {
+            total_comments = sum([comment['count'] for comment in comments_pond])
+            comment_fig.update_layout(yaxis = dict(range=[0, 6]))
+            comment_fig_html = comment_fig.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_comments = {
                 "feature_url": feature,
-                "comment_count": len(comment_fig_monthly),
-                "figure_html": comment_fig_monthly_html,
+                "comment_count": total_comments,
+                "figure_html": comment_fig_html,
             }
-            graphs.append(graph_data_comment_monthly)
-            
-            comment_fig_three_month = px.scatter(
-                c_p_three_month, 
-                y="rating", 
-                x="sentiment_score",
-                size = "count", 
-                color="color", 
-                color_discrete_map={
-                    "NEGATIVE": "red", 
-                    "POSITIVE": "green",
-            })
-            comment_fig_three_month.update_layout(yaxis = dict(range=[0, 6]))
-
-            comment_fig_three_month_html = comment_fig_three_month.to_html(full_html=False, include_plotlyjs=False)
-            graph_data_comment_three_data = {
-                "feature_url": feature,
-                "comment_count": len(c_p_three_month),
-                "figure_html": comment_fig_three_month_html,
-            }
-            graphs.append(graph_data_comment_three_data)
+            graphs.append(graph_data_comments)
 
     for feature_url, rates in filtered_rates.items():
         if feature_url == 'date_timestamp_start':
@@ -289,13 +237,13 @@ async def generate_detailed_report_from_project_id(
         fig = px.box(df, x='timestamp', y='rates', labels={'timestamp': 'Timestamp','rates': 'Rates'})
         fig.update_layout(yaxis=dict(range=[0, 6]))
 
-        fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
-        graph_data = {
+        fig_html_comments = fig.to_html(full_html=False, include_plotlyjs=False)
+        graph_data_comments = {
             "feature_url": feature_url,
             "comment_count": len(rates),
-            "figure_html": fig_html,
+            "figure_html": fig_html_comments,
         }
-        graphs.append(graph_data)
+        graphs.append(graph_data_comments)
         notes_sec=[({
             'note': str(rate["rate"]),
             'count': 1,
@@ -306,12 +254,8 @@ async def generate_detailed_report_from_project_id(
         #If empty the graph lib shows an error about x (first argument) that receive a bad format []
         if(len(notes_sec)>0) :
             notes_sec_pond=generic_ponderate(notes_sec,'note','day','count','color')
-            
-            
-            n_p_month=[note for note in notes_sec_pond if datetime.strptime(note['day'], '%Y-%m-%d') >= first_day_of_the_month and datetime.strptime(note['day'], '%Y-%m-%d') < first_day_of_next_month]
-            n_p_three_month=[note for note in notes_sec_pond if datetime.strptime(note['day'], '%Y-%m-%d') >= first_day_of_two_month_back and datetime.strptime(note['day'], '%Y-%m-%d') < first_day_of_next_month]
-            fig__monthly = px.bar(
-                n_p_month, 
+            notes_fig = px.bar(
+                notes_sec_pond, 
                 x="day", 
                 y="count", 
                 color="color", 
@@ -323,39 +267,18 @@ async def generate_detailed_report_from_project_id(
                     "4": "lightGreen", 
                     "5": "green",
             }   )
-            
-            fig_three_month = px.bar(
-                n_p_three_month, 
-                x="day", 
-                y="count", 
-                color="note", 
-                title="Totals notes", 
-                color_discrete_map={
-                    "1": "red", 
-                    "2": "orange", 
-                    "3": "yellow", 
-                    "4": "lightGreen", 
-                    "5": "green",
-            }   )
-            total = sum([note['count'] for note in notes_sec])
+            total_notes = sum([note['count'] for note in notes_sec_pond])
             #For future use
-            moyenne = sum([note['count'] * int(note['note']) for note in notes_sec ]) / total
-            median = np.median(np.sort([int(note['note']) for note in notes_sec for _ in range(note['count'])]))
+            moyenne_notes = sum([note['count'] * int(note['note']) for note in notes_sec_pond ]) / total_notes
+            median_notes = np.median(np.sort([int(note['note']) for note in notes_sec_pond for _ in range(note['count'])]))
 
-            fig_html_monthly = fig__monthly.to_html(full_html=False, include_plotlyjs=False)
-            graph_data_monthly = {
+            notes_fig_html = notes_fig.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_notes = {
                 "feature_url": feature_url,
-                "comment_count": total,
-                "figure_html": fig_html_monthly,
+                "comment_count": total_notes,
+                "figure_html": notes_fig_html,
             }
-            graphs.append(graph_data_monthly)
-            fig_html_three_month = fig_three_month.to_html(full_html=False, include_plotlyjs=False)
-            graph_data_three_month = {
-                "feature_url": feature_url,
-                "comment_count": total,
-                "figure_html": fig_html_three_month,
-            }
-            graphs.append(graph_data_three_month)
+            graphs.append(graph_data_notes)
         
     return html_repository.generate_detail_project_report(
         project_id, timerange, date_timestamp_start, date_timestamp_end, graphs
