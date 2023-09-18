@@ -108,10 +108,10 @@ def generic_ponderate(list,x_name,y_name,count_name, color_name, optional : Opti
                 })
             else :
                 list_pond.append({
-                        y_name : val[y_name],
-                        count_name : val[count_name],
-                        x_name : val[x_name],
-                        color_name : val[color_name],
+                    y_name : val[y_name],
+                    count_name : val[count_name],
+                    x_name : val[x_name],
+                    color_name : val[color_name],
                 })
     return list_pond
 #Ponderates an array of notes by score and date
@@ -193,7 +193,6 @@ async def generate_detailed_report_from_project_id(
         comments = []
         for comment in comment_list : 
             if(comment.sentiment_score) : 
-            
                 comments.append({
                     'rating' : comment.rating,
                     'sentiment_score' : comment.sentiment_score,
