@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Survey project details report</title>
+    <style>{% include 'bootstrap.min.css' %}</style>
+    <script>{% include 'jquery-3.6.1.min.js' %}</script>
+    <script>{% include 'plotly-2.14.0.min.js' %}</script>
+    <script>{% include 'bootstrap.bundle.min.js' %}</script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            console.log('App started');
+        });
+    </script>
+</head>
+
+<body>
+    <div class="container-fluid">
+        
+        <div class="row">
+            <div class="col">
+                <h1>Project with ID {{ project.id }}</h1>
+
+                <ul>
+                    <li>Start : {{ timestamp_start }}</li>
+                    <li>End : {{ timestamp_end }}</li>
+                    <li>Timerange : {{ timerange }}</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div id="graphs-container">
+            {% for graph in graphs %}
+                <h3>{{ graph.feature_url }}</h3>
+                <p>Number of comments : {{ graph.comment_count }}</p>
+                {{ graph.figure_html }}
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
