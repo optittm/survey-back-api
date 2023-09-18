@@ -64,7 +64,7 @@ async def generate_project_report(
 #Ponderates an array of dict based on 4 parameters add one to count if the three others are equals
 #Possibly make some optional like the color for other array to be ponderate
 
-def ponderate_generated(list,x_name,y_name,count_name, color_name)->[] : 
+def generic_ponderate(list,x_name,y_name,count_name, color_name, optional : Optional[str]=None )->[] : 
     if len(list) <=0 :
         return []
     list_pond=[]
@@ -79,22 +79,40 @@ def ponderate_generated(list,x_name,y_name,count_name, color_name)->[] :
                 val_p[color_name] == val[color_name] ):
                 count=val_p[count_name] +1
                 del list_pond[i]
+                if(optional) :
+                    list_pond.append({
+                        y_name : val[y_name],
+                        count_name : count,
+                        x_name : val[x_name],
+                        color_name : val[color_name],
+                        optional : val[optional],
+                    })
+                else : 
+                    list_pond.append({
+                        y_name : val[y_name],
+                        count_name : count,
+                        x_name : val[x_name],
+                        color_name : val[color_name],
+                    })
+                added = 1
+                break
+            i +=1
+        if added == 0 : 
+            if(optional) :
                 list_pond.append({
                     y_name : val[y_name],
                     count_name : count,
                     x_name : val[x_name],
                     color_name : val[color_name],
-            })
-                added = 1
-                break
-            i +=1
-        if added == 0 : 
-            list_pond.append({
-                    y_name : val[y_name],
-                    count_name : val[count_name],
-                    x_name : val[x_name],
-                    color_name : val[color_name],
-            })
+                    optional : val[optional],
+                })
+            else :
+                list_pond.append({
+                        y_name : val[y_name],
+                        count_name : val[count_name],
+                        x_name : val[x_name],
+                        color_name : val[color_name],
+                })
     return list_pond
 #Ponderates an array of notes by score and date
 #Curently the date is registered as DD/MM/YYYY so the granularity is daily
@@ -171,6 +189,91 @@ async def generate_detailed_report_from_project_id(
     date_timestamp_start = []
     date_timestamp_end = []
     notes_sec = []
+    first_day_of_the_month = datetime.today().replace(day=1)
+    print(datetime.today().replace(day=1))
+    print(str(datetime.today()))
+    tempo_ = str(datetime.today())
+    print(datetime.strptime(tempo_, '%Y-%m-%d'))
+    first_day_of_next_month = (datetime.strptime(str(datetime.today()), '%Y-%m-%d')+pd.DateOffset(months=1)).replace(day=1)
+    first_day_of_two_month_back=(datetime.strptime(str(datetime.today()), '%Y-%m-%d')-pd.DateOffset(months=2)).replace(day=1)
+    for feature,comment_list in comments.items() : 
+        comments = []
+        for comment in comment_list : 
+            if(comment.sentiment_score) : 
+            
+                comments.append({
+                    'rating' : comment.rating,
+                    'sentiment_score' : comment.sentiment_score,
+                    'color' : comment.sentiment,
+                    'count' : 1,
+                    'date' : comment.timestamp,
+                })
+        if(len(comments)>0): 
+            # fig_1 = px.scatter(
+            #     comments, 
+            #     y="rating", 
+            #     x="sentiment_score",
+            #     size = "count", 
+            #     color="color", 
+            #     color_discrete_map={
+            #         "NEGATIVE": "red", 
+            #         "POSITIVE": "green",
+            # })
+            # fig_html_1 = fig_1.to_html(full_html=False, include_plotlyjs=False)
+            # graph_data_1 = {
+            #     "feature_url": feature,
+            #     "comment_count": len(comments),
+            #     "figure_html": fig_html_1,
+            # }
+            # graphs.append(graph_data_1)
+            print('-----|||||------')
+            print(comments[0].timestamp)
+            comments_pond = generic_ponderate(comments,'sentiment_score', 'rating','count',"color" )
+            #TODO : 
+            #Optional comment to add date and filter by date the comments
+            #On a "timestamp" au format YYYY-MM-DDTHH:MM..... "T" étant le format Timestamp je suppose 
+            c_p_month=[comment for comment in comments_pond if datetime.strptime(comment['date'], '%Y-%m-%d') >= first_day_of_the_month and datetime.strptime(comment['date'], '%Y-%m-%d') < first_day_of_next_month]
+            c_p_three_month=[comment for comment in comments_pond if datetime.strptime(comment['date'], '%Y-%m-%d') >= first_day_of_two_month_back and datetime.strptime(comment['date'], '%Y-%m-%d') < first_day_of_next_month]
+            
+            comment_fig_monthly = px.scatter(
+                c_p_month, 
+                y="rating", 
+                x="sentiment_score",
+                size = "count", 
+                color="color", 
+                color_discrete_map={
+                    "NEGATIVE": "red", 
+                    "POSITIVE": "green",
+            })
+            comment_fig_monthly.update_layout(yaxis = dict(range=[0, 6]))
+
+            comment_fig_monthly_html = comment_fig_monthly.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_comment_monthly = {
+                "feature_url": feature,
+                "comment_count": len(comment_fig_monthly),
+                "figure_html": comment_fig_monthly_html,
+            }
+            graphs.append(graph_data_comment_monthly)
+            
+            comment_fig_three_month = px.scatter(
+                c_p_three_month, 
+                y="rating", 
+                x="sentiment_score",
+                size = "count", 
+                color="color", 
+                color_discrete_map={
+                    "NEGATIVE": "red", 
+                    "POSITIVE": "green",
+            })
+            comment_fig_three_month.update_layout(yaxis = dict(range=[0, 6]))
+
+            comment_fig_three_month_html = comment_fig_three_month.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_comment_three_data = {
+                "feature_url": feature,
+                "comment_count": len(c_p_three_month),
+                "figure_html": comment_fig_three_month_html,
+            }
+            graphs.append(graph_data_comment_three_data)
 
     for feature_url, rates in filtered_rates.items():
         if feature_url == 'date_timestamp_start':
@@ -193,41 +296,17 @@ async def generate_detailed_report_from_project_id(
             "figure_html": fig_html,
         }
         graphs.append(graph_data)
-        
-    for feature,comment_list in comments.items() : 
-        comments = []
-        for comment in comment_list : 
-            if(comment.sentiment_score) : 
-            
-                comments.append({
-                    'rating' : comment.rating,
-                    'sentiment_score' : comment.sentiment_score,
-                    'color' : comment.sentiment,
-                    'count' : 1,
-                })
-        if(len(comments)>0): 
-            fig_1 = px.scatter(
-                comments, 
-                y="rating", 
-                x="sentiment_score",
-                size = "count", 
-                olor="color", 
-                color_discrete_map={
-                    "NEGATIVE": "red", 
-                    "POSITIVE": "green",
-            })
         notes_sec=[({
             'note': str(rate["rate"]),
             'count': 1,
             'day':str(rate["date_timestamp"]),
+            'color': str(rate["rate"]),
             }) for rate in rates]
         notes_sec_pond=[]
         #If empty the graph lib shows an error about x (first argument) that receive a bad format []
         if(len(notes_sec)>0) :
-            notes_sec_pond=ponderate(notes_sec)
-            first_day_of_the_month = datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d').replace(day=1)
-            first_day_of_next_month = (datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d')+pd.DateOffset(months=1)).replace(day=1)
-            first_day_of_two_month_back=(datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d')-pd.DateOffset(months=2)).replace(day=1)
+            notes_sec_pond=generic_ponderate(notes_sec,'note','day','count','color')
+            
             
             n_p_month=[note for note in notes_sec_pond if datetime.strptime(note['day'], '%Y-%m-%d') >= first_day_of_the_month and datetime.strptime(note['day'], '%Y-%m-%d') < first_day_of_next_month]
             n_p_three_month=[note for note in notes_sec_pond if datetime.strptime(note['day'], '%Y-%m-%d') >= first_day_of_two_month_back and datetime.strptime(note['day'], '%Y-%m-%d') < first_day_of_next_month]
@@ -235,7 +314,7 @@ async def generate_detailed_report_from_project_id(
                 n_p_month, 
                 x="day", 
                 y="count", 
-                color="note", 
+                color="color", 
                 title="Totals notes", 
                 color_discrete_map={
                     "1": "red", 
@@ -277,35 +356,7 @@ async def generate_detailed_report_from_project_id(
                 "figure_html": fig_html_three_month,
             }
             graphs.append(graph_data_three_month)
-
-            fig_html_1 = fig_1.to_html(full_html=False, include_plotlyjs=False)
-            graph_data_1 = {
-                "feature_url": feature,
-                "comment_count": len(comments),
-                "figure_html": fig_html_1,
-            }
-            graphs.append(graph_data_1)
-            comments_pond = ponderate_generated(comments,'sentiment_score', 'rating','count',"color" )
-            fig = px.scatter(
-                comments_pond, 
-                y="rating", 
-                x="sentiment_score",
-                size = "count", 
-                color="color", 
-                color_discrete_map={
-                    "NEGATIVE": "red", 
-                    "POSITIVE": "green",
-            })
-            fig.update_layout(yaxis = dict(range=[0, 6]))
-
-            fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
-            graph_data = {
-                "feature_url": feature,
-                "comment_count": len(comments_pond),
-                "figure_html": fig_html,
-            }
-            graphs.append(graph_data)
-    
+        
     return html_repository.generate_detail_project_report(
         project_id, timerange, date_timestamp_start, date_timestamp_end, graphs
     )
