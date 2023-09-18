@@ -9,7 +9,6 @@ from utils.html_report import HTMLReport
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.container import Container
-from datetime import datetime
 
 import numpy as np
 
@@ -278,7 +277,7 @@ async def generate_detailed_report_from_project_id(
                 "figure_html": notes_fig_html,
             }
             graphs.append(graph_data_notes)
-        
+    graphs.append(html.Div())
     return html_repository.generate_detail_project_report(
         project_id, timerange, date_timestamp_start, date_timestamp_end, graphs
     )
