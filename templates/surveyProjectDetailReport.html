@@ -38,6 +38,8 @@
             {% for graph in graphs %}
                 <h3>{{ graph.feature_url }}</h3>
                 <p>Number of comments : {{ graph.comment_count }}</p>
+                <p>Average note : {{ graph.average }}</p>
+                <p>Median note : {{ graph.median }}</p>
                 {{ graph.figure_html }}
             {% endfor %}
         </div>

@@ -211,12 +211,16 @@ async def generate_detailed_report_from_project_id(
                     "POSITIVE": "green",
             })
             total_comments = sum([comment['count'] for comment in comments_pond])
+            moyenne_comments = sum([comment['count'] * int(comment['rating']) for comment in comments_pond ]) / total_comments
+            median_comments = np.median(np.sort([int(comment['rating']) for comment in comments_pond for _ in range(comment['count'])]))
             comment_fig.update_layout(yaxis = dict(range=[0, 6]))
             comment_fig_html = comment_fig.to_html(full_html=False, include_plotlyjs=False)
             graph_data_comments = {
                 "feature_url": feature,
                 "comment_count": total_comments,
                 "figure_html": comment_fig_html,
+                "average": moyenne_comments,
+                "median": median_comments,
             }
             graphs.append(graph_data_comments)
 
@@ -274,6 +278,8 @@ async def generate_detailed_report_from_project_id(
                 "feature_url": feature_url,
                 "comment_count": total_notes,
                 "figure_html": notes_fig_html,
+                "average": moyenne_notes,
+                "median": median_notes,
             }
             graphs.append(graph_data_notes)
     return html_repository.generate_detail_project_report(
