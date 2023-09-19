@@ -3,12 +3,12 @@ from dependency_injector.wiring import Provide, inject
 from typing import Optional
 import plotly.express as px
 import pandas as pd
+from survey_logic.comments import get_comments
 
 from utils.html_report import HTMLReport
 from repository.sqlite_repository import SQLiteRepository
 from repository.yaml_rule_repository import YamlRulesRepository
 from utils.container import Container
-from datetime import datetime
 
 import numpy as np
 
@@ -60,6 +60,59 @@ async def generate_project_report(
 
     return html_repository.generate_report(projects)
 
+#Ponderates an array of dict based on 4 parameters add one to count if the three others are equals
+#Possibly make some optional like the color for other array to be ponderate
+
+def generic_ponderate(list,x_name,y_name,count_name, color_name, optional : Optional[str]=None )->[] : 
+    if len(list) <=0 :
+        return []
+    list_pond=[]
+    list = sorted(list,key=lambda x: (x[y_name], x[x_name]))
+    for val in list : 
+        added = 0
+        i=0
+        for val_p in list_pond :
+            
+            if (val_p[x_name] == val[x_name] and 
+                val_p[y_name] == val[y_name] and 
+                val_p[color_name] == val[color_name] ):
+                count=val_p[count_name] +1
+                del list_pond[i]
+                if(optional) :
+                    list_pond.append({
+                        y_name : val[y_name],
+                        count_name : count,
+                        x_name : val[x_name],
+                        color_name : val[color_name],
+                        optional : val[optional],
+                    })
+                else : 
+                    list_pond.append({
+                        y_name : val[y_name],
+                        count_name : count,
+                        x_name : val[x_name],
+                        color_name : val[color_name],
+                    })
+                added = 1
+                break
+            i +=1
+        if added == 0 : 
+            if(optional) :
+                list_pond.append({
+                    y_name : val[y_name],
+                    count_name : val[count_name],
+                    x_name : val[x_name],
+                    color_name : val[color_name],
+                    optional : val[optional],
+                })
+            else :
+                list_pond.append({
+                    y_name : val[y_name],
+                    count_name : val[count_name],
+                    x_name : val[x_name],
+                    color_name : val[color_name],
+                })
+    return list_pond
 #Ponderates an array of notes by score and date
 #Curently the date is registered as DD/MM/YYYY so the granularity is daily
 #This function has been added to improve the graph design
@@ -122,16 +175,51 @@ async def generate_detailed_report_from_project_id(
     project_name = project.name
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project_name)
     feature_rates = {}
+    comments={}
     
     for feature_url in feature_urls:
         rates = await sqlite_repo.get_rates_from_feature(feature_url)
         feature_rates[feature_url] = rates
-    filtered_rates = await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
+        comments[feature_url] = await get_comments(project_name, feature_url,timestamp_start= timestamp_start, timestamp_end = timestamp_end)
 
+    filtered_rates = await sqlite_repo.filter_rates_by_timerange(feature_rates, timerange, timestamp_start, timestamp_end)
     graphs = []
     date_timestamp_start = []
     date_timestamp_end = []
     notes_sec = []
+
+    for feature,comment_list in comments.items() : 
+        comments = []
+        for comment in comment_list : 
+            if(comment.sentiment_score) : 
+                comments.append({
+                    'rating' : comment.rating,
+                    'sentiment_score' : comment.sentiment_score,
+                    'color' : comment.sentiment,
+                    'count' : 1,
+                    'date' : str((comment.timestamp).split("T",1)[0]),
+                })
+        if(len(comments)>0): 
+            comments_pond = generic_ponderate(comments,'sentiment_score', 'rating','count','color','date' )
+            comment_fig = px.scatter(
+                comments_pond, 
+                y="rating", 
+                x="sentiment_score",
+                size = "count", 
+                color="color", 
+                color_discrete_map={
+                    "NEGATIVE": "red", 
+                    "POSITIVE": "green",
+            })
+            total_comments = sum([comment['count'] for comment in comments_pond])
+            comment_fig.update_layout(yaxis = dict(range=[0, 6]))
+            comment_fig_html = comment_fig.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_comments = {
+                "feature_url": feature,
+                "comment_count": total_comments,
+                "figure_html": comment_fig_html,
+            }
+            graphs.append(graph_data_comments)
 
     for feature_url, rates in filtered_rates.items():
         if feature_url == 'date_timestamp_start':
@@ -147,33 +235,28 @@ async def generate_detailed_report_from_project_id(
         fig = px.box(df, x='timestamp', y='rates', labels={'timestamp': 'Timestamp','rates': 'Rates'})
         fig.update_layout(yaxis=dict(range=[0, 6]))
 
-        fig_html = fig.to_html(full_html=False, include_plotlyjs=False)
-        graph_data = {
+        fig_html_comments = fig.to_html(full_html=False, include_plotlyjs=False)
+        graph_data_comments = {
             "feature_url": feature_url,
             "comment_count": len(rates),
-            "figure_html": fig_html,
+            "figure_html": fig_html_comments,
         }
-        graphs.append(graph_data)
+        graphs.append(graph_data_comments)
         notes_sec=[({
             'note': str(rate["rate"]),
             'count': 1,
             'day':str(rate["date_timestamp"]),
+            'color': str(rate["rate"]),
             }) for rate in rates]
         notes_sec_pond=[]
         #If empty the graph lib shows an error about x (first argument) that receive a bad format []
         if(len(notes_sec)>0) :
-            notes_sec_pond=ponderate(notes_sec)
-            first_day_of_the_month = datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d').replace(day=1)
-            first_day_of_next_month = (datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d')+pd.DateOffset(months=1)).replace(day=1)
-            first_day_of_two_month_back=(datetime.strptime(notes_sec_pond[0]['day'], '%Y-%m-%d')-pd.DateOffset(months=2)).replace(day=1)
-            
-            n_p_month=[note for note in notes_sec_pond if datetime.strptime(note['day'], '%Y-%m-%d') >= first_day_of_the_month and datetime.strptime(note['day'], '%Y-%m-%d') < first_day_of_next_month]
-            n_p_three_month=[note for note in notes_sec_pond if datetime.strptime(note['day'], '%Y-%m-%d') >= first_day_of_two_month_back and datetime.strptime(note['day'], '%Y-%m-%d') < first_day_of_next_month]
-            fig__monthly = px.bar(
-                n_p_month, 
+            notes_sec_pond=generic_ponderate(notes_sec,'note','day','count','color')
+            notes_fig = px.bar(
+                notes_sec_pond, 
                 x="day", 
                 y="count", 
-                color="note", 
+                color="color", 
                 title="Totals notes", 
                 color_discrete_map={
                     "1": "red", 
@@ -182,40 +265,19 @@ async def generate_detailed_report_from_project_id(
                     "4": "lightGreen", 
                     "5": "green",
             }   )
-            
-            fig_three_month = px.bar(
-                n_p_three_month, 
-                x="day", 
-                y="count", 
-                color="note", 
-                title="Totals notes", 
-                color_discrete_map={
-                    "1": "red", 
-                    "2": "orange", 
-                    "3": "yellow", 
-                    "4": "lightGreen", 
-                    "5": "green",
-            }   )
-            total = sum([note['count'] for note in notes_sec])
+            total_notes = sum([note['count'] for note in notes_sec_pond])
             #For future use
-            moyenne = sum([note['count'] * int(note['note']) for note in notes_sec ]) / total
-            median = np.median(np.sort([int(note['note']) for note in notes_sec for _ in range(note['count'])]))
+            moyenne_notes = sum([note['count'] * int(note['note']) for note in notes_sec_pond ]) / total_notes
+            median_notes = np.median(np.sort([int(note['note']) for note in notes_sec_pond for _ in range(note['count'])]))
 
-            fig_html_monthly = fig__monthly.to_html(full_html=False, include_plotlyjs=False)
-            graph_data_monthly = {
+            notes_fig_html = notes_fig.to_html(full_html=False, include_plotlyjs=False)
+            graph_data_notes = {
                 "feature_url": feature_url,
-                "comment_count": total,
-                "figure_html": fig_html_monthly,
+                "comment_count": total_notes,
+                "figure_html": notes_fig_html,
             }
-            graphs.append(graph_data_monthly)
-            fig_html_three_month = fig_three_month.to_html(full_html=False, include_plotlyjs=False)
-            graph_data_three_month = {
-                "feature_url": feature_url,
-                "comment_count": total,
-                "figure_html": fig_html_three_month,
-            }
-            graphs.append(graph_data_three_month)
-
+            graphs.append(graph_data_notes)
+    graphs.append(html.Div())
     return html_repository.generate_detail_project_report(
         project_id, timerange, date_timestamp_start, date_timestamp_end, graphs
     )
