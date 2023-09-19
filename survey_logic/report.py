@@ -176,7 +176,6 @@ async def generate_detailed_report_from_project_id(
     feature_urls = yaml_repo.getFeatureUrlsFromProjectName(project_name)
     feature_rates = {}
     comments={}
-    
     for feature_url in feature_urls:
         rates = await sqlite_repo.get_rates_from_feature(feature_url)
         feature_rates[feature_url] = rates
@@ -277,7 +276,6 @@ async def generate_detailed_report_from_project_id(
                 "figure_html": notes_fig_html,
             }
             graphs.append(graph_data_notes)
-    graphs.append(html.Div())
     return html_repository.generate_detail_project_report(
         project_id, timerange, date_timestamp_start, date_timestamp_end, graphs
     )
