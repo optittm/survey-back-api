@@ -117,34 +117,6 @@ def generic_ponderate(list,x_name,y_name,count_name, color_name, optional : Opti
 #Curently the date is registered as DD/MM/YYYY so the granularity is daily
 #This function has been added to improve the graph design
 
-def ponderate(notes)->[] : 
-    if len(notes) <=0 :
-        return []
-    notes_pond=[]
-    notes=sorted(notes,key=lambda x: (x['note'], x['day']))
-    for note in notes : 
-        added = 0
-        i=0
-        for note_p in notes_pond :
-            
-            if note_p["day"] == note["day"] and note_p["note"] == note["note"]:
-                count=note_p["count"] +1
-                del notes_pond[i]
-                notes_pond.append({
-                    'note' : note["note"],
-                    'count' : count,
-                    'day' : note["day"],
-                })
-                added = 1
-            i +=1
-        if added == 0 : 
-            notes_pond.append({
-                'note' : note["note"],
-                'count' : note["count"],
-                'day' : note["day"],
-            })
-    return notes_pond
-
 @inject
 async def generate_detailed_report_from_project_id(
     project_id: int,
