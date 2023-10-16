@@ -62,7 +62,8 @@ async def main(config=Provide[Container.config]):
         host=config["survey_api_host"],
         reload=config["debug_mode"],
         port=config["survey_api_port"],
-        log_level=config["log_level"].lower(),
+        # NOTSET is for Python's logging. TRACE is the equivalent in uvicorn
+        log_level="trace" if config["log_level"] == "NOTSET" else config["log_level"].lower(),
     )
     # Running the server in the existing async loop
     # https://www.uvicorn.org/#config-and-server-instances
