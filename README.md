@@ -14,8 +14,9 @@ Here are the repositories related to the Survey project:
 
 ## Requirements
 
-This tool works with `python3:8`.\
-You can dockerized it if you want.
+This tool works with `Python 3.11`.\
+You can dockerize it if you want.
+
 ## Documentation
 
 Please refer to the following documentation for detailed information about the Survey back-end API:
