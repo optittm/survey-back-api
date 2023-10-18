@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
    
-FROM python:3.8
+FROM python:3.11-alpine
 WORKDIR /survey-back-api
 COPY . .
 # Additional COPY to check if .env exists
